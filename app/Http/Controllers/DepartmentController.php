@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Inertia\Inertia;
+use App\Models\Department;
+use App\Models\School;
+use Illuminate\Http\Request;
+
+class DepartmentController extends Controller
+{
+    // GET /departments
+    public function index()
+    {
+        $departments = Department::with(['school', 'majors', 'courses', 'professorProfiles'])->get();
+        return Inertia::render('Departments/Index', ['departments' => $departments]);
+    }
+
+    // GET /departments/create
+    public function create()
+    {
+        // Pass list of schools for selection
+        $schools = School::all();
+        return Inertia::render('Departments/Create', ['schools' => $schools]);
+    }
+
+    // POST /departments
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'school_id' => 'required|exists:schools,id',
+            'name'      => 'required|string',
+        ]);
+
+        Department::create($data);
+        return redirect()->route('departments.index')->with('success', 'Department created successfully');
+    }
+
+    // GET /departments/{id}/edit
+    public function edit($id)
+    {
+        $department = Department::findOrFail($id);
+        $schools = School::all();
+        return Inertia::render('Departments/Edit', [
+            'department' => $department,
+            'schools'    => $schools,
+        ]);
+    }
+
+    // PUT /departments/{id}
+    public function update(Request $request, $id)
+    {
+        $department = Department::findOrFail($id);
+        $data = $request->validate([
+            'school_id' => 'required|exists:schools,id',
+            'name'      => 'required|string',
+        ]);
+
+        $department->update($data);
+        return redirect()->route('departments.index')->with('success', 'Department updated successfully');
+    }
+
+    // DELETE /departments/{id}
+    public function destroy($id)
+    {
+        $department = Department::findOrFail($id);
+        $department->delete();
+        return redirect()->route('departments.index')->with('success', 'Department deleted successfully');
+    }
+}
