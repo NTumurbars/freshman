@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\UserWelcome;
 use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Role;
@@ -51,6 +52,7 @@ class UserController extends Controller
 
         // Send email verification notification so the user can set their password.
         $user->sendEmailVerificationNotification();
+        dispatch(new UserWelcome($user, $tempPassword));
 
         return redirect()->route('users.index')->with('success', 'User invited successfully');
     }

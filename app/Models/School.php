@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Jobs\CredentialsMail;
+use App\Jobs\UserWelcome;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
@@ -21,7 +21,7 @@ class School extends Model
     protected static function booted()
     {
         static::created(function (School $school) {
-            $adminRole = Role::firstOrCreate(['name' => 'admin']);
+            $adminRole = Role::firstOrCreate(['name' => 'school_admin']);
 
             $plainPassword = Str::random(12);
 
@@ -35,7 +35,7 @@ class School extends Model
             ]);
 
             // Dispatch credentials mail job
-            //CredentialsMail::dispatch($admin, $plainPassword);
+            dispatch(new UserWelcome($admin, $plainPassword));
 
             // Send email verification notification
             $admin->sendEmailVerificationNotification();
