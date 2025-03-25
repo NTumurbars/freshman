@@ -4,50 +4,52 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Redirect;
+use Illuminate\Validation\Rules;
 use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Support\Facades\Redirect;
 
 class ProfileController extends Controller
 {
     /**
-     * Display the form for editing the user's profile.
+     * Display the user's profile info.
      */
-    public function edit(Request $request): Response
+    public function show(Request $request)
+    {
+        return Inertia::render('Profile/Show', [
+            'user' => $request->user()->only('id', 'name', 'email', 'created_at'),
+            'status' => session('status'),
+        ]);
+    }
+    
+    /**
+     * Display the edit form.
+     */
+    public function edit(Request $request)
     {
         return Inertia::render('Profile/Edit', [
-            'status' => session('status'),
-            'user' => [
-                'name' => $request->user()->name,
-
-                'email' => $request->user()->email,
-            ],
+            'user' => $request->user()->only('id', 'name', 'email'),
         ]);
     }
 
     /**
-     * Update the user's name or password.
+     * Handle the profile update request.
      */
     public function update(Request $request)
     {
-        $data = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'password'              => 'nullable|string|min:8|confirmed',
-            'password_confirmation' => 'required_with:password|same:password'
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = $request->user();
+        $user->name = $request->name;
 
-        // Update name
-        $user->name = $data['name'];
-
-        // Update password only if provided
-        if (!empty($data['password'])) {
-            $user->password = Hash::make($data['password']);
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
         }
 
         $user->save();
 
-        return Redirect::route('profile.edit')->with('success', 'Profile updated successfully!');
+        return Redirect::route('profile.show')->with('status', 'Profile updated successfully!');
     }
 }
