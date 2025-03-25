@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\School;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -16,15 +17,17 @@ class UserController extends Controller
     // GET /users
     public function index()
     {
-        $users = User::with(['school', 'role', 'professorProfile'])->get();
+        $user = User::find(Auth::id());
+        $users = User::with(['school', 'role', 'professorProfile'])->where('school_id', $user->school_id)->whereNot('id', $user->id)->get();
         return Inertia::render('Users/Index', ['users' => $users]);
     }
 
     // GET /users/create
     public function create()
     {
-        $roles = Role::all();
-        $schools = School::all();
+        $user = User::find(Auth::id());
+        $roles = Role::where('id', '>', 1)->get();
+        $schools =$user->school;
         return Inertia::render('Users/Create', [
             'roles' => $roles,
             'schools' => $schools,
