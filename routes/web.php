@@ -36,23 +36,18 @@ require __DIR__.'/auth.php';
 */
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Dashboard
+    // Dashboard & Profile Routes
     Route::get('/dashboard', fn () => Inertia::render('Dashboard'))->name('dashboard');
 
-    Route::middleware(['auth', 'verified'])->group(function () {
-        Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
-        Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    });
-    
-    
-
- 
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     /*
     |--------------------------------------------------------------------------
-    | Super Admin Routes
+    | Super Admin Routes (Global Write Actions)
     |--------------------------------------------------------------------------
+    | Super Admin can manage schools at the top level.
     */
     Route::middleware('role:super_admin')->group(function () {
         Route::resource('schools', SchoolController::class);
@@ -60,62 +55,107 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Admin (Super Admin + School Admin)
+    | Nested School Routes for School-Specific Write Actions
+    |--------------------------------------------------------------------------
+    | Resources that belong to a specific school are nested under /schools/{school}.
+    | Only users with roles super_admin, school_admin, or major_coordinator can create/update these.
+    */
+    Route::middleware('role:super_admin,school_admin,major_coordinator')->group(function () {
+        // Departments
+        Route::resource('schools.departments', DepartmentController::class)
+            ->scoped(['department' => 'id'])
+            ->except(['index', 'show']);
+
+        // Terms
+        Route::resource('schools.terms', TermController::class)
+            ->scoped(['term' => 'id'])
+            ->except(['index', 'show']);
+
+        // Courses
+        Route::resource('schools.courses', CourseController::class)
+            ->scoped(['course' => 'id'])
+            ->except(['index', 'show']);
+
+        // Sections
+        Route::resource('schools.sections', SectionController::class)
+            ->scoped(['section' => 'id'])
+            ->except(['index', 'show']);
+
+        // Rooms
+        Route::resource('schools.rooms', RoomController::class)
+            ->scoped(['room' => 'id'])
+            ->except(['index', 'show']);
+
+        // Schedules
+        Route::resource('schools.schedules', ScheduleController::class)
+            ->scoped(['schedule' => 'id'])
+            ->except(['index', 'show']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Global Write Actions Not Nested Under School
     |--------------------------------------------------------------------------
     */
     Route::middleware('role:super_admin,school_admin')->group(function () {
+        // Users are global; filtering will help super admins.
         Route::resource('users', UserController::class);
-        Route::resource('departments', DepartmentController::class)->except(['index', 'show']);
+        // Majors can be managed globally (or nest them under departments if preferred)
         Route::resource('majors', MajorController::class)->except(['index', 'show']);
-        Route::resource('terms', TermController::class)->except(['index', 'show']);
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Major Coordinator (Super Admin, School Admin, Major Coordinator)
-    |--------------------------------------------------------------------------
-    */
-    Route::middleware('role:super_admin,school_admin,major_coordinator')->group(function () {
-        Route::resource('courses', CourseController::class)->except(['index', 'show']);
-        Route::resource('sections', SectionController::class)->except(['index', 'show']);
-        Route::resource('rooms', RoomController::class)->except(['index', 'show']);
-        Route::resource('room-features', RoomFeatureController::class)->except(['index', 'show']);
-        Route::resource('schedules', ScheduleController::class)->except(['index', 'show']);
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Professor Management (Super Admin, School Admin, Professor)
-    |--------------------------------------------------------------------------
-    */
     Route::middleware('role:super_admin,school_admin,professor')->group(function () {
         Route::resource('professor-profiles', ProfessorProfileController::class)->except(['index', 'show']);
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Course Registration (Super Admin, School Admin, Student)
-    |--------------------------------------------------------------------------
-    */
     Route::middleware('role:super_admin,school_admin,student')->group(function () {
         Route::resource('course-registrations', CourseRegistrationController::class)->except(['index', 'show']);
     });
 
+
+    Route::resource('room-features', RoomFeatureController::class)->only(['index', 'show']);
+
     /*
     |--------------------------------------------------------------------------
-    | Read-Only (Index, Show) Routes: All Verified Users
+    | Read-Only Routes (Index & Show) for Nested School Resources
     |--------------------------------------------------------------------------
+    | These routes are accessible to all authenticated users.
     */
-    Route::resources([
-        'departments'          => DepartmentController::class,
-        'majors'               => MajorController::class,
-        'terms'                => TermController::class,
-        'courses'              => CourseController::class,
-        'sections'             => SectionController::class,
-        'rooms'                => RoomController::class,
-        'room-features'        => RoomFeatureController::class,
-        'professor-profiles'   => ProfessorProfileController::class,
-        'course-registrations' => CourseRegistrationController::class,
-        'schedules'            => ScheduleController::class,
-    ], ['only' => ['index', 'show']]);
+    Route::middleware('auth')->group(function () {
+        // Departments (read-only)
+        Route::get('/schools/{school}/departments', [DepartmentController::class, 'index'])
+            ->name('schools.departments.index');
+        Route::get('/schools/{school}/departments/{department}', [DepartmentController::class, 'show'])
+            ->name('schools.departments.show');
+
+        // Terms (read-only)
+        Route::get('/schools/{school}/terms', [TermController::class, 'index'])
+            ->name('schools.terms.index');
+        Route::get('/schools/{school}/terms/{term}', [TermController::class, 'show'])
+            ->name('schools.terms.show');
+
+        // Courses (read-only)
+        Route::get('/schools/{school}/courses', [CourseController::class, 'index'])
+            ->name('schools.courses.index');
+        Route::get('/schools/{school}/courses/{course}', [CourseController::class, 'show'])
+            ->name('schools.courses.show');
+
+        // Sections (read-only)
+        Route::get('/schools/{school}/sections', [SectionController::class, 'index'])
+            ->name('schools.sections.index');
+        Route::get('/schools/{school}/sections/{section}', [SectionController::class, 'show'])
+            ->name('schools.sections.show');
+
+        // Rooms (read-only)
+        Route::get('/schools/{school}/rooms', [RoomController::class, 'index'])
+            ->name('schools.rooms.index');
+        Route::get('/schools/{school}/rooms/{room}', [RoomController::class, 'show'])
+            ->name('schools.rooms.show');
+
+        // Schedules (read-only)
+        Route::get('/schools/{school}/schedules', [ScheduleController::class, 'index'])
+            ->name('schools.schedules.index');
+        Route::get('/schools/{school}/schedules/{schedule}', [ScheduleController::class, 'show'])
+            ->name('schools.schedules.show');
+    });
 });

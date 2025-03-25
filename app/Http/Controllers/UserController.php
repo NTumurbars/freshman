@@ -15,12 +15,36 @@ use Illuminate\Support\Str;
 class UserController extends Controller
 {
     // GET /users
-    public function index()
+    public function index(Request $request)
     {
-        $user = User::find(Auth::id());
-        $users = User::with(['school', 'role', 'professorProfile'])->where('school_id', $user->school_id)->whereNot('id', $user->id)->get();
-        return Inertia::render('Users/Index', ['users' => $users]);
+        // Start with a query to load users along with their related school and role.
+        $query = User::with(['school', 'role']);
+        
+        // Apply filters if provided.
+        if ($request->filled('school')) {
+            $query->where('school_id', $request->school);
+        }
+        if ($request->filled('role')) {
+            $query->whereHas('role', function ($q) use ($request) {
+                $q->where('name', $request->role);
+            });
+        }
+        
+        // Paginate results (and keep the query string).
+        $users = $query->paginate(10)->appends($request->all());
+    
+        // For super admin, load all schools and roles.
+        $schools = School::all();
+        $roles = Role::all();
+    
+        return Inertia::render('Users/Index', [
+            'users'   => $users,
+            'schools' => $schools,
+            'roles'   => $roles,
+            'filters' => $request->only(['school', 'role']),
+        ]);
     }
+    
 
     // GET /users/create
     public function create()

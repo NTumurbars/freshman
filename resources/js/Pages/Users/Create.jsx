@@ -8,7 +8,7 @@ export default function Create({ roles, schools }) {
         name: '',
         email: '',
         role_id: '',
-        school_id: schools.id,
+        school_id: schools?.id || '', // Safely access schools.id or default to an empty string
     });
 
     const handleChange = (field) => (e) => setData(field, e.target.value);
@@ -73,12 +73,18 @@ export default function Create({ roles, schools }) {
                     </div>
 
                     <div className="mb-4">
-                        <input
-                            type="text"
+                        <select
                             className="w-full rounded border border-gray-300 px-3 py-2"
-                            value={schools.name}
-                            disabled // Make the field disabled
-                        />
+                            value={data.school_id}
+                            onChange={handleChange('school_id')}
+                        >
+                            <option value="">Select a School</option>
+                            {schools.map((school) => (
+                                <option key={school.id} value={school.id}>
+                                    {school.name}
+                                </option>
+                            ))}
+                        </select>
                         {errors.school_id && (
                             <div className="text-sm text-red-500">
                                 {errors.school_id}
