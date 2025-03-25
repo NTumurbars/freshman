@@ -73,12 +73,29 @@ export default function Create({ roles, schools }) {
                     </div>
 
                     <div className="mb-4">
-                        <input
-                            type="text"
-                            className="w-full rounded border border-gray-300 px-3 py-2"
-                            value={schools.name}
-                            disabled // Make the field disabled
-                        />
+                        {Array.isArray(schools) ? (
+                            // If schools is an array, show a dropdown
+                            <select
+                                className="w-full rounded border border-gray-300 px-3 py-2"
+                                value={data.school_id}
+                                onChange={handleChange('school_id')}
+                            >
+                                <option value="">Select School</option>
+                                {schools.map((school) => (
+                                    <option key={school.id} value={school.id}>
+                                        {school.name}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            // If schools is not an array, show an input field
+                            <input
+                                type="text"
+                                className="w-full rounded border border-gray-300 px-3 py-2"
+                                value={schools.name} // Assuming `schools` is an object
+                                disabled // Disable the input field
+                            />
+                        )}
                         {errors.school_id && (
                             <div className="text-sm text-red-500">
                                 {errors.school_id}

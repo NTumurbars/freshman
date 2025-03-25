@@ -18,6 +18,10 @@ class UserController extends Controller
     public function index()
     {
         $user = User::find(Auth::id());
+        if($user->role_id == 1)
+        {
+            return Inertia::render('Users/Index', ['users' => User::all()]);
+        }
         $users = User::with(['school', 'role', 'professorProfile'])->where('school_id', $user->school_id)->whereNot('id', $user->id)->get();
         return Inertia::render('Users/Index', ['users' => $users]);
     }
@@ -26,12 +30,19 @@ class UserController extends Controller
     public function create()
     {
         $user = User::find(Auth::id());
+        if($user->role_id == 1)
+        {
+            return Inertia::render('Users/Create', [
+                        'roles' => Role::all(),
+                        'schools' => School::all(),
+                    ]);
+        }
         $roles = Role::where('id', '>', 1)->get();
         $schools =$user->school;
         return Inertia::render('Users/Create', [
-            'roles' => $roles,
-            'schools' => $schools,
-        ]);
+                        'roles' => $roles,
+                        'schools' => $schools,
+                    ]);
     }
 
     // POST /users
