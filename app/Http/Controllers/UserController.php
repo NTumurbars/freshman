@@ -17,32 +17,13 @@ class UserController extends Controller
     // GET /users
     public function index(Request $request)
     {
-        // Start with a query to load users along with their related school and role.
-        $query = User::with(['school', 'role']);
-        
-        // Apply filters if provided.
-        if ($request->filled('school')) {
-            $query->where('school_id', $request->school);
+        $user = User::find(Auth::id());
+        if($user->role_id == 1)
+        {
+            return Inertia::render('Users/Index', ['users' => User::all()]);
         }
-        if ($request->filled('role')) {
-            $query->whereHas('role', function ($q) use ($request) {
-                $q->where('name', $request->role);
-            });
-        }
-        
-        // Paginate results (and keep the query string).
-        $users = $query->paginate(10)->appends($request->all());
-    
-        // For super admin, load all schools and roles.
-        $schools = School::all();
-        $roles = Role::all();
-    
-        return Inertia::render('Users/Index', [
-            'users'   => $users,
-            'schools' => $schools,
-            'roles'   => $roles,
-            'filters' => $request->only(['school', 'role']),
-        ]);
+        $users = User::with(['school', 'role', 'professorProfile'])->where('school_id', $user->school_id)->whereNot('id', $user->id)->get();
+        return Inertia::render('Users/Index', ['users' => $users]);
     }
     
 
@@ -50,12 +31,19 @@ class UserController extends Controller
     public function create()
     {
         $user = User::find(Auth::id());
+        if($user->role_id == 1)
+        {
+            return Inertia::render('Users/Create', [
+                        'roles' => Role::all(),
+                        'schools' => School::all(),
+                    ]);
+        }
         $roles = Role::where('id', '>', 1)->get();
         $schools =$user->school;
         return Inertia::render('Users/Create', [
-            'roles' => $roles,
-            'schools' => $schools,
-        ]);
+                        'roles' => $roles,
+                        'schools' => $schools,
+                    ]);
     }
 
     // POST /users

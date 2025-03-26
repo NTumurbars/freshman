@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 // Controllers
 use App\Http\Controllers\{
@@ -53,6 +54,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:super_admin')->group(function () {
         Route::resource('schools', SchoolController::class);
     });
+
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Email verification 
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill();
+
+        return redirect('/profile/edit');
+    })->middleware(['auth', 'signed'])->name('verification.verify');
 
     /*
     |--------------------------------------------------------------------------
