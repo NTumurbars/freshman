@@ -1,7 +1,7 @@
 // resources/js/Pages/Users/Index.jsx
 import AppLayout from '@/Layouts/AppLayout';
 import { Inertia } from '@inertiajs/inertia';
-import { Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function Index() {
@@ -24,6 +24,18 @@ export default function Index() {
     const school = auth.user.school;
     return (
         <AppLayout userRole={userRole} school={school}>
+            <Head title="Users" />
+            <div className="mb-6 flex items-center justify-between">
+                <h1 className="text-2xl font-bold text-gray-800">
+                    All Schools
+                </h1>
+                <Link
+                    href={route('users.create')}
+                    className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                >
+                    Create User
+                </Link>
+            </div>
             <div>
                 <h1 className="mb-4 text-3xl font-bold">User Management</h1>
 

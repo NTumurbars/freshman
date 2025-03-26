@@ -10,7 +10,7 @@ export default function AdminSideBar({ school }) {
                 Dashboard
             </Link>
             <Link
-                href={'/'}
+                href={'/users'}
                 className="block rounded px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
             >
                 School Users
