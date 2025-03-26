@@ -17,6 +17,7 @@ use App\Http\Controllers\{
     ScheduleController,
     RoomFeatureController,
     ProfileController,
+    ReportController,
     UserController
 };
 
@@ -102,6 +103,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('users', UserController::class);
         // Majors can be managed globally (or nest them under departments if preferred)
         Route::resource('majors', MajorController::class)->except(['index', 'show']);
+        // Reports view
+        Route::get('reports', [ReportController::class, 'index'])->name("reports.view");
     });
 
     Route::middleware('role:super_admin,school_admin,professor')->group(function () {

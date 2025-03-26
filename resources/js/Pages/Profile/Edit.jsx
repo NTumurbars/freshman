@@ -1,6 +1,5 @@
-import React from 'react';
-import { Head, useForm, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
 export default function Edit({ user }) {
     const { data, setData, patch, errors, processing } = useForm({
@@ -13,31 +12,41 @@ export default function Edit({ user }) {
         e.preventDefault();
         patch(route('profile.update'));
     };
-
+    const { auth } = usePage().props;
+    const userRole = auth.user.role.id;
+    const school = auth.user.school;
     return (
-        <AppLayout>
+        <AppLayout userRole={userRole} school={school}>
             <Head title="Edit Profile" />
 
-            <div className="max-w-xl mx-auto bg-white shadow-md rounded p-6">
-                <h2 className="text-2xl font-bold mb-4">Edit Profile</h2>
+            <div className="mx-auto max-w-xl rounded bg-white p-6 shadow-md">
+                <h2 className="mb-4 text-2xl font-bold">Edit Profile</h2>
 
                 <form onSubmit={submit}>
                     <div className="mb-4">
-                        <label className="block font-medium text-gray-700">Name</label>
+                        <label className="block font-medium text-gray-700">
+                            Name
+                        </label>
                         <input
                             type="text"
-                            className="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                         />
-                        {errors.name && <div className="text-red-500 text-sm">{errors.name}</div>}
+                        {errors.name && (
+                            <div className="text-sm text-red-500">
+                                {errors.name}
+                            </div>
+                        )}
                     </div>
 
                     <div className="mb-4">
-                        <label className="block font-medium text-gray-700">Email</label>
+                        <label className="block font-medium text-gray-700">
+                            Email
+                        </label>
                         <input
                             type="email"
-                            className="mt-1 block w-full bg-gray-100 border-gray-300 rounded shadow-sm"
+                            className="mt-1 block w-full rounded border-gray-300 bg-gray-100 shadow-sm"
                             value={user.email}
                             disabled
                         />
@@ -49,30 +58,42 @@ export default function Edit({ user }) {
                         </label>
                         <input
                             type="password"
-                            className="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
                             value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
+                            onChange={(e) =>
+                                setData('password', e.target.value)
+                            }
                         />
-                        {errors.password && <div className="text-red-500 text-sm">{errors.password}</div>}
+                        {errors.password && (
+                            <div className="text-sm text-red-500">
+                                {errors.password}
+                            </div>
+                        )}
                     </div>
 
                     <div className="mb-4">
-                        <label className="block font-medium text-gray-700">Confirm Password</label>
+                        <label className="block font-medium text-gray-700">
+                            Confirm Password
+                        </label>
                         <input
                             type="password"
-                            className="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
                             value={data.password_confirmation}
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
+                            onChange={(e) =>
+                                setData('password_confirmation', e.target.value)
+                            }
                         />
                         {errors.password_confirmation && (
-                            <div className="text-red-500 text-sm">{errors.password_confirmation}</div>
+                            <div className="text-sm text-red-500">
+                                {errors.password_confirmation}
+                            </div>
                         )}
                     </div>
 
                     <div className="flex items-center space-x-4">
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
+                            className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
                             disabled={processing}
                         >
                             Save Changes

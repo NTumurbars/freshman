@@ -1,8 +1,7 @@
 // resources/js/Pages/Schools/Create.jsx
 
-import React, { useState } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 
 export default function Create() {
     const { data, setData, post, errors } = useForm({
@@ -24,13 +23,15 @@ export default function Create() {
         });
     };
 
-
+    const { auth } = usePage().props;
+    const userRole = auth.user.role.id;
+    const school = auth.user.school;
     return (
-        <AppLayout>
+        <AppLayout userRole={userRole} school={school}>
             <Head title="Create School" />
 
-            <div className="max-w-2xl mx-auto bg-white p-6 shadow rounded">
-                <h1 className="text-xl font-bold mb-4">Create a New School</h1>
+            <div className="mx-auto max-w-2xl rounded bg-white p-6 shadow">
+                <h1 className="mb-4 text-xl font-bold">Create a New School</h1>
 
                 <form onSubmit={submit}>
                     <div className="mb-4">
@@ -39,17 +40,16 @@ export default function Create() {
                         </label>
                         <input
                             type="text"
-                            className="mt-1 block w-full border-gray-300 rounded"
+                            className="mt-1 block w-full rounded border-gray-300"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                         />
                         {errors.name && (
-                            <div className="text-red-600 text-sm mt-1">
+                            <div className="mt-1 text-sm text-red-600">
                                 {errors.name}
                             </div>
                         )}
                     </div>
-
 
                     <div className="mb-4">
                         <label className="block font-medium text-gray-700">
@@ -57,12 +57,12 @@ export default function Create() {
                         </label>
                         <input
                             type="email"
-                            className="mt-1 block w-full border-gray-300 rounded"
+                            className="mt-1 block w-full rounded border-gray-300"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
                         />
                         {errors.email && (
-                            <div className="text-red-600 text-sm mt-1">
+                            <div className="mt-1 text-sm text-red-600">
                                 {errors.email}
                             </div>
                         )}
@@ -70,7 +70,7 @@ export default function Create() {
 
                     <button
                         type="submit"
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                        className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
                     >
                         Save
                     </button>

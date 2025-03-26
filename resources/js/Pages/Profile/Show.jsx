@@ -1,19 +1,21 @@
 // resources/js/Pages/Profile/Show.jsx
 
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 export default function Show({ user, status }) {
+    const { auth } = usePage().props;
+    const userRole = auth.user.role.id;
+    const school = auth.user.school;
     return (
-        <AppLayout>
+        <AppLayout userRole={userRole} school={school}>
             <Head title="My Profile" />
 
-            <div className="max-w-xl mx-auto bg-white shadow rounded p-6">
-                <h2 className="text-2xl font-bold mb-4">My Profile</h2>
+            <div className="mx-auto max-w-xl rounded bg-white p-6 shadow">
+                <h2 className="mb-4 text-2xl font-bold">My Profile</h2>
 
                 {status && (
-                    <div className="mb-4 p-2 bg-green-100 text-green-800 rounded">
+                    <div className="mb-4 rounded bg-green-100 p-2 text-green-800">
                         {status}
                     </div>
                 )}
@@ -24,7 +26,8 @@ export default function Show({ user, status }) {
                     </div>
 
                     <div>
-                        <span className="font-semibold">Email:</span> {user.email}
+                        <span className="font-semibold">Email:</span>{' '}
+                        {user.email}
                     </div>
 
                     <div>
@@ -36,7 +39,7 @@ export default function Show({ user, status }) {
                 <div className="mt-6">
                     <Link
                         href={route('profile.edit')}
-                        className="inline-block px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
+                        className="inline-block rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
                     >
                         Edit Profile
                     </Link>

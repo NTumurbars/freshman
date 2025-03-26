@@ -17,9 +17,11 @@ export default function Create({ roles, schools }) {
         e.preventDefault();
         post(route('users.store'));
     };
-
+    const { auth } = usePage().props;
+    const userRole = auth.user.role.id;
+    const school = auth.user.school;
     return (
-        <AppLayout>
+        <AppLayout userRole={userRole} school={school}>
             <Head title="Create User" />
 
             <div className="mx-auto max-w-xl rounded-lg bg-white p-6 shadow">

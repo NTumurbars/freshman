@@ -1,31 +1,35 @@
 // resources/js/Pages/Departments/Index.jsx
 
-import React from 'react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 export default function Index({ departments, flash }) {
+    const { auth } = usePage().props;
+    const userRole = auth.user.role.id;
+    const school = auth.user.school;
     return (
-        <AppLayout>
+        <AppLayout userRole={userRole} school={school}>
             <Head title="Departments" />
 
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">All Departments</h1>
+            <div className="mb-6 flex items-center justify-between">
+                <h1 className="text-2xl font-bold text-gray-800">
+                    All Departments
+                </h1>
                 <Link
                     href={route('departments.create')}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                    className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
                 >
                     Create Department
                 </Link>
             </div>
 
             {flash.success && (
-                <div className="bg-green-100 text-green-800 p-2 mb-4 rounded">
+                <div className="mb-4 rounded bg-green-100 p-2 text-green-800">
                     {flash.success}
                 </div>
             )}
 
-            <table className="w-full bg-white shadow rounded overflow-hidden">
+            <table className="w-full overflow-hidden rounded bg-white shadow">
                 <thead className="bg-gray-100">
                     <tr>
                         <th className="p-3 text-left">ID</th>
@@ -40,7 +44,7 @@ export default function Index({ departments, flash }) {
                             <td className="p-3">{dept.id}</td>
                             <td className="p-3">{dept.name}</td>
                             <td className="p-3">{dept.school?.name}</td>
-                            <td className="p-3 space-x-2">
+                            <td className="space-x-2 p-3">
                                 <Link
                                     href={route('departments.edit', dept.id)}
                                     className="text-blue-600 hover:underline"

@@ -1,26 +1,17 @@
-// resources/js/Pages/Schools/Index.jsx
-
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
 
-export default function Index({ schools, flash }) {
+export default function Reports({ reports, flash }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const school = auth.user.school;
     return (
         <AppLayout userRole={userRole} school={school}>
-            <Head title="School Management" />
-
+            <Head title="Reports" />
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-800">
-                    All Schools
+                    All Reports
                 </h1>
-                <Link
-                    href={route('schools.create')}
-                    className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-                >
-                    Create School
-                </Link>
             </div>
 
             {flash?.success && (
@@ -34,19 +25,19 @@ export default function Index({ schools, flash }) {
                     <tr>
                         <th className="p-3 text-left">ID</th>
                         <th className="p-3 text-left">Name</th>
-                        <th className="p-3 text-left">Personal Mail</th>
+                        <th className="p-3 text-left">Content</th>
                         <th className="p-3 text-left">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {schools.map((school) => (
+                    {reports.map((report) => (
                         <tr
-                            key={school.id}
+                            key={report.id}
                             className="border-b last:border-b-0"
                         >
-                            <td className="p-3">{school.id}</td>
-                            <td className="p-3">{school.name}</td>
-                            <td className="p-3">{school.email}</td>
+                            <td className="p-3">{report.id}</td>
+                            <td className="p-3">{report.name}</td>
+                            <td className="p-3">{report.content}</td>
                             <td className="space-x-2 p-3">
                                 <Link
                                     href={route('schools.edit', school.id)}
