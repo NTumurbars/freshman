@@ -1,5 +1,6 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
+import { Button } from '@/Components/ui/button';
 
 export default function Welcome() {
     return (
@@ -14,11 +15,10 @@ export default function Welcome() {
             </p>
 
             <div className="space-x-4">
-                <Link
-                    href={route('login')}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                    Login
+                <Link href={route('login')}>
+                    <Button size="lg">
+                        Login
+                    </Button>
                 </Link>
 
             </div>
