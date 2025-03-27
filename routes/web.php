@@ -20,6 +20,7 @@ use App\Http\Controllers\{
     UserController
 };
 
+
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -62,6 +63,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     */
     Route::middleware('role:super_admin,school_admin,major_coordinator')->group(function () {
         // Departments
+
+
         Route::resource('schools.departments', DepartmentController::class)
             ->scoped(['department' => 'id'])
             ->except(['index', 'show']);
