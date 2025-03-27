@@ -12,6 +12,7 @@ class TermController extends Controller
     // GET /terms
     public function index()
     {
+        $this->authorize('viewAny', Term::class);
         $terms = Term::with('school')->get();
         return Inertia::render('Terms/Index', ['terms' => $terms]);
     }
@@ -19,6 +20,7 @@ class TermController extends Controller
     // GET /terms/create
     public function create()
     {
+        $this->authorize('create', Term::class);
         $schools = School::all();
         return Inertia::render('Terms/Create', ['schools' => $schools]);
     }
@@ -26,6 +28,7 @@ class TermController extends Controller
     // POST /terms
     public function store(Request $request)
     {
+        $this->authorize('create', Term::class);
         $data = $request->validate([
             'school_id' => 'required|exists:schools,id',
             'name'      => 'required|string',
@@ -41,6 +44,7 @@ class TermController extends Controller
     public function edit($id)
     {
         $term = Term::findOrFail($id);
+        $this->authorize('update', $term);
         $schools = School::all();
         return Inertia::render('Terms/Edit', [
             'term' => $term,
@@ -52,6 +56,7 @@ class TermController extends Controller
     public function update(Request $request, $id)
     {
         $term = Term::findOrFail($id);
+        $this->authorize('update', $term);
         $data = $request->validate([
             'school_id' => 'required|exists:schools,id',
             'name'      => 'required|string',
@@ -67,6 +72,7 @@ class TermController extends Controller
     public function destroy($id)
     {
         $term = Term::findOrFail($id);
+        $this->authorize('delete', $term);
         $term->delete();
         return redirect()->route('terms.index')->with('success', 'Term deleted successfully');
     }

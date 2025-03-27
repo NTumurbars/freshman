@@ -12,6 +12,7 @@ class MajorController extends Controller
     // GET /majors
     public function index()
     {
+        $this->authorize('viewAny', Major::class);
         $majors = Major::with('department')->get();
         return Inertia::render('Majors/Index', ['majors' => $majors]);
     }
@@ -19,6 +20,7 @@ class MajorController extends Controller
     // GET /majors/create
     public function create()
     {
+        $this->authorize('create', Major::class);
         $departments = Department::all();
         return Inertia::render('Majors/Create', ['departments' => $departments]);
     }
@@ -26,6 +28,7 @@ class MajorController extends Controller
     // POST /majors
     public function store(Request $request)
     {
+        $this->authorize('create', Major::class);
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'code'          => 'required|string|unique:majors,code',
@@ -39,6 +42,7 @@ class MajorController extends Controller
     public function edit($id)
     {
         $major = Major::findOrFail($id);
+        $this->authorize('update', $major);
         $departments = Department::all();
         return Inertia::render('Majors/Edit', [
             'major' => $major,
@@ -50,6 +54,7 @@ class MajorController extends Controller
     public function update(Request $request, $id)
     {
         $major = Major::findOrFail($id);
+        $this->authorize('update', $major);
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'code'          => 'required|string|unique:majors,code,' . $major->id,
@@ -63,6 +68,7 @@ class MajorController extends Controller
     public function destroy($id)
     {
         $major = Major::findOrFail($id);
+        $this->authorize('delete', $major);
         $major->delete();
         return redirect()->route('majors.index')->with('success', 'Major deleted successfully');
     }

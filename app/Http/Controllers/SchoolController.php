@@ -11,6 +11,7 @@ class SchoolController extends Controller
     // GET /schools
     public function index()
     {
+        $this->authorize('viewAny', School::class);
         return Inertia::render('Schools/Index', [
             'schools' => School::all()
         ]);
@@ -19,12 +20,14 @@ class SchoolController extends Controller
     // GET /schools/create
     public function create()
     {
+        $this->authorize('create', School::class);
         return Inertia::render('Schools/Create');
     }
 
     // POST /schools
     public function store(Request $request)
     {
+        $this->authorize('create', School::class);
         $validated = $request->validate([
             'name'  => 'required|string|unique:schools,name',
             'email' => 'required|email',
@@ -40,6 +43,7 @@ class SchoolController extends Controller
     // GET /schools/{school}/edit
     public function edit(School $school)
     {
+        $this->authorize('update', $school);
         return Inertia::render('Schools/Edit', [
             'school' => $school
         ]);
@@ -48,6 +52,7 @@ class SchoolController extends Controller
     // PUT /schools/{school}
     public function update(Request $request, School $school)
     {
+        $this->authorize('update', $school);
         $validated = $request->validate([
             'name'  => 'required|string|unique:schools,name,' . $school->id,
             'email' => 'required|email',
@@ -63,6 +68,7 @@ class SchoolController extends Controller
     // DELETE /schools/{school}
     public function destroy(School $school)
     {
+        $this->authorize('delete', $school);
         $school->delete();
 
         return redirect()
