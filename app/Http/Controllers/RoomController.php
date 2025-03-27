@@ -13,6 +13,7 @@ class RoomController extends Controller
     // GET /rooms
     public function index()
     {
+        $this->authorize('viewAny', Room::class);
         $rooms = Room::with('features')->get();
         return Inertia::render('Rooms/Index', ['rooms' => $rooms]);
     }
@@ -20,6 +21,7 @@ class RoomController extends Controller
     // GET /rooms/create
     public function create()
     {
+        $this->authorize('create', Room::class);
         $schools = School::all();
         $features = RoomFeature::all();
         return Inertia::render('Rooms/Create', [
@@ -31,6 +33,7 @@ class RoomController extends Controller
     // POST /rooms
     public function store(Request $request)
     {
+        $this->authorize('create', Room::class);
         $data = $request->validate([
             'school_id'   => 'required|exists:schools,id',
             'room_number' => 'required|string|max:50',
@@ -49,6 +52,8 @@ class RoomController extends Controller
     // GET /rooms/{id}/edit
     public function edit($id)
     {
+        $room = Room::findOrFail($id);
+        $this->authorize('update', $room);
         $room = Room::with('features')->findOrFail($id);
         $schools = School::all();
         $features = RoomFeature::all();
@@ -63,6 +68,7 @@ class RoomController extends Controller
     public function update(Request $request, $id)
     {
         $room = Room::findOrFail($id);
+        $this->authorize('update', $room);
         $data = $request->validate([
             'room_number' => 'required|string|max:50',
             'building'    => 'nullable|string|max:100',
@@ -80,6 +86,7 @@ class RoomController extends Controller
     public function destroy($id)
     {
         $room = Room::findOrFail($id);
+        $this->authorize('delete', $room);
         $room->delete();
         return redirect()->route('rooms.index')->with('success', 'Room deleted successfully');
     }
