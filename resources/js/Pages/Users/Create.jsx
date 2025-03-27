@@ -8,7 +8,7 @@ export default function Create({ roles, schools }) {
         name: '',
         email: '',
         role_id: '',
-        school_id: schools?.id || '', // Safely access schools.id or default to an empty string
+        school_id: schools?.id || '',
     });
 
     const handleChange = (field) => (e) => setData(field, e.target.value);

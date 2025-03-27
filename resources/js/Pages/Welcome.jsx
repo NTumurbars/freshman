@@ -20,13 +20,7 @@ export default function Welcome() {
                 >
                     Login
                 </Link>
-                {/* Uncomment below if you allow public registration:
-                <Link
-                    href={route('register')}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-                >
-                    Register
-                </Link> */}
+
             </div>
         </div>
     );
