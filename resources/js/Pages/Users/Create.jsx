@@ -3,7 +3,6 @@ import { Head, useForm, usePage } from '@inertiajs/react';
 
 export default function Create({ roles, schools }) {
     const { flash } = usePage().props;
-
     const { data, setData, post, errors, processing } = useForm({
         name: '',
         email: '',
@@ -19,9 +18,9 @@ export default function Create({ roles, schools }) {
     };
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
-    const school = auth.user.school;
+    const school1 = auth.user.school;
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout userRole={userRole} school={school1}>
             <Head title="Create User" />
 
             <div className="mx-auto max-w-xl rounded-lg bg-white p-6 shadow">
@@ -75,25 +74,30 @@ export default function Create({ roles, schools }) {
                     </div>
 
                     <div className="mb-4">
-                        <select
-                            className="w-full rounded border border-gray-300 px-3 py-2"
-                            value={data.school_id}
-                            onChange={handleChange('school_id')}
-                        >
-                            <option value="">Select a School</option>
-                            {schools.map((school) => (
-                                <option key={school.id} value={school.id}>
-                                    {school.name}
-                                </option>
-                            ))}
-                        </select>
+                        {userRole === 1 ? (
+                            <select
+                                className="w-full rounded border border-gray-300 px-3 py-2"
+                                value={data.school_id}
+                                onChange={handleChange('school_id')}
+                            >
+                                <option value="">Select a School</option>
+                                {schools.map((school) => (
+                                    <option key={school.id} value={school.id}>
+                                        {school.name}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <div className="w-full rounded border border-gray-300 px-3 py-2">
+                                {school1.name}
+                            </div>
+                        )}
                         {errors.school_id && (
                             <div className="text-sm text-red-500">
                                 {errors.school_id}
                             </div>
                         )}
                     </div>
-
                     <button
                         type="submit"
                         className="w-full rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"

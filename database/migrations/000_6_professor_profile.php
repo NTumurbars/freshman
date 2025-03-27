@@ -16,6 +16,7 @@ return new class extends Migration
             // Every profile has a valid professor (user)
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             // Every professor is associated with a department
+            // Why dont we add major here instead of department?????
             $table->foreignId('department_id')->constrained()->onDelete('cascade');
             // Professor's office location
             $table->string('office_location')->nullable();

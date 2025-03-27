@@ -5,31 +5,24 @@ use Inertia\Inertia;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 // Controllers
-use App\Http\Controllers\{
-    SchoolController,
-    DepartmentController,
-    MajorController,
-    ProfessorProfileController,
-    TermController,
-    CourseController,
-    SectionController,
-    CourseRegistrationController,
-    RoomController,
-    ScheduleController,
-    RoomFeatureController,
-    ProfileController,
-    ReportController,
-    UserController
-};
+use App\Http\Controllers\{SchoolController, DepartmentController, MajorController, ProfessorProfileController, TermController, CourseController, SectionController, CourseRegistrationController, RoomController, ScheduleController, RoomFeatureController, ProfileController, ReportController, UserController};
+use App\Models\School;
+use App\Models\User;
 
 /*
 |--------------------------------------------------------------------------
 | Public Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/', fn () => Inertia::render('Welcome'))->name('welcome');
+Route::get(
+    '/',
+    fn() => Inertia::render('Welcome', [
+        'users' => User::all()->count(),
+        'schools' => School::all()->count(),
+    ]),
+)->name('welcome');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -37,9 +30,8 @@ require __DIR__.'/auth.php';
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-
     // Dashboard & Profile Routes
-    Route::get('/dashboard', fn () => Inertia::render('Dashboard'))->name('dashboard');
+    Route::get('/dashboard', fn() => Inertia::render('Dashboard'))->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -55,17 +47,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('schools', SchoolController::class);
     });
 
-    
     /*
     |--------------------------------------------------------------------------
-    | Email verification 
+    | Email verification
     |--------------------------------------------------------------------------
     */
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
         $request->fulfill();
 
         return redirect('/profile/edit');
-    })->middleware(['auth', 'signed'])->name('verification.verify');
+    })
+        ->middleware(['auth', 'signed'])
+        ->name('verification.verify');
 
     /*
     |--------------------------------------------------------------------------
@@ -117,7 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Majors can be managed globally (or nest them under departments if preferred)
         Route::resource('majors', MajorController::class)->except(['index', 'show']);
         // Reports view
-        Route::get('reports', [ReportController::class, 'index'])->name("reports.view");
+        Route::get('reports', [ReportController::class, 'index'])->name('reports.view');
     });
 
     Route::middleware('role:super_admin,school_admin,professor')->group(function () {
@@ -127,7 +120,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:super_admin,school_admin,student')->group(function () {
         Route::resource('course-registrations', CourseRegistrationController::class)->except(['index', 'show']);
     });
-
 
     Route::resource('room-features', RoomFeatureController::class)->only(['index', 'show']);
 
@@ -139,39 +131,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     */
     Route::middleware('auth')->group(function () {
         // Departments (read-only)
-        Route::get('/schools/{school}/departments', [DepartmentController::class, 'index'])
-            ->name('schools.departments.index');
-        Route::get('/schools/{school}/departments/{department}', [DepartmentController::class, 'show'])
-            ->name('schools.departments.show');
+        Route::get('/schools/{school}/departments', [DepartmentController::class, 'index'])->name('schools.departments.index');
+        Route::get('/schools/{school}/departments/{department}', [DepartmentController::class, 'show'])->name('schools.departments.show');
 
         // Terms (read-only)
-        Route::get('/schools/{school}/terms', [TermController::class, 'index'])
-            ->name('schools.terms.index');
-        Route::get('/schools/{school}/terms/{term}', [TermController::class, 'show'])
-            ->name('schools.terms.show');
+        Route::get('/schools/{school}/terms', [TermController::class, 'index'])->name('schools.terms.index');
+        Route::get('/schools/{school}/terms/{term}', [TermController::class, 'show'])->name('schools.terms.show');
 
         // Courses (read-only)
-        Route::get('/schools/{school}/courses', [CourseController::class, 'index'])
-            ->name('schools.courses.index');
-        Route::get('/schools/{school}/courses/{course}', [CourseController::class, 'show'])
-            ->name('schools.courses.show');
+        Route::get('/schools/{school}/courses', [CourseController::class, 'index'])->name('schools.courses.index');
+        Route::get('/schools/{school}/courses/{course}', [CourseController::class, 'show'])->name('schools.courses.show');
 
         // Sections (read-only)
-        Route::get('/schools/{school}/sections', [SectionController::class, 'index'])
-            ->name('schools.sections.index');
-        Route::get('/schools/{school}/sections/{section}', [SectionController::class, 'show'])
-            ->name('schools.sections.show');
+        Route::get('/schools/{school}/sections', [SectionController::class, 'index'])->name('schools.sections.index');
+        Route::get('/schools/{school}/sections/{section}', [SectionController::class, 'show'])->name('schools.sections.show');
 
         // Rooms (read-only)
-        Route::get('/schools/{school}/rooms', [RoomController::class, 'index'])
-            ->name('schools.rooms.index');
-        Route::get('/schools/{school}/rooms/{room}', [RoomController::class, 'show'])
-            ->name('schools.rooms.show');
+        Route::get('/schools/{school}/rooms', [RoomController::class, 'index'])->name('schools.rooms.index');
+        Route::get('/schools/{school}/rooms/{room}', [RoomController::class, 'show'])->name('schools.rooms.show');
 
         // Schedules (read-only)
-        Route::get('/schools/{school}/schedules', [ScheduleController::class, 'index'])
-            ->name('schools.schedules.index');
-        Route::get('/schools/{school}/schedules/{schedule}', [ScheduleController::class, 'show'])
-            ->name('schools.schedules.show');
+        Route::get('/schools/{school}/schedules', [ScheduleController::class, 'index'])->name('schools.schedules.index');
+        Route::get('/schools/{school}/schedules/{schedule}', [ScheduleController::class, 'show'])->name('schools.schedules.show');
     });
 });

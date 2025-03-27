@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
             // Each course belongs to a department
+            // Why do we need this department id, we have major id right?????
             $table->foreignId('department_id')->constrained()->onDelete('cascade');
             // Optional a course can be associated with a major (nullable)
             $table->foreignId('major_id')->nullable()->constrained()->onDelete('set null');

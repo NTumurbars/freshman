@@ -35,14 +35,6 @@ export default function Dashboard() {
                                 10
                             </p>
                         </div>
-                        <div className="rounded-lg bg-white p-6 shadow">
-                            <h2 className="text-xl font-semibold text-gray-700">
-                                Total Departments
-                            </h2>
-                            <p className="mt-4 text-3xl font-bold text-indigo-600">
-                                35
-                            </p>
-                        </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">

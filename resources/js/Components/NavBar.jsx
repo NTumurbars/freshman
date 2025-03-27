@@ -22,14 +22,11 @@ export default function Navbar({ children }) {
     }, []);
 
     return (
-        <header className="bg-indigo-600 shadow-md">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <header className="shadow-md">
+            <div className="mx-auto max-w-7xl px-4 text-black sm:px-6 lg:px-8">
                 <div className="flex h-16 items-center justify-between">
                     {/* Logo */}
-                    <Link
-                        href="/dashboard"
-                        className="text-2xl font-bold text-white"
-                    >
+                    <Link href="/dashboard" className="text-2xl font-bold">
                         UNIMAN
                     </Link>
                     {children}
@@ -44,7 +41,7 @@ export default function Navbar({ children }) {
                                 src="https://via.placeholder.com/150"
                                 alt="User avatar"
                             />
-                            <span className="ml-2 hidden text-white md:block">
+                            <span className="ml-2 hidden md:block">
                                 {auth.user.name}
                             </span>
                         </button>

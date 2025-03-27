@@ -1,4 +1,5 @@
 // resources/js/Pages/Users/Index.jsx
+import NavLink from '@/Components/NavLink';
 import AppLayout from '@/Layouts/AppLayout';
 import { Inertia } from '@inertiajs/inertia';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -22,19 +23,26 @@ export default function Index() {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const school = auth.user.school;
+    const navChildren = (
+        <NavLink
+            className="p-5"
+            href={route('users.create')}
+            active={route().current('users.create')}
+        >
+            Create User
+        </NavLink>
+    );
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout
+            userRole={userRole}
+            school={school}
+            navChildren={navChildren}
+        >
             <Head title="Users" />
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-800">
                     All Schools
                 </h1>
-                <Link
-                    href={route('users.create')}
-                    className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-                >
-                    Create User
-                </Link>
             </div>
             <div>
                 <h1 className="mb-4 text-3xl font-bold">User Management</h1>
