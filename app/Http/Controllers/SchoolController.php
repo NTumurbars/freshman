@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\School;
 use Illuminate\Http\Request;
-// We need a show function in here
-// GET|HEAD  show  schools/{school}
+
 class SchoolController extends Controller
 {
     // GET /schools
@@ -69,5 +68,21 @@ class SchoolController extends Controller
         return redirect()
             ->route('schools.index')
             ->with('success', 'School deleted successfully.');
+    }
+
+    // GET schools/{school}
+    public function show($id)
+    {
+        $school = School::withCount(['users', 'terms', 'rooms'])->findOrFail($id);
+        return Inertia::render('Schools/Show', [
+            'school' => [
+                'id' => $school->id,
+                'name' => $school->name,
+                'email' => $school->email,
+                'users' => $school->users_count,
+                'terms' => $school->terms_count,
+                'rooms' => $school->rooms_count,
+            ]
+        ]);
     }
 }

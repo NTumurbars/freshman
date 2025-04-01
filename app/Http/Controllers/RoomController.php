@@ -7,8 +7,7 @@ use App\Models\Room;
 use App\Models\School;
 use App\Models\RoomFeature;
 use Illuminate\Http\Request;
-// We need the show method
-// GET|HEAD show schools/{school}/rooms/{room}
+
 class RoomController extends Controller
 {
     // GET /rooms
@@ -83,5 +82,14 @@ class RoomController extends Controller
         $room = Room::findOrFail($id);
         $room->delete();
         return redirect()->route('rooms.index')->with('success', 'Room deleted successfully');
+    }
+
+    // GET schools/{school}/rooms/{room}
+    public function show($id)
+    {
+        $room = Room::with(['features', 'schedules'])->findOrFail($id);
+        return Inertia::render('Rooms/Show', [
+            'room' => $room
+        ]);
     }
 }

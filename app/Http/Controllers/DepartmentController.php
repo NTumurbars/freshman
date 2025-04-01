@@ -6,8 +6,6 @@ use Inertia\Inertia;
 use App\Models\Department;
 use App\Models\School;
 use Illuminate\Http\Request;
-// We need a show function 
-// GET|HEAD  show  schools/{school}/departments/{department} 
 class DepartmentController extends Controller
 {
     // GET /departments
@@ -67,5 +65,15 @@ class DepartmentController extends Controller
         $department = Department::findOrFail($id);
         $department->delete();
         return redirect()->route('departments.index')->with('success', 'Department deleted successfully');
+    }
+
+    // GET  schools/{school}/departments/{department} 
+    public function show($id)
+    {
+        $department = Department::with(['majors', 'professorProfiles', 'courses'])->findOrFail($id);
+
+        return Inertia::render('Departments/Show', [
+            'department' => $department,
+        ]);
     }
 }

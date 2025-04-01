@@ -7,8 +7,7 @@ use App\Models\Schedule;
 use App\Models\Section;
 use App\Models\Room;
 use Illuminate\Http\Request;
-// We need the show methods for this class 
-// GET|HEAD show schools/{school}/schedules/{schedule} 
+
 class ScheduleController extends Controller
 {
     // GET /schedules
@@ -79,5 +78,14 @@ class ScheduleController extends Controller
         $schedule = Schedule::findOrFail($id);
         $schedule->delete();
         return redirect()->route('schedules.index')->with('success', 'Schedule deleted successfully');
+    }
+
+    // GET schools/{school}/schedules/{schedule} 
+    public function show ($id)
+    {
+        $schedule = Schedule::with(['section', 'room'])->findOrFail($id);
+        return Inertia::render('Schedules/Show', [
+            'schedule' => $schedule
+        ]);
     }
 }
