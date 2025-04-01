@@ -22,8 +22,9 @@ class UserController extends Controller
         {
             return Inertia::render('Users/Index', ['users' => User::all()]);
         }
-        $users = User::with(['school', 'role', 'professorProfile'])->where('school_id', $user->school_id)->whereNot('id', $user->id)->get();
-        return Inertia::render('Users/Index', ['users' => $users]);
+        $users = User::with(['role', 'professorProfile'])->where('school_id', $user->school_id)->whereNot('id', $user->id)->get();
+        $roles = Role::where('id', '>', 1)->select('name', 'id')->get();
+        return Inertia::render('Users/Index', ['users' => $users, 'roles' => $roles]);
     }
     
 
