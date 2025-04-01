@@ -7,7 +7,8 @@ use App\Models\Course;
 use App\Models\Department;
 use App\Models\Major;
 use Illuminate\Http\Request;
-
+// We need show method in here
+// GET|HEAD show schools/{school}/courses/{course}
 class CourseController extends Controller
 {
     // GET /courses

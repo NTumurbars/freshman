@@ -6,7 +6,8 @@ use Inertia\Inertia;
 use App\Models\Term;
 use App\Models\School;
 use Illuminate\Http\Request;
-
+// we need to add show method for this class
+// GET|HEAD show schools/{school}/terms/{term}
 class TermController extends Controller
 {
     // GET /terms
