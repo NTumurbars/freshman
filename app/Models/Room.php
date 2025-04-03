@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\School;
 use App\Models\RoomFeature;
 use App\Models\Schedule;
+use App\Models\Floor;
 
 class Room extends Model
 {
@@ -14,6 +15,7 @@ class Room extends Model
         'room_number',
         'building',
         'capacity',
+        'floor_id',
     ];
 
     public function school()
@@ -29,5 +31,10 @@ class Room extends Model
     public function schedules()
     {
         return $this->hasMany(Schedule::class);
+    }
+    
+    public function floor()
+    {
+        return $this->belongsTo(Floor::class);
     }
 }

@@ -81,7 +81,7 @@ class SchoolController extends Controller
     {
         $school = School::withCount(['users', 'terms', 'rooms'])->findOrFail($id);
         return Inertia::render('Schools/Show', [
-            'school' => [
+            'school_info' => [
                 'id' => $school->id,
                 'name' => $school->name,
                 'email' => $school->email,
