@@ -11,6 +11,7 @@ class RoomFeatureController extends Controller
     // GET /room-features
     public function index()
     {
+        $this->authorize('viewAny', RoomFeature::class);
         $features = RoomFeature::all();
         return Inertia::render('RoomFeatures/Index', ['features' => $features]);
     }
@@ -18,12 +19,14 @@ class RoomFeatureController extends Controller
     // GET /room-features/create
     public function create()
     {
+        $this->authorize('create', RoomFeature::class);
         return Inertia::render('RoomFeatures/Create');
     }
 
     // POST /room-features
     public function store(Request $request)
     {
+        $this->authorize('create', RoomFeature::class);
         $data = $request->validate([
             'name'        => 'required|string|unique:room_features,name',
             'description' => 'nullable|string',
@@ -37,6 +40,7 @@ class RoomFeatureController extends Controller
     public function edit($id)
     {
         $feature = RoomFeature::findOrFail($id);
+        $this->authorize('update', $feature);
         return Inertia::render('RoomFeatures/Edit', ['feature' => $feature]);
     }
 
@@ -44,6 +48,7 @@ class RoomFeatureController extends Controller
     public function update(Request $request, $id)
     {
         $feature = RoomFeature::findOrFail($id);
+        $this->authorize('update', $feature);
         $data = $request->validate([
             'name'        => 'required|string|unique:room_features,name,' . $feature->id,
             'description' => 'nullable|string',
@@ -57,6 +62,7 @@ class RoomFeatureController extends Controller
     public function destroy($id)
     {
         $feature = RoomFeature::findOrFail($id);
+        $this->authorize('delete', $feature);
         $feature->delete();
         return redirect()->route('room-features.index')->with('success', 'Room feature deleted successfully');
     }

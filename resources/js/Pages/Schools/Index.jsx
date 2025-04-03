@@ -32,7 +32,6 @@ export default function Index({ schools, flash }) {
             <table className="w-full overflow-hidden rounded bg-white shadow">
                 <thead className="bg-gray-100">
                     <tr>
-                        <th className="p-3 text-left">ID</th>
                         <th className="p-3 text-left">Name</th>
                         <th className="p-3 text-left">Personal Mail</th>
                         <th className="p-3 text-left">Actions</th>
@@ -44,8 +43,14 @@ export default function Index({ schools, flash }) {
                             key={school.id}
                             className="border-b last:border-b-0"
                         >
-                            <td className="p-3">{school.id}</td>
-                            <td className="p-3">{school.name}</td>
+                            <td className="p-3">
+                                <Link
+                                    href={route('schools.show', school.id)}
+                                    className="text-blue-600 hover:underline"
+                                >
+                                    {school.name}
+                                </Link>
+                            </td>
                             <td className="p-3">{school.email}</td>
                             <td className="space-x-2 p-3">
                                 <Link

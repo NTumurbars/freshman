@@ -11,6 +11,7 @@ class DepartmentController extends Controller
     // GET /departments
     public function index()
     {
+        $this->authorize('viewAny', Department::class);
         $departments = Department::with(['school', 'majors', 'courses', 'professorProfiles'])->get();
         return Inertia::render('Departments/Index', ['departments' => $departments]);
     }
@@ -18,6 +19,7 @@ class DepartmentController extends Controller
     // GET /departments/create
     public function create()
     {
+        $this->authorize('create', Department::class);
         // Pass list of schools for selection
         $schools = School::all();
         return Inertia::render('Departments/Create', ['schools' => $schools]);
@@ -26,6 +28,7 @@ class DepartmentController extends Controller
     // POST /departments
     public function store(Request $request)
     {
+        $this->authorize('create', Department::class);
         $data = $request->validate([
             'school_id' => 'required|exists:schools,id',
             'name'      => 'required|string',
@@ -39,6 +42,7 @@ class DepartmentController extends Controller
     public function edit($id)
     {
         $department = Department::findOrFail($id);
+        $this->authorize('update', $department);
         $schools = School::all();
         return Inertia::render('Departments/Edit', [
             'department' => $department,
@@ -50,6 +54,7 @@ class DepartmentController extends Controller
     public function update(Request $request, $id)
     {
         $department = Department::findOrFail($id);
+        $this->authorize('update', $department);
         $data = $request->validate([
             'school_id' => 'required|exists:schools,id',
             'name'      => 'required|string',
@@ -63,6 +68,7 @@ class DepartmentController extends Controller
     public function destroy($id)
     {
         $department = Department::findOrFail($id);
+        $this->authorize('delete', $department);
         $department->delete();
         return redirect()->route('departments.index')->with('success', 'Department deleted successfully');
     }

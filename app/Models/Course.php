@@ -7,11 +7,10 @@ use App\Models\Department;
 use App\Models\School;
 use App\Models\Section;
 
-// Need to add school to this and update scholl
+// Need to add school to this and update school
 class Course extends Model
 {
      protected $fillable = [
-        'school_id',
         'department_id',
         'major_id',
         'course_code',

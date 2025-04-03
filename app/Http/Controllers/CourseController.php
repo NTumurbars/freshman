@@ -7,11 +7,18 @@ use App\Models\Course;
 use App\Models\Department;
 use App\Models\Major;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
 class CourseController extends Controller
 {
+    use AuthorizesRequests;
+
     // GET /courses
     public function index()
     {
+        // Check if the user can view courses
+        $this->authorize('viewAny', Course::class);
+
         $courses = Course::with(['department', 'major', 'sections'])->get();
         return Inertia::render('Courses/Index', ['courses' => $courses]);
     }
@@ -19,6 +26,9 @@ class CourseController extends Controller
     // GET /courses/create
     public function create()
     {
+        // Check if the user can create a course
+        $this->authorize('create', Course::class);
+
         $departments = Department::all();
         $majors = Major::all();
         return Inertia::render('Courses/Create', [
@@ -30,6 +40,9 @@ class CourseController extends Controller
     // POST /courses
     public function store(Request $request)
     {
+        // Check if the user can create a course
+        $this->authorize('create', Course::class);
+
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'major_id'      => 'nullable|exists:majors,id',
@@ -47,6 +60,10 @@ class CourseController extends Controller
     public function edit($id)
     {
         $course = Course::findOrFail($id);
+
+        // Check if the user can update this course
+        $this->authorize('update', $course);
+
         $departments = Department::all();
         $majors = Major::all();
         return Inertia::render('Courses/Edit', [
@@ -60,6 +77,10 @@ class CourseController extends Controller
     public function update(Request $request, $id)
     {
         $course = Course::findOrFail($id);
+
+        // Check if the user can update this course
+        $this->authorize('update', $course);
+
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'major_id'      => 'nullable|exists:majors,id',
@@ -77,6 +98,10 @@ class CourseController extends Controller
     public function destroy($id)
     {
         $course = Course::findOrFail($id);
+
+        // Check if the user can delete this course
+        $this->authorize('delete', $course);
+
         $course->delete();
         return redirect()->route('courses.index')->with('success', 'Course deleted successfully');
     }

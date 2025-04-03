@@ -13,6 +13,7 @@ class ScheduleController extends Controller
     // GET /schedules
     public function index()
     {
+        $this->authorize('viewAny', Schedule::class);
         $schedules = Schedule::with(['section', 'room'])->get();
         return Inertia::render('Schedules/Index', ['schedules' => $schedules]);
     }
@@ -20,6 +21,7 @@ class ScheduleController extends Controller
     // GET /schedules/create
     public function create()
     {
+        $this->authorize('create', Schedule::class);
         $sections = Section::all();
         $rooms = Room::all();
         return Inertia::render('Schedules/Create', [
@@ -31,6 +33,7 @@ class ScheduleController extends Controller
     // POST /schedules
     public function store(Request $request)
     {
+        $this->authorize('create', Schedule::class);
         $data = $request->validate([
             'section_id'  => 'required|exists:sections,id',
             'room_id'     => 'required|exists:rooms,id',
@@ -47,6 +50,7 @@ class ScheduleController extends Controller
     public function edit($id)
     {
         $schedule = Schedule::findOrFail($id);
+        $this->authorize('update', $schedule);
         $sections = Section::all();
         $rooms = Room::all();
         return Inertia::render('Schedules/Edit', [
@@ -60,6 +64,7 @@ class ScheduleController extends Controller
     public function update(Request $request, $id)
     {
         $schedule = Schedule::findOrFail($id);
+        $this->authorize('update', $schedule);
         $data = $request->validate([
             'section_id'  => 'required|exists:sections,id',
             'room_id'     => 'required|exists:rooms,id',
@@ -76,6 +81,7 @@ class ScheduleController extends Controller
     public function destroy($id)
     {
         $schedule = Schedule::findOrFail($id);
+        $this->authorize('delete', $schedule);
         $schedule->delete();
         return redirect()->route('schedules.index')->with('success', 'Schedule deleted successfully');
     }

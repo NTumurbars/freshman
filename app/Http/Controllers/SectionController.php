@@ -14,6 +14,7 @@ class SectionController extends Controller
     // GET /sections
     public function index()
     {
+        $this->authorize('viewAny', Section::class);
         $sections = Section::with(['course', 'term', 'professor', 'schedules', 'requiredFeatures'])->get();
         return Inertia::render('Sections/Index', ['sections' => $sections]);
     }
@@ -21,6 +22,7 @@ class SectionController extends Controller
     // GET /sections/create
     public function create()
     {
+        $this->authorize('create', Section::class);
         $courses = Course::all();
         $terms = Term::all();
         return Inertia::render('Sections/Create', [
@@ -32,6 +34,7 @@ class SectionController extends Controller
     // POST /sections
     public function store(Request $request)
     {
+        $this->authorize('create', Section::class);
         $data = $request->validate([
             'course_id'          => 'required|exists:courses,id',
             'term_id'            => 'required|exists:terms,id',
@@ -52,6 +55,8 @@ class SectionController extends Controller
     // GET /sections/{id}/edit
     public function edit($id)
     {
+        $section = Section::findOrFail($id);
+        $this->authorize('update', $section);
         $section = Section::with(['course', 'term', 'professor', 'schedules', 'requiredFeatures'])->findOrFail($id);
         $courses = Course::all();
         $terms = Term::all();
@@ -66,6 +71,7 @@ class SectionController extends Controller
     public function update(Request $request, $id)
     {
         $section = Section::findOrFail($id);
+        $this->authorize('update', $section);
         $data = $request->validate([
             'course_id'          => 'required|exists:courses,id',
             'term_id'            => 'required|exists:terms,id',
@@ -87,6 +93,7 @@ class SectionController extends Controller
     public function destroy($id)
     {
         $section = Section::findOrFail($id);
+        $this->authorize('delete', $section);
         $section->delete();
         return redirect()->route('sections.index')->with('success', 'Section deleted successfully');
     }

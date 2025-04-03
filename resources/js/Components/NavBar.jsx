@@ -36,11 +36,6 @@ export default function Navbar({ children }) {
                             onClick={() => setDropdownOpen(!dropdownOpen)}
                             className="flex items-center focus:outline-none"
                         >
-                            <img
-                                className="h-10 w-10 rounded-full border-2 border-white"
-                                src="https://via.placeholder.com/150"
-                                alt="User avatar"
-                            />
                             <span className="ml-2 hidden md:block">
                                 {auth.user.name}
                             </span>
@@ -65,7 +60,7 @@ export default function Navbar({ children }) {
                                     href="/logout"
                                     method="post"
                                     as="button"
-                                    className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
+                                    className="block w-full rounded-md px-4 py-2 text-left text-gray-700 hover:bg-[#c34040c3]"
                                     onClick={() => setDropdownOpen(false)}
                                 >
                                     Logout

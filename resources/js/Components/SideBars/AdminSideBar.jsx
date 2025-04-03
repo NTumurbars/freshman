@@ -1,31 +1,31 @@
 import { Link } from '@inertiajs/react';
 
-export default function AdminSideBar() {
+export default function AdminSideBar({ school }) {
     return (
         <aside className="min-h-screen border-r border-gray-200 bg-gray-50 p-4">
             <Link
-                href="/dashboard"
+                href={route('dashboard')}
                 className="block rounded px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
             >
                 Dashboard
             </Link>
             <Link
-                href={'/users'}
+                href={route('users.index')}
                 className="block rounded px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
             >
                 User Management
             </Link>
             <Link
-                href={'/'}
+                href={route('schools.edit', school.id)}
                 className="block rounded px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
             >
                 School Management
             </Link>
             <Link
-                href={'/'}
+                href="/" //{route('buildings.index', school)}
                 className="block rounded px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
             >
-                Terms
+                Buildings
             </Link>
             <Link
                 href={'/'}
