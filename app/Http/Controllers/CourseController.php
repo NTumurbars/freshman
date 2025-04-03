@@ -105,4 +105,12 @@ class CourseController extends Controller
         $course->delete();
         return redirect()->route('courses.index')->with('success', 'Course deleted successfully');
     }
+
+    // GET /schools/{school}/courses/{course}
+    public function show($id)
+    {
+        $course = Course::with(['departments', 'majors'])->findOrFail($id);
+        return Inertia::render('Courses/Show', ['course' => $course]);
+    }
+
 }

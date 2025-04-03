@@ -6,8 +6,6 @@ use Inertia\Inertia;
 use App\Models\RoomFeature;
 use Illuminate\Http\Request;
 
-// We need show function
-// GET|HEAD show room-features/{room_feature}
 class RoomFeatureController extends Controller
 {
     // GET /room-features
@@ -67,5 +65,12 @@ class RoomFeatureController extends Controller
         $this->authorize('delete', $feature);
         $feature->delete();
         return redirect()->route('room-features.index')->with('success', 'Room feature deleted successfully');
+    }
+
+    // GET room-features/{room_feature}
+    public function show($id)
+    {
+        $features = RoomFeature::findorFail($id);
+        return Inertia::render('RoomFeatures/Show', ['features' => $features]);
     }
 }

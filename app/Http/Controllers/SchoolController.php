@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\School;
 use Illuminate\Http\Request;
-// We need a show function in here
-// GET|HEAD  show  schools/{school}
+use Illuminate\Support\Facades\Auth;
+
 class SchoolController extends Controller
 {
     // GET /schools
@@ -14,7 +14,7 @@ class SchoolController extends Controller
     {
         $this->authorize('viewAny', School::class);
         return Inertia::render('Schools/Index', [
-            'schools' => School::all()
+            'schools' => School::all(),
         ]);
     }
 
@@ -30,15 +30,13 @@ class SchoolController extends Controller
     {
         $this->authorize('create', School::class);
         $validated = $request->validate([
-            'name'  => 'required|string|unique:schools,name',
+            'name' => 'required|string|unique:schools,name',
             'email' => 'required|email',
         ]);
 
         School::create($validated);
 
-        return redirect()
-            ->route('schools.index')
-            ->with('success', 'School created successfully.');
+        return redirect()->route('schools.index')->with('success', 'School created successfully.');
     }
 
     // GET /schools/{school}/edit
@@ -46,7 +44,7 @@ class SchoolController extends Controller
     {
         $this->authorize('update', $school);
         return Inertia::render('Schools/Edit', [
-            'school' => $school
+            'school' => $school,
         ]);
     }
 
@@ -55,15 +53,18 @@ class SchoolController extends Controller
     {
         $this->authorize('update', $school);
         $validated = $request->validate([
-            'name'  => 'required|string|unique:schools,name,' . $school->id,
+            'name' => 'required|string|unique:schools,name,' . $school->id,
             'email' => 'required|email',
         ]);
-
         $school->update($validated);
-
-        return redirect()
-            ->route('schools.index')
-            ->with('success', 'School updated successfully.');
+        $userRole = Auth::user()->role_id;
+        if ($userRole == 1) {
+            return redirect()->route('schools.index')->with('success', 'School updated successfully.');
+        } else {
+            return redirect()
+                ->route('dashboard')
+                ->with('success', 'School updated successfully.');
+        }
     }
 
     // DELETE /schools/{school}
@@ -72,8 +73,22 @@ class SchoolController extends Controller
         $this->authorize('delete', $school);
         $school->delete();
 
-        return redirect()
-            ->route('schools.index')
-            ->with('success', 'School deleted successfully.');
+        return redirect()->route('schools.index')->with('success', 'School deleted successfully.');
+    }
+
+    // GET schools/{school}
+    public function show($id)
+    {
+        $school = School::withCount(['users', 'terms', 'rooms'])->findOrFail($id);
+        return Inertia::render('Schools/Show', [
+            'school_info' => [
+                'id' => $school->id,
+                'name' => $school->name,
+                'email' => $school->email,
+                'users' => $school->users_count,
+                'terms' => $school->terms_count,
+                'rooms' => $school->rooms_count,
+            ],
+        ]);
     }
 }
