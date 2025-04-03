@@ -101,8 +101,15 @@ export default function Index() {
                                             key={user.id}
                                             className="hover:bg-gray-50"
                                         >
-                                            <td className="border px-4 py-2">
-                                                {user.name}
+                                            <td className="hover:underlin border px-4 py-2 text-blue-600">
+                                                <Link
+                                                    href={route(
+                                                        'users.show',
+                                                        user.id,
+                                                    )}
+                                                >
+                                                    {user.name}
+                                                </Link>
                                             </td>
                                             <td className="border px-4 py-2">
                                                 {user.email}
