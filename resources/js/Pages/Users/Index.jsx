@@ -35,11 +35,6 @@ export default function Index() {
             }
         >
             <Head title="Users" />
-            <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-800">
-                    All Schools
-                </h1>
-            </div>
             <div>
                 <h1 className="mb-4 text-3xl font-bold">User Management</h1>
 

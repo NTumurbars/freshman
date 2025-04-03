@@ -57,8 +57,9 @@ class School extends Model
         return $this->hasMany(Term::class);
     }
 
-    public function rooms()
+    public function buildings()
     {
-        return $this->hasMany(Room::class);
+        return $this->hasMany(Building::class);
     }
+
 }
