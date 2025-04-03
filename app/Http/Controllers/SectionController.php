@@ -7,7 +7,8 @@ use App\Models\Section;
 use App\Models\Course;
 use App\Models\Term;
 use Illuminate\Http\Request;
-
+// We need to add the show method for this class
+// GET|HEAD show schools/{school}/sections/{section} 
 class SectionController extends Controller
 {
     // GET /sections

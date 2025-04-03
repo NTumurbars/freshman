@@ -11,7 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-
+// We need to add the show method to this class 
+// GET|HEAD show users/{user}
 class UserController extends Controller
 {
     // GET /users

@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\School;
 use Illuminate\Http\Request;
-
+// We need a show function in here
+// GET|HEAD  show  schools/{school}
 class SchoolController extends Controller
 {
     // GET /schools
