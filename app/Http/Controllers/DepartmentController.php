@@ -6,7 +6,8 @@ use Inertia\Inertia;
 use App\Models\Department;
 use App\Models\School;
 use Illuminate\Http\Request;
-
+// We need a show function 
+// GET|HEAD  show  schools/{school}/departments/{department} 
 class DepartmentController extends Controller
 {
     // GET /departments

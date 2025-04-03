@@ -21,6 +21,7 @@ use App\Http\Controllers\{
     RoomFeatureController,
     ProfileController,
     ReportController,
+    StatsController,
     UserController
 };
 
@@ -33,6 +34,9 @@ Route::get('/', fn() => Inertia::render('Welcome', [
     'users' => User::all()->count(),
     'schools' => School::all()->count(),
 ]))->name('welcome');
+
+Route::get('/dashboard/all/stats', [StatsController::class, 'superUser'])->name('superuser.stats');
+Route::get('/dashboard/admin/stats', [StatsController::class, 'schoolAdmin'])->name('school.admin.stats');
 
 require __DIR__ . '/auth.php';
 

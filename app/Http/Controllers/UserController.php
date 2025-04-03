@@ -11,7 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-
+// We need to add the show method to this class 
+// GET|HEAD show users/{user}
 class UserController extends Controller
 {
     // GET /users
@@ -22,8 +23,9 @@ class UserController extends Controller
         {
             return Inertia::render('Users/Index', ['users' => User::all()]);
         }
-        $users = User::with(['school', 'role', 'professorProfile'])->where('school_id', $user->school_id)->whereNot('id', $user->id)->get();
-        return Inertia::render('Users/Index', ['users' => $users]);
+        $users = User::with(['role', 'professorProfile'])->where('school_id', $user->school_id)->whereNot('id', $user->id)->get();
+        $roles = Role::where('id', '>', 1)->select('name', 'id')->get();
+        return Inertia::render('Users/Index', ['users' => $users, 'roles' => $roles]);
     }
     
 
@@ -31,20 +33,17 @@ class UserController extends Controller
     public function create()
     {
         $user = User::find(Auth::id());
-        if($user->role_id == 1)
-        {
-            return Inertia::render('Users/Create', [
-                        'roles' => Role::all(),
-                        'schools' => School::all(),
-                    ]);
-        }
         $roles = Role::where('id', '>', 1)->get();
-        $schools =$user->school;
+        $schools = $user->school;
+        $departments = $schools->departments;
+        
         return Inertia::render('Users/Create', [
-                        'roles' => $roles,
-                        'schools' => $schools,
-                    ]);
+            'roles' => $roles,
+            'schools' => $schools,
+            'departments' => $departments,
+        ]);
     }
+
 
     // POST /users
     public function store(Request $request)
@@ -54,6 +53,7 @@ class UserController extends Controller
             'email'     => 'required|email|unique:users,email',
             'role_id'   => 'required|exists:roles,id',
             'school_id' => 'required|exists:schools,id',
+            'department_id' => 'nullable|exists:departments,id',
         ]);
 
         $tempPassword = Str::random(12);
@@ -65,7 +65,13 @@ class UserController extends Controller
             'school_id' => $data['school_id'],
         ]);
 
-        // Send email verification notification so the user can set their password.
+        if ($request->department_id) 
+        {
+            $user->professorProfile()->create([
+            'department_id' => $data['department_id'],
+            ]);
+        }
+
         $user->sendEmailVerificationNotification();
         dispatch(new UserWelcome($user, $tempPassword));
 
@@ -110,5 +116,15 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User deleted successfully');
+    }
+
+    public function show(User $user)
+    {
+        $user->role;
+        $professors = $user->professorProfile;
+        $department = $professors->department;
+        return Inertia::render('Users/Show', [
+            'user' => $user
+        ]);
     }
 }

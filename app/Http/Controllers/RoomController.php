@@ -7,7 +7,8 @@ use App\Models\Room;
 use App\Models\School;
 use App\Models\RoomFeature;
 use Illuminate\Http\Request;
-
+// We need the show method
+// GET|HEAD show schools/{school}/rooms/{room}
 class RoomController extends Controller
 {
     // GET /rooms

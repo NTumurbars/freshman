@@ -6,6 +6,8 @@ use Inertia\Inertia;
 use App\Models\RoomFeature;
 use Illuminate\Http\Request;
 
+// We need show function
+// GET|HEAD show room-features/{room_feature}
 class RoomFeatureController extends Controller
 {
     // GET /room-features
