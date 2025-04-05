@@ -7,6 +7,8 @@ export default function Create({ departments, majors }) {
     const { data, setData, post, errors } = useForm({
         name: '',
         email: '',
+        department_id: '',
+        major_id: '',
     });
 
     const submit = (e) => {
