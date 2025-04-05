@@ -5,10 +5,12 @@ import { Head, useForm, usePage } from '@inertiajs/react';
 
 export default function Create({ departments, majors }) {
     const { data, setData, post, errors } = useForm({
-        name: '',
-        email: '',
+        course_code: '',
+        title: '',
+        description: '',
         department_id: '',
         major_id: '',
+        capacity: 0,
     });
 
     const submit = (e) => {
@@ -39,34 +41,114 @@ export default function Create({ departments, majors }) {
                 <form onSubmit={submit}>
                     <div className="mb-4">
                         <label className="block font-medium text-gray-700">
-                            Name
+                            Department
                         </label>
-                        <input
-                            type="text"
+                        <select
                             className="mt-1 block w-full rounded border-gray-300"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                        />
-                        {errors.name && (
+                            value={data.department_id}
+                            onChange={(e) => setData('department_id', e.target.value)}
+                        >
+                            <option value="">Select Department</option>
+                            {departments.map((department) => (
+                                <option key={department.id} value={department.id}>
+                                    {department.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.department_id && (
                             <div className="mt-1 text-sm text-red-600">
-                                {errors.name}
+                                {errors.department_id}
                             </div>
                         )}
                     </div>
 
                     <div className="mb-4">
                         <label className="block font-medium text-gray-700">
-                            Admin Email
+                            Major
+                        </label>
+                        <select
+                            className="mt-1 block w-full rounded border-gray-300"
+                            value={data.major_id}
+                            onChange={(e) => setData('major_id', e.target.value)}
+                        >
+                            <option value="">Select Major</option>
+                            {majors.map((major) => (
+                                <option key={major.id} value={major.id}>
+                                    {major.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.major_id && (
+                            <div className="mt-1 text-sm text-red-600">
+                                {errors.major_id}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block font-medium text-gray-700">
+                            Course Code
                         </label>
                         <input
-                            type="email"
+                            type="text"
                             className="mt-1 block w-full rounded border-gray-300"
-                            value={data.email}
-                            onChange={(e) => setData('email', e.target.value)}
+                            value={data.course_code}
+                            onChange={(e) => setData('course_code', e.target.value)}
                         />
-                        {errors.email && (
+                        {errors.course_code && (
                             <div className="mt-1 text-sm text-red-600">
-                                {errors.email}
+                                {errors.course_code}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block font-medium text-gray-700">
+                            Title
+                        </label>
+                        <input
+                            type="text"
+                            className="mt-1 block w-full rounded border-gray-300"
+                            value={data.title}
+                            onChange={(e) => setData('title', e.target.value)}
+                        />
+                        {errors.title && (
+                            <div className="mt-1 text-sm text-red-600">
+                                {errors.title}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block font-medium text-gray-700">
+                            Description
+                        </label>
+                        <textarea
+                            className="mt-1 block w-full rounded border-gray-300"
+                            value={data.description}
+                            onChange={(e) => setData('description', e.target.value)}
+                        />
+                        {errors.description && (
+                            <div className="mt-1 text-sm text-red-600">
+                                {errors.description}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block font-medium text-gray-700">
+                            Capacity
+                        </label>
+                        <input
+                            type="number"
+                            min="0"
+                            className="mt-1 block w-full rounded border-gray-300"
+                            value={data.capacity}
+                            onChange={(e) => setData('capacity', parseInt(e.target.value) || 0)}
+                        />
+                        {errors.capacity && (
+                            <div className="mt-1 text-sm text-red-600">
+                                {errors.capacity}
                             </div>
                         )}
                     </div>
