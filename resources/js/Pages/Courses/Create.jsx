@@ -3,7 +3,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
 
-export default function Create() {
+export default function Create({ departments, majors }) {
     const { data, setData, post, errors } = useForm({
         name: '',
         email: '',
@@ -13,7 +13,7 @@ export default function Create() {
         e.preventDefault();
         console.log('Submitting data:', data);
 
-        post(route('schools.store'), {
+        post(route('courses.store'), {
             onSuccess: () => {
                 console.log('Success!');
             },
@@ -26,7 +26,7 @@ export default function Create() {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const school = auth.user.school;
-    
+
     return (
         <AppLayout userRole={userRole} school={school}>
             <Head title="Create School" />
