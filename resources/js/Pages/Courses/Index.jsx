@@ -1,4 +1,4 @@
-// resources/js/Pages/Departments/Index.jsx
+// resources/js/Pages/Courses/Index.jsx
 
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
