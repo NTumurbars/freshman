@@ -57,7 +57,7 @@ class CourseController extends Controller
     }
 
     // GET /courses/{id}/edit
-    public function edit($id)
+    public function edit($school, $id)
     {
         $course = Course::findOrFail($id);
 
@@ -74,7 +74,7 @@ class CourseController extends Controller
     }
 
     // PUT /courses/{id}
-    public function update(Request $request, $id)
+    public function update(Request $request, $school, $id)
     {
         $course = Course::findOrFail($id);
 
@@ -91,7 +91,7 @@ class CourseController extends Controller
         ]);
 
         $course->update($data);
-        return redirect()->route('courses.index')->with('success', 'Course updated successfully');
+        return redirect()->route('courses.index', ['school' => $school])->with('success', 'Course updated successfully');
     }
 
     // DELETE /courses/{id}
