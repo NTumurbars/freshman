@@ -1,21 +1,28 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage, router } from '@inertiajs/react';
 
 export default function Edit({ department }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const school = auth.user.school;
 
-    const { data, setData, put, errors } = useForm({
+    const { data, setData, errors } = useForm({
         name: department.name,
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        put(route('departments.update', {
+        router.put(route('departments.update', {
             school: school.id,
             department: department.id
-        }));
+        }), data, {
+            onSuccess: () => {
+                console.log('Success: Department updated successfully');
+            },
+            onError: (errors) => {
+                console.log('Error:', errors);
+            }
+        });
     };
 
     return (

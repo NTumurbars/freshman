@@ -52,17 +52,17 @@ class DepartmentController extends Controller
     }
 
     // PUT /departments/{id}
-    public function update(Request $request, $id)
+    public function update(Request $request, $school, $id)
     {
         $department = Department::findOrFail($id);
         $this->authorize('update', $department);
         $data = $request->validate([
-            'school_id' => 'required|exists:schools,id',
+            // 'school_id' => 'required|exists:schools,id',
             'name'      => 'required|string',
         ]);
 
         $department->update($data);
-        return redirect()->route('departments.index')->with('success', 'Department updated successfully');
+        return redirect()->route('departments.index', ['school' => $school])->with('success', 'Department updated successfully');
     }
 
     // DELETE /departments/{id}
