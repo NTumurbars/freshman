@@ -66,11 +66,11 @@ class DepartmentController extends Controller
     }
 
     // DELETE /departments/{id}
-    public function destroy($id)
+    public function destroy($school, $id)
     {
         $department = Department::findOrFail($id);
         $this->authorize('delete', $department);
         $department->delete();
-        return redirect()->route('departments.index')->with('success', 'Department deleted successfully');
+        return redirect()->route('departments.index', ['school' => $school])->with('success', 'Department deleted successfully');
     }
 }
