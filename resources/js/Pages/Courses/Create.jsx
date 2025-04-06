@@ -17,7 +17,7 @@ export default function Create({ departments, majors }) {
         e.preventDefault();
         console.log('Submitting data:', data);
 
-        post(route('courses.store'), {
+        post(route('courses.store', { school: school.id }), {
             onSuccess: () => {
                 console.log('Success!');
             },
