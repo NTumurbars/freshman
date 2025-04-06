@@ -11,11 +11,11 @@ use Illuminate\Http\Request;
 class DepartmentController extends Controller
 {
     // GET /departments
-    public function index()
+    public function index($school)
     {
         $this->authorize('viewAny', Department::class);
-        $departments = Department::with(['school', 'majors', 'courses', 'professorProfiles'])->get();
-        return Inertia::render('Departments/Index', ['departments' => $departments]);
+        $departments = Department::where('school_id', $school)->with(['school', 'majors', 'courses', 'professorProfiles'])->get();
+        return Inertia::render('Departments/Index', ['departments' => $departments, 'school_id' => $school]);
     }
 
     // GET /departments/create

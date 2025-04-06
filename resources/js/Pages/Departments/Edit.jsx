@@ -1,60 +1,71 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Inertia } from '@inertiajs/inertia';
-import { usePage } from '@inertiajs/inertia-react';
-import { useState } from 'react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 
-const DepartmentEdit = ({ department, schools }) => {
+export default function Edit({ department }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const school = auth.user.school;
-    const [values, setValues] = useState({
-        school_id: department.school_id,
+
+    const { data, setData, put, errors } = useForm({
         name: department.name,
     });
 
-    const handleChange = (e) => {
-        setValues({ ...values, [e.target.name]: e.target.value });
-    };
-
     const handleSubmit = (e) => {
         e.preventDefault();
-        Inertia.put(route('departments.update', department.id), values);
+        put(route('departments.update', {
+            school: school.id,
+            department: department.id
+        }));
     };
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <div>
-                <h1>Edit Department</h1>
-                <form onSubmit={handleSubmit}>
-                    <div>
-                        <label>School</label>
-                        <select
-                            name="school_id"
-                            value={values.school_id}
-                            onChange={handleChange}
-                        >
-                            <option value="">Select a School</option>
-                            {schools.map((school) => (
-                                <option key={school.id} value={school.id}>
-                                    {school.name}
-                                </option>
-                            ))}
-                        </select>
+            <Head title="Edit Department" />
+
+            <div className="mx-auto max-w-2xl py-6 sm:px-6 lg:px-8">
+                <div className="bg-white shadow sm:rounded-lg">
+                    <div className="px-4 py-5 sm:p-6">
+                        <h1 className="text-xl font-bold text-gray-900 mb-4">
+                            Edit Department
+                        </h1>
+
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-4">
+                                <label className="block font-medium text-gray-700 mb-2">
+                                    Department Name
+                                </label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200"
+                                    value={data.name}
+                                    onChange={e => setData('name', e.target.value)}
+                                />
+                                {errors.name && (
+                                    <div className="mt-1 text-sm text-red-600">
+                                        {errors.name}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex justify-between">
+                                <button
+                                    type="submit"
+                                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                                >
+                                    Update Department
+                                </button>
+
+                                <a
+                                    href={route('departments.index', school.id)}
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded"
+                                >
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
                     </div>
-                    <div>
-                        <label>Department Name</label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={values.name}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <button type="submit">Update Department</button>
-                </form>
+                </div>
             </div>
         </AppLayout>
     );
-};
-
-export default DepartmentEdit;
+}

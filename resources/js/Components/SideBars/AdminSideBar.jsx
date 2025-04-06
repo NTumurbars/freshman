@@ -28,6 +28,12 @@ export default function AdminSideBar({ school }) {
                 Buildings
             </Link>
             <Link
+                href={route('departments.index', school.id)}
+                className="block rounded px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
+            >
+                Departments
+            </Link>
+            <Link
                 href={route('courses.index', school.id)}
                 className="block rounded px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
             >
