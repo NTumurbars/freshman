@@ -31,9 +31,9 @@ export default function Index({ courses, flash }) {
                 <table className="w-full overflow-hidden rounded bg-white shadow">
                     <thead className="bg-gray-100">
                         <tr>
+                            <th className="p-3 text-left">Department</th>
                             <th className="p-3 text-left">Course Code</th>
                             <th className="p-3 text-left">Title</th>
-                            <th className="p-3 text-left">Department</th>
                             <th className="p-3 text-left">Major</th>
                             <th className="p-3 text-left">Capacity</th>
                             <th className="p-3 text-left">Sections</th>
