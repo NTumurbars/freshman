@@ -95,7 +95,7 @@ class CourseController extends Controller
     }
 
     // DELETE /courses/{id}
-    public function destroy($id)
+    public function destroy($school, $id)
     {
         $course = Course::findOrFail($id);
 
@@ -103,6 +103,6 @@ class CourseController extends Controller
         $this->authorize('delete', $course);
 
         $course->delete();
-        return redirect()->route('courses.index')->with('success', 'Course deleted successfully');
+        return redirect()->route('courses.index', ['school' => $school])->with('success', 'Course deleted successfully');
     }
 }
