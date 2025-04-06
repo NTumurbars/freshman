@@ -19,25 +19,24 @@ class DepartmentController extends Controller
     }
 
     // GET /departments/create
-    public function create()
+    public function create($school)
     {
         $this->authorize('create', Department::class);
         // Pass list of schools for selection
-        $schools = School::all();
-        return Inertia::render('Departments/Create', ['schools' => $schools]);
+        // $schools = School::all();
+        return Inertia::render('Departments/Create', ['school_id' => $school]);
     }
 
     // POST /departments
-    public function store(Request $request)
+    public function store(Request $request, $school)
     {
         $this->authorize('create', Department::class);
         $data = $request->validate([
-            'school_id' => 'required|exists:schools,id',
             'name'      => 'required|string',
         ]);
 
-        Department::create($data);
-        return redirect()->route('departments.index')->with('success', 'Department created successfully');
+        Department::create(['name' => $data['name'], 'school_id' => $school]);
+        return redirect()->route('departments.index', ['school' => $school])->with('success', 'Department created successfully');
     }
 
     // GET /departments/{id}/edit
