@@ -48,14 +48,13 @@ class DepartmentController extends Controller
     }
 
     // GET /departments/{id}/edit
-    public function edit($id)
+    public function edit($school, $id)
     {
         $department = Department::findOrFail($id);
         $this->authorize('update', $department);
-        $schools = School::all();
         return Inertia::render('Departments/Edit', [
             'department' => $department,
-            'schools'    => $schools,
+            'school_id'  => $school,
         ]);
     }
 
