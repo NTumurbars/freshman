@@ -74,7 +74,7 @@ export default function Create({ departments, majors }) {
                             <option value="">Select Major</option>
                             {majors.map((major) => (
                                 <option key={major.id} value={major.id}>
-                                    {major.name}
+                                    {major.code}
                                 </option>
                             ))}
                         </select>
