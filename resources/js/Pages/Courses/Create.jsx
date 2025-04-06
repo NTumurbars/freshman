@@ -46,7 +46,7 @@ export default function Create({ departments, majors }) {
                         <select
                             className="mt-1 block w-full rounded border-gray-300"
                             value={data.department_id}
-                            onChange={(e) => setData('department_id', e.target.value)}
+                            onChange={(e) => setData('department_id', parseInt(e.target.value))}
                         >
                             <option value="">Select Department</option>
                             {departments.map((department) => (
@@ -69,7 +69,7 @@ export default function Create({ departments, majors }) {
                         <select
                             className="mt-1 block w-full rounded border-gray-300"
                             value={data.major_id}
-                            onChange={(e) => setData('major_id', e.target.value)}
+                            onChange={(e) => setData('major_id', parseInt(e.target.value))}
                         >
                             <option value="">Select Major</option>
                             {majors.map((major) => (
