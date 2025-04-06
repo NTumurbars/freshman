@@ -18,6 +18,14 @@ class DepartmentController extends Controller
         return Inertia::render('Departments/Index', ['departments' => $departments, 'school_id' => $school]);
     }
 
+    // GET /departments/{id}
+    public function show($school, $id)
+    {
+        $department = Department::with(['majors', 'courses'])->findOrFail($id);
+        $this->authorize('view', $department);
+        return Inertia::render('Departments/Show', ['department' => $department]);
+    }
+
     // GET /departments/create
     public function create($school)
     {
