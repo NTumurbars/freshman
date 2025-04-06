@@ -53,7 +53,7 @@ class CourseController extends Controller
         ]);
 
         Course::create($data);
-        return redirect()->route('courses.index')->with('success', 'Course created successfully');
+        return redirect()->route('courses.index', ['school' => $request->route('school')])->with('success', 'Course created successfully');
     }
 
     // GET /courses/{id}/edit
