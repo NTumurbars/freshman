@@ -43,7 +43,7 @@ export default function Index({ courses, flash }) {
                     <tbody>
                         {courses.map((course) => (
                             <tr key={course.id} className="border-b last:border-b-0">
-                                <td className="p-3">{course.major?.code || '-'}</td>
+                                <td className="p-3">{course.department?.name}</td>
                                 <td className="p-3">{course.course_code}</td>
                                 <td className="p-3">
                                     <div className="font-medium">{course.title}</div>
@@ -53,7 +53,7 @@ export default function Index({ courses, flash }) {
                                         </div>
                                     )}
                                 </td>
-                                <td className="p-3">{course.department?.name}</td>
+                                <td className="p-3">{course.major?.code || '-'}</td>
                                 <td className="p-3">{course.capacity}</td>
                                 <td className="p-3">{course.sections?.length || 0}</td>
                                 <td className="space-x-2 p-3">

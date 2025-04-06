@@ -175,15 +175,7 @@ export default function Show({ department }) {
                                         {department.courses.map((course) => (
                                             <tr key={course.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <Link
-                                                        href={route('courses.show', {
-                                                            school: school.id,
-                                                            course: course.id
-                                                        })}
-                                                        className="text-blue-600 hover:text-blue-900 hover:underline"
-                                                    >
-                                                        {course.course_code}
-                                                    </Link>
+                                                    {course.course_code}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     {course.title}
