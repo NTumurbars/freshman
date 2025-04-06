@@ -11,7 +11,7 @@ class BuildingController extends Controller
 {
     public function index(School $school)
     {
-        $buildings = $school->buildings;
+        $buildings = $school->buildings()->withCount('floors')->get();
         return Inertia::render('Buildings/Index', ['buildings' => $buildings]);
     }
 
@@ -46,6 +46,6 @@ class BuildingController extends Controller
     public function destroy(School $school, Building $building)
     {
         $building->delete();
-        return redirect(route('buildings.index', ['school' => $school->id]))->with('success', 'School deleted successfully.');
+        return redirect(route('buildings.index', ['school' => $school->id]))->with('success', 'Building deleted successfully.');
     }
 }
