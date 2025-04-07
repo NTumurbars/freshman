@@ -12,7 +12,8 @@ import {
     Clock,
     GraduationCap,
     ChevronRight,
-    AlertCircle
+    AlertCircle,
+    LayoutList
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -92,21 +93,24 @@ export default function Dashboard() {
     const QuickAction = ({ title, description, icon, href, color = "blue" }) => {
         const Icon = icon;
         const colors = {
-            blue: "bg-blue-50 text-blue-700 hover:bg-blue-100",
-            green: "bg-green-50 text-green-700 hover:bg-green-100",
-            purple: "bg-purple-50 text-purple-700 hover:bg-purple-100",
-            orange: "bg-orange-50 text-orange-700 hover:bg-orange-100",
+            blue: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300",
+            green: "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300",
+            purple: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:border-purple-300",
+            orange: "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 hover:border-orange-300",
+            indigo: "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300",
         };
 
         return (
             <Link
                 href={href}
-                className={`block rounded-lg p-4 transition-colors ${colors[color]}`}
+                className={`block rounded-lg p-5 transition-all border shadow-sm hover:shadow ${colors[color]}`}
             >
                 <div className="flex items-center">
-                    <Icon className="h-6 w-6 mr-3" />
+                    <div className={`rounded-full p-3 mr-4 bg-white bg-opacity-60`}>
+                        <Icon className="h-6 w-6" />
+                    </div>
                     <div>
-                        <p className="font-medium">{title}</p>
+                        <p className="font-semibold text-lg">{title}</p>
                         <p className="mt-1 text-sm opacity-90">{description}</p>
                     </div>
                 </div>
@@ -172,7 +176,7 @@ export default function Dashboard() {
                         <DashboardCard
                             title="Departments"
                             value={stats.departments}
-                            icon={School}
+                            icon={LayoutList}
                             linkTo={schoolRoute('departments.index')}
                             color="purple"
                             subtitle="Academic departments"
@@ -232,6 +236,15 @@ export default function Dashboard() {
                                 href={schoolRoute('courses.create')}
                                 color="blue"
                             />
+
+                            <QuickAction
+                                title="Create Section"
+                                description="Add new class section"
+                                icon={GraduationCap}
+                                href={schoolRoute('sections.create')}
+                                color="purple"
+                            />
+                            
                             <QuickAction
                                 title="Schedule Class"
                                 description="Add new class schedule"
@@ -239,13 +252,16 @@ export default function Dashboard() {
                                 href={schoolRoute('schedules.create')}
                                 color="green"
                             />
+
+       
                             <QuickAction
                                 title="Add Department"
                                 description="Create new department"
-                                icon={GraduationCap}
+                                icon={School}
                                 href={schoolRoute('departments.create')}
-                                color="purple"
+                                color="indigo"
                             />
+   
                             <QuickAction
                                 title="Add Building"
                                 description="Register new building"

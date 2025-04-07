@@ -1,7 +1,8 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
-import { Plus, Edit, Trash2, Search, Eye, Calendar, User, BookOpen } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Plus, Edit, Trash2, Search, Eye, Calendar, User, BookOpen, Grid, Clock, CalendarPlus } from 'lucide-react';
+import { Badge } from '@tremor/react';
 
 export default function Index({ sections, flash, school }) {
     const { auth } = usePage().props;
@@ -9,6 +10,17 @@ export default function Index({ sections, flash, school }) {
     const userSchool = auth.user.school;
     const [searchTerm, setSearchTerm] = useState('');
     const [termFilter, setTermFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    
+    // Debug sections data 
+    useEffect(() => {
+        console.log('Sections data:', sections);
+        if (sections && sections.length > 0) {
+            console.log('First section:', sections[0]);
+            console.log('Schedules:', sections[0].schedules);
+            console.log('Professor:', sections[0].professor);
+        }
+    }, [sections]);
 
     // Get unique terms for filter
     const terms = useMemo(() => {
@@ -24,6 +36,19 @@ export default function Index({ sections, flash, school }) {
         });
     }, [sections]);
 
+    // Get section status
+    const getSectionStatus = (section) => {
+        if (!section.term) {
+            return 'draft';
+        } else if (section.number_of_students >= (section.course?.capacity || 0)) {
+            return 'full';
+        } else if (section.schedules && section.schedules.length > 0) {
+            return 'scheduled';
+        } else {
+            return 'unscheduled';
+        }
+    };
+
     // Filter sections based on search term and filters
     const filteredSections = useMemo(() => {
         return sections.filter(section => {
@@ -32,44 +57,169 @@ export default function Index({ sections, flash, school }) {
                 return false;
             }
 
+            // Status filter
+            if (statusFilter) {
+                const status = getSectionStatus(section);
+                if (status !== statusFilter) {
+                    return false;
+                }
+            }
+
             // Search term filter
+            if (!searchTerm) return true;
             const searchLower = searchTerm.toLowerCase();
             return (
                 (section.section_code && section.section_code.toLowerCase().includes(searchLower)) ||
                 (section.course?.title && section.course.title.toLowerCase().includes(searchLower)) ||
                 (section.course?.course_code && section.course.course_code.toLowerCase().includes(searchLower)) ||
-                (section.professor_profile?.user?.name && section.professor_profile.user.name.toLowerCase().includes(searchLower))
+                (section.professor?.name && section.professor.name.toLowerCase().includes(searchLower))
             );
         });
-    }, [sections, searchTerm, termFilter]);
+    }, [sections, searchTerm, termFilter, statusFilter]);
 
     // Status badge for section
     const SectionStatusBadge = ({ section }) => {
-        if (!section.term) {
-            return (
-                <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                    Draft
-                </span>
-            );
-        } else if (section.number_of_students >= (section.course?.capacity || 0)) {
-            return (
-                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                    Full
-                </span>
-            );
-        } else if (section.schedules && section.schedules.length > 0) {
-            return (
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                    Scheduled
-                </span>
-            );
-        } else {
-            return (
-                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                    Unscheduled
-                </span>
-            );
+        const status = getSectionStatus(section);
+        
+        switch (status) {
+            case 'draft':
+                return (
+                    <Badge color="gray" size="sm">
+                        Draft
+                    </Badge>
+                );
+            case 'full':
+                return (
+                    <Badge color="red" size="sm">
+                        Full
+                    </Badge>
+                );
+            case 'scheduled':
+                return (
+                    <Badge color="green" size="sm">
+                        Scheduled
+                    </Badge>
+                );
+            case 'unscheduled':
+                return (
+                    <Badge color="amber" size="sm">
+                        Unscheduled
+                    </Badge>
+                );
+            default:
+                return null;
         }
+    };
+
+    // Function to group schedules by time and pattern
+    const groupSchedulesByPattern = (schedules) => {
+        if (!Array.isArray(schedules) || schedules.length === 0) return [];
+        
+        // First, group by start and end time
+        const timeGroups = {};
+        schedules.forEach(schedule => {
+            const timeKey = `${schedule.start_time}-${schedule.end_time}`;
+            if (!timeGroups[timeKey]) {
+                timeGroups[timeKey] = [];
+            }
+            timeGroups[timeKey].push(schedule);
+        });
+        
+        // Then for each time group, check if they form a common pattern
+        const result = [];
+        Object.values(timeGroups).forEach(group => {
+            // Sort by day of week to ensure consistent ordering
+            const sortedGroup = [...group].sort((a, b) => {
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                return days.indexOf(a.day_of_week) - days.indexOf(b.day_of_week);
+            });
+            
+            // Get array of days
+            const days = sortedGroup.map(s => s.day_of_week);
+            
+            // Check if it's a standard pattern
+            let patternName = '';
+            
+            // First check if any schedule in the group has a predefined meeting pattern
+            const firstWithPattern = sortedGroup.find(s => s.meeting_pattern && s.meeting_pattern !== 'single');
+            
+            if (firstWithPattern && firstWithPattern.meeting_pattern !== 'single') {
+                // Use the pattern name from our meeting patterns
+                switch(firstWithPattern.meeting_pattern) {
+                    case 'monday-wednesday-friday':
+                        patternName = 'MWF';
+                        break;
+                    case 'tuesday-thursday':
+                        patternName = 'TTh';
+                        break;
+                    case 'monday-wednesday':
+                        patternName = 'MW';
+                        break;
+                    case 'tuesday-friday':
+                        patternName = 'TF';
+                        break;
+                    case 'weekly':
+                        patternName = 'Weekly';
+                        break;
+                }
+            } else {
+                // Fallback to using the actual days if no pattern is defined
+                if (arraysEqual(days, ['Monday', 'Wednesday', 'Friday'])) {
+                    patternName = 'MWF';
+                } else if (arraysEqual(days, ['Tuesday', 'Thursday'])) {
+                    patternName = 'TTh';
+                } else if (arraysEqual(days, ['Monday', 'Wednesday'])) {
+                    patternName = 'MW';
+                } else if (arraysEqual(days, ['Tuesday', 'Friday'])) {
+                    patternName = 'TF';
+                } else if (arraysEqual(days, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) {
+                    patternName = 'Weekly';
+                }
+            }
+            
+            // Create a merged schedule object
+            result.push({
+                group: sortedGroup,
+                pattern: patternName || (days.length > 1 ? days.join('/') : days[0]),
+                start_time: sortedGroup[0].start_time,
+                end_time: sortedGroup[0].end_time,
+                room: sortedGroup[0].room, // Use the first room (assuming all are the same)
+                location_type: sortedGroup[0].location_type,
+                virtual_meeting_url: sortedGroup[0].virtual_meeting_url
+            });
+        });
+        
+        return result;
+    };
+    
+    // Helper to check if arrays are equal
+    const arraysEqual = (a, b) => {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) return false;
+        }
+        return true;
+    };
+
+    // Format schedule display for a group of schedules
+    const ScheduleInfo = ({ schedule }) => {
+        if (!schedule) return null;
+        
+        // Handle time format
+        const formatTime = (time) => {
+            if (!time) return '';
+            // Handle both H:i and H:i:s formats
+            return time.substring(0, 5); // Show only HH:MM part
+        };
+        
+        return (
+            <div className="flex items-center text-xs text-gray-500">
+                <Clock className="mr-1 h-3 w-3" />
+                <span>
+                    <strong>{schedule.pattern}</strong>, {formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}
+                </span>
+            </div>
+        );
     };
 
     return (
@@ -82,18 +232,26 @@ export default function Index({ sections, flash, school }) {
                         <h1 className="text-2xl font-bold text-gray-800">Class Sections</h1>
                         <p className="text-gray-600">{userSchool.name}</p>
                     </div>
-                    <Link
-                        href={route('sections.create', userSchool.id)}
-                        className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                        <Plus className="mr-2 h-4 w-4" /> Create Section
-                    </Link>
+                    <div className="flex space-x-2">
+                        <Link
+                            href={route('sections.calendar', userSchool.id)}
+                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            <Calendar className="mr-2 h-4 w-4" /> Calendar View
+                        </Link>
+                        <Link
+                            href={route('sections.create', userSchool.id)}
+                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            <Plus className="mr-2 h-4 w-4" /> Create Section
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Search and Filters */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-6">
                     {/* Search */}
-                    <div className="relative col-span-2">
+                    <div className="relative md:col-span-3">
                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                             <Search className="h-5 w-5 text-gray-400" />
                         </div>
@@ -121,6 +279,37 @@ export default function Index({ sections, flash, school }) {
                             ))}
                         </select>
                     </div>
+
+                    {/* Status Filter */}
+                    <div>
+                        <select
+                            className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="unscheduled">Unscheduled</option>
+                            <option value="full">Full</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </div>
+
+                    {/* Clear Filters */}
+                    {(searchTerm || termFilter || statusFilter) && (
+                        <div className="flex items-center">
+                            <button
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setTermFilter('');
+                                    setStatusFilter('');
+                                }}
+                                className="text-sm text-blue-600 hover:text-blue-800"
+                            >
+                                Clear Filters
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Flash Messages */}
@@ -148,7 +337,7 @@ export default function Index({ sections, flash, school }) {
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Course</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Term</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Instructor</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Enrollment</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Schedule</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
                             <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
                         </tr>
@@ -179,11 +368,32 @@ export default function Index({ sections, flash, school }) {
                                 <td className="whitespace-nowrap px-6 py-4">
                                     <div className="flex items-center text-sm text-gray-500">
                                         <User className="mr-2 h-4 w-4 text-gray-400" />
-                                        {section.professor_profile?.user?.name || 'Not assigned'}
+                                        {section.professor?.name || 'Not assigned'}
                                     </div>
                                 </td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                    {section.number_of_students} / {section.course?.capacity || 'N/A'}
+                                <td className="px-6 py-4">
+                                    {section.schedules && Array.isArray(section.schedules) && section.schedules.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {groupSchedulesByPattern(section.schedules).map((scheduleGroup, idx) => (
+                                                <div key={idx}>
+                                                    <ScheduleInfo schedule={scheduleGroup} />
+                                                    {scheduleGroup.room && (
+                                                        <div className="mt-1 text-xs text-gray-500">
+                                                            Room {scheduleGroup.room.room_number}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <Link
+                                            href={route('schedules.create', { school: userSchool.id, section_id: section.id })}
+                                            className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-100"
+                                        >
+                                            <CalendarPlus className="mr-1 h-3 w-3" />
+                                            Add Schedule
+                                        </Link>
+                                    )}
                                 </td>
                                 <td className="whitespace-nowrap px-6 py-4 text-sm">
                                     <SectionStatusBadge section={section} />
@@ -204,6 +414,27 @@ export default function Index({ sections, flash, school }) {
                                         >
                                             <Edit className="h-5 w-5" />
                                         </Link>
+                                        
+                                        {section.schedules && Array.isArray(section.schedules) && section.schedules.length > 0 ? (
+                                            <Link
+                                                href={section.schedules.length === 1 
+                                                    ? route('schedules.edit', [userSchool.id, section.schedules[0].id])
+                                                    : route('sections.show', [userSchool.id, section.id])}
+                                                className="rounded p-1 text-gray-500 hover:bg-green-100 hover:text-green-600"
+                                                title={section.schedules.length === 1 ? "Edit schedule" : "View all schedules"}
+                                            >
+                                                <Calendar className="h-5 w-5" />
+                                            </Link>
+                                        ) : (
+                                            <Link
+                                                href={route('schedules.create', { school: userSchool.id, section_id: section.id })}
+                                                className="rounded p-1 text-gray-500 hover:bg-green-100 hover:text-green-600"
+                                                title="Add schedule"
+                                            >
+                                                <CalendarPlus className="h-5 w-5" />
+                                            </Link>
+                                        )}
+                                        
                                         <Link
                                             href={route('sections.destroy', [userSchool.id, section.id])}
                                             method="delete"
@@ -225,7 +456,7 @@ export default function Index({ sections, flash, school }) {
                         {filteredSections.length === 0 && (
                             <tr>
                                 <td colSpan="7" className="px-6 py-8 text-center text-sm text-gray-500">
-                                    {searchTerm || termFilter
+                                    {searchTerm || termFilter || statusFilter
                                         ? 'No sections found matching your search criteria'
                                         : 'No sections found. Create your first section to get started.'}
                                 </td>

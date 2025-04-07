@@ -76,10 +76,8 @@ class CourseController extends Controller
     }
 
     // GET /courses/{id}/edit
-    public function edit(School $school, $id)
+    public function edit(School $school, Course $course)
     {
-        $course = Course::findOrFail($id);
-
         // Check if the user can update this course
         $this->authorize('update', $course);
 
@@ -89,9 +87,9 @@ class CourseController extends Controller
             abort(403, 'This course does not belong to your school');
         }
 
-        // Get only departments from the current school
+        // Get departments from this school
         $departments = Department::where('school_id', $school->id)->get();
-
+        
         // Get majors related to these departments
         $majors = Major::whereIn('department_id', $departments->pluck('id'))->get();
 
@@ -103,11 +101,9 @@ class CourseController extends Controller
         ]);
     }
 
-    // PUT /courses/{id}
-    public function update(Request $request, School $school, $id)
+    // PUT/PATCH /courses/{id}
+    public function update(Request $request, School $school, Course $course)
     {
-        $course = Course::findOrFail($id);
-
         // Check if the user can update this course
         $this->authorize('update', $course);
 
@@ -136,10 +132,8 @@ class CourseController extends Controller
     }
 
     // DELETE /courses/{id}
-    public function destroy(School $school, $id)
+    public function destroy(School $school, Course $course)
     {
-        $course = Course::findOrFail($id);
-
         // Check if the user can delete this course
         $this->authorize('delete', $course);
 
@@ -154,9 +148,10 @@ class CourseController extends Controller
     }
 
     // GET /schools/{school}/courses/{course}
-    public function show(School $school, $id)
+    public function show(School $school, Course $course)
     {
-        $course = Course::with(['department', 'major', 'sections.room', 'sections.schedule', 'sections.professorProfile.user'])->findOrFail($id);
+        // Load relationships
+        $course->load(['department', 'major', 'sections.schedules.room', 'sections.professor']);
 
         // Check if the user can view this course
         $this->authorize('view', $course);

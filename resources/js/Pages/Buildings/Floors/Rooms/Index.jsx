@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import {
     Card,
@@ -17,11 +17,11 @@ import {
     BuildingOffice2Icon,
     PlusIcon,
     ArrowLeftIcon,
-    HomeModernIcon,
     UsersIcon,
     ComputerDesktopIcon,
     WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
+import { DoorOpen, Hotel, Layers } from 'lucide-react';
 
 const RoomCard = ({ room, school, building, floor }) => {
     const features = room.features || [];
@@ -33,7 +33,7 @@ const RoomCard = ({ room, school, building, floor }) => {
                     <Title>{room.room_number}</Title>
                     <Text className="mt-1">Capacity: {room.capacity}</Text>
                 </div>
-                <HomeModernIcon className="h-8 w-8 text-blue-500" />
+                <DoorOpen className="h-8 w-8 text-blue-500" />
             </div>
 
             {features.length > 0 && (
@@ -58,7 +58,8 @@ const RoomCard = ({ room, school, building, floor }) => {
 
             <Flex justifyContent="end">
                 <Link href={route('rooms.edit', {
-                    id: room.id,
+                    school: school.id,
+                    room: room.id,
                     return_url: route('buildings.floors.rooms.index', {
                         school: school.id,
                         building: building.id,
@@ -77,6 +78,22 @@ const RoomCard = ({ room, school, building, floor }) => {
 export default function Index({ rooms, floor, building, school }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
+    const { visit } = useForm();
+
+    const handleAddRoom = () => {
+        // Use Inertia's visit method with the proper parameters
+        visit(route('rooms.create', { school: school.id }), {
+            data: {
+                floor_id: floor.id,
+                return_url: route('buildings.floors.rooms.index', {
+                    school: school.id,
+                    building: building.id,
+                    floor: floor.id
+                })
+            },
+            preserveState: false
+        });
+    };
 
     return (
         <AppLayout userRole={userRole} school={school}>
@@ -99,33 +116,27 @@ export default function Index({ rooms, floor, building, school }) {
                             </Button>
                         </Link>
                         <div className="flex items-center">
-                            <HomeModernIcon className="h-8 w-8 text-blue-600 mr-3" />
+                            <Layers className="h-8 w-8 text-blue-600 mr-3" />
                             <div>
-                                <Title>{floor.name} Rooms</Title>
-                                <Text>Manage rooms in {building.name}, {floor.name}</Text>
+                                <Title>Floor {floor.number} Rooms</Title>
+                                <Text>Manage rooms in {building.name}, Floor {floor.number}</Text>
                             </div>
                         </div>
                     </div>
                     <div className="mt-4 sm:mt-0">
-                        <Link href={route('rooms.create', {
-                            floor_id: floor.id,
-                            return_url: route('buildings.floors.rooms.index', {
-                                school: school.id,
-                                building: building.id,
-                                floor: floor.id
-                            })
-                        })}>
-                            <Button icon={PlusIcon}>
-                                Add Room
-                            </Button>
-                        </Link>
+                        <Button 
+                            icon={PlusIcon} 
+                            onClick={handleAddRoom}
+                        >
+                            Add Room
+                        </Button>
                     </div>
                 </div>
 
                 <Card className="mb-6">
                     <Flex alignItems="center">
                         <div className="flex items-center">
-                            <BuildingOffice2Icon className="h-6 w-6 text-blue-600 mr-2" />
+                            <Hotel className="h-6 w-6 text-blue-600 mr-2" />
                             <Title>Room Summary</Title>
                         </div>
                     </Flex>
@@ -135,7 +146,7 @@ export default function Index({ rooms, floor, building, school }) {
                     <Grid numItems={1} numItemsSm={3} className="gap-6">
                         <Card decoration="top" decorationColor="blue">
                             <Flex alignItems="center">
-                                <HomeModernIcon className="h-6 w-6 text-blue-600 mr-2" />
+                                <DoorOpen className="h-6 w-6 text-blue-600 mr-2" />
                                 <Text>Total Rooms</Text>
                             </Flex>
                             <Metric>{rooms.length}</Metric>
@@ -164,20 +175,16 @@ export default function Index({ rooms, floor, building, school }) {
                     {rooms.length === 0 ? (
                         <Card>
                             <div className="flex flex-col items-center justify-center py-12">
-                                <HomeModernIcon className="h-12 w-12 text-gray-400" />
+                                <DoorOpen className="h-12 w-12 text-gray-400" />
                                 <Text className="mt-2">No rooms found in this floor</Text>
-                                <Link href={route('rooms.create', {
-                                    floor_id: floor.id,
-                                    return_url: route('buildings.floors.rooms.index', {
-                                        school: school.id,
-                                        building: building.id,
-                                        floor: floor.id
-                                    })
-                                })} className="mt-4">
-                                    <Button variant="light" icon={PlusIcon}>
-                                        Add your first room
-                                    </Button>
-                                </Link>
+                                <Button 
+                                    variant="light" 
+                                    icon={PlusIcon}
+                                    onClick={handleAddRoom}
+                                    className="mt-4"
+                                >
+                                    Add your first room
+                                </Button>
                             </div>
                         </Card>
                     ) : (

@@ -1,15 +1,60 @@
 import { Head, Link, usePage, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
+import {
+    Card,
+    Title,
+    Text,
+    Badge,
+    Button,
+    Divider,
+    Grid,
+    Col,
+    Metric,
+    Table,
+    TableHead,
+    TableRow,
+    TableHeaderCell,
+    TableBody,
+    TableCell,
+    TextInput,
+    Dialog,
+    Tab,
+    TabGroup,
+    TabList,
+    TabPanel,
+    TabPanels,
+} from '@tremor/react';
+import {
+    PencilIcon,
+    ArrowLeftIcon,
+    BookOpenIcon,
+    UserGroupIcon,
+    AcademicCapIcon,
+    EnvelopeIcon,
+    PhoneIcon,
+    MapPinIcon,
+    PlusIcon,
+    XMarkIcon,
+} from '@heroicons/react/24/outline';
 
-export default function Show({ department }) {
+export default function Show({ department, school }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
-    const school = auth.user.school;
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    // Ensure professorProfiles is never undefined
+    if (!department.professorProfiles) {
+        department.professorProfiles = [];
+    }
+    
+    // Debug - check if users are loaded correctly
+    console.log("Professor Profiles with users:", JSON.stringify(department.professorProfiles, null, 2));
 
-    const { data, setData, post, errors, reset } = useForm({
+    const { data, setData, post, errors, reset, processing } = useForm({
         code: '',
+        name: '',
+        description: '',
         department_id: department.id
     });
 
@@ -23,176 +68,438 @@ export default function Show({ department }) {
             onSuccess: () => {
                 setIsModalOpen(false);
                 reset();
-            },
-            onError: (errors) => {
-                console.log('Errors:', errors);
             }
         });
     };
+
+    // Check if we actually have professor profiles
+    const hasProfessors = Array.isArray(department.professorProfiles) && department.professorProfiles.length > 0;
+    const hasMajors = Array.isArray(department.majors) && department.majors.length > 0;
+    const hasCourses = Array.isArray(department.courses) && department.courses.length > 0;
 
     return (
         <AppLayout userRole={userRole} school={school}>
             <Head title={department.name} />
 
-            <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-                <div className="mb-6 flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-gray-900">
-                        {department.name}
-                    </h1>
-                    <Link
-                        href={route('departments.index', { school: school.id })}
-                        className="bg-gray-100 text-gray-600 px-4 py-2 rounded hover:bg-gray-200"
-                    >
-                        Back to Departments
+            <div className="py-6 px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="sm:flex sm:items-center sm:justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href={route('departments.index', { school: school.id })}
+                            className="flex items-center text-blue-600 hover:text-blue-800"
+                        >
+                            <ArrowLeftIcon className="w-4 h-4 mr-1" />
+                            <span>Back to Departments</span>
+                        </Link>
+                        <span className="text-gray-500">|</span>
+                        <Title>{department.name}</Title>
+                        {department.code && (
+                            <Badge size="lg" color="blue">{department.code}</Badge>
+                        )}
+                    </div>
+                    <Link href={route('departments.edit', { school: school.id, department: department.id })}>
+                        <Button icon={PencilIcon}>Edit Department</Button>
                     </Link>
                 </div>
 
-                {/* Majors Section */}
-                <div className="bg-white shadow sm:rounded-lg mb-6">
-                    <div className="px-4 py-5 sm:p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-900">
-                                Majors
-                            </h2>
-                            <button
-                                onClick={() => setIsModalOpen(true)}
-                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                            >
-                                Add Major
-                            </button>
-                        </div>
-
-                        {department.majors?.length > 0 ? (
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {department.majors.map((major) => (
-                                    <div
-                                        key={major.id}
-                                        className="bg-gray-50 p-4 rounded-lg shadow-sm"
-                                    >
-                                        <h3 className="font-medium text-gray-900">
-                                            {major.code}
-                                        </h3>
-                                        {major.description && (
-                                            <p className="mt-2 text-sm text-gray-600">
-                                                {major.description}
-                                            </p>
+                {/* Department Info Section */}
+                <Grid numItemsMd={3} className="gap-6 mt-6">
+                    {/* Department Details */}
+                    <Col numColSpanMd={2}>
+                        <Card>
+                            <Title>Department Details</Title>
+                            <Divider />
+                            
+                            <div className="space-y-4 mt-4">
+                                <div>
+                                    <Text className="text-gray-500">Name</Text>
+                                    <Text className="font-medium text-lg">{department.name}</Text>
+                                </div>
+                                
+                                {department.code && (
+                                    <div>
+                                        <Text className="text-gray-500">Department Code</Text>
+                                        <Text className="font-medium text-lg">{department.code}</Text>
+                                    </div>
+                                )}
+                                
+                                <div className="pt-4">
+                                    <Text className="text-gray-500 text-sm font-medium mb-3">Contact Information</Text>
+                                    <div className="space-y-2">
+                                        {department.contact?.email && (
+                                            <div className="flex items-center gap-2">
+                                                <EnvelopeIcon className="h-5 w-5 text-gray-400" />
+                                                <Text>{department.contact.email}</Text>
+                                            </div>
+                                        )}
+                                        
+                                        {department.contact?.phone && (
+                                            <div className="flex items-center gap-2">
+                                                <PhoneIcon className="h-5 w-5 text-gray-400" />
+                                                <Text>{department.contact.phone}</Text>
+                                            </div>
+                                        )}
+                                        
+                                        {department.contact?.office && (
+                                            <div className="flex items-center gap-2">
+                                                <MapPinIcon className="h-5 w-5 text-gray-400" />
+                                                <Text>{department.contact.office}</Text>
+                                            </div>
+                                        )}
+                                        
+                                        {!department.contact?.email && !department.contact?.phone && !department.contact?.office && (
+                                            <Text className="text-gray-500">No contact information available</Text>
                                         )}
                                     </div>
-                                ))}
+                                </div>
                             </div>
-                        ) : (
-                            <p className="text-gray-600">No majors found in this department.</p>
-                        )}
-                    </div>
+                        </Card>
+                    </Col>
+                    
+                    {/* Stats */}
+                    <Col>
+                        <Card>
+                            <Title>Department Statistics</Title>
+                            <Divider />
+                            
+                            <div className="mt-4 space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                        <AcademicCapIcon className="h-8 w-8 text-purple-500 mr-3" />
+                                        <div>
+                                            <Text>Majors</Text>
+                                            <Title>{department.majors?.length || 0}</Title>
+                                        </div>
+                                    </div>
+                                    
+                                    {hasMajors && (
+                                        <Button 
+                                            variant="light" 
+                                            icon={PlusIcon} 
+                                            onClick={() => setIsModalOpen(true)}
+                                        >
+                                            Add
+                                        </Button>
+                                    )}
+                                </div>
+                                
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                        <BookOpenIcon className="h-8 w-8 text-green-500 mr-3" />
+                                        <div>
+                                            <Text>Courses</Text>
+                                            <Title>{department.courses?.length || 0}</Title>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                        <UserGroupIcon className="h-8 w-8 text-blue-500 mr-3" />
+                                        <div>
+                                            <Text>Professors</Text>
+                                            <Title>{department.professorProfiles?.length || 0}</Title>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    </Col>
+                </Grid>
+                
+                {/* Main Content Section - Tabbed Interface */}
+                <div className="mt-8">
+                    <TabGroup>
+                        <TabList className="mb-6">
+                            <Tab icon={AcademicCapIcon}>
+                                Majors
+                                {hasMajors && <Badge className="ml-2">{department.majors.length}</Badge>}
+                            </Tab>
+                            <Tab icon={BookOpenIcon}>
+                                Courses
+                                {hasCourses && <Badge className="ml-2">{department.courses.length}</Badge>}
+                            </Tab>
+                            <Tab icon={UserGroupIcon}>
+                                Professors
+                                {hasProfessors && <Badge className="ml-2">{department.professorProfiles.length}</Badge>}
+                            </Tab>
+                        </TabList>
+                        
+                        <TabPanels>
+                            {/* Majors Tab */}
+                            <TabPanel>
+                                <Card>
+                                    <div className="flex items-center justify-between">
+                                        <Title>Academic Majors</Title>
+                                        <Button 
+                                            icon={PlusIcon} 
+                                            onClick={() => setIsModalOpen(true)}
+                                        >
+                                            Add Major
+                                        </Button>
+                                    </div>
+                                    <Divider />
+                                    
+                                    {hasMajors ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                                            {department.majors.map((major) => (
+                                                <Link 
+                                                    key={major.id}
+                                                    href={route('majors.show', { school: school.id, major: major.id })}
+                                                >
+                                                    <Card 
+                                                        decoration="left" 
+                                                        decorationColor="blue"
+                                                        className="hover:shadow-md transition-shadow"
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div>
+                                                                <Badge color="blue">{major.code}</Badge>
+                                                                <Text className="font-medium mt-2">{major.name || major.code}</Text>
+                                                            </div>
+                                                            <AcademicCapIcon className="h-10 w-10 text-blue-100" />
+                                                        </div>
+                                                        {major.description && (
+                                                            <Text className="mt-2 text-sm text-gray-500 line-clamp-2">
+                                                                {major.description}
+                                                            </Text>
+                                                        )}
+                                                    </Card>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="py-12 text-center">
+                                            <AcademicCapIcon className="h-12 w-12 mx-auto text-gray-300" />
+                                            <Text className="mt-3 text-gray-500">No majors found in this department</Text>
+                                            <Button
+                                                className="mt-4" 
+                                                variant="light" 
+                                                icon={PlusIcon}
+                                                onClick={() => setIsModalOpen(true)}
+                                            >
+                                                Add your first major
+                                            </Button>
+                                        </div>
+                                    )}
+                                </Card>
+                            </TabPanel>
+                            
+                            {/* Courses Tab */}
+                            <TabPanel>
+                                <Card>
+                                    <div className="flex items-center justify-between">
+                                        <Title>Courses</Title>
+                                        <Link href={route('courses.create', { school: school.id })}>
+                                            <Button icon={PlusIcon}>
+                                                Add Course
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                    <Divider />
+                                    
+                                    {hasCourses ? (
+                                        <Table className="mt-4">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableHeaderCell>Course Code</TableHeaderCell>
+                                                    <TableHeaderCell>Title</TableHeaderCell>
+                                                    <TableHeaderCell>Capacity</TableHeaderCell>
+                                                    <TableHeaderCell>Actions</TableHeaderCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {department.courses.map((course) => (
+                                                    <TableRow key={course.id}>
+                                                        <TableCell className="font-medium">{course.course_code}</TableCell>
+                                                        <TableCell>{course.title}</TableCell>
+                                                        <TableCell>{course.capacity || 'N/A'}</TableCell>
+                                                        <TableCell>
+                                                            <Link href={route('courses.show', { 
+                                                                school: school.id, 
+                                                                course: course.id 
+                                                            })}>
+                                                                <Button size="xs" variant="light">View</Button>
+                                                            </Link>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    ) : (
+                                        <div className="py-12 text-center">
+                                            <BookOpenIcon className="h-12 w-12 mx-auto text-gray-300" />
+                                            <Text className="mt-3 text-gray-500">No courses found in this department</Text>
+                                            <Link href={route('courses.create', { school: school.id })}>
+                                                <Button className="mt-4" variant="light" icon={PlusIcon}>
+                                                    Add your first course
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                </Card>
+                            </TabPanel>
+                            
+                            {/* Professors Tab */}
+                            <TabPanel>
+                                <Card>
+                                    <div className="flex items-center justify-between">
+                                        <Title>Faculty Members</Title>
+                                        <div className="flex gap-2">
+                                            <Link href={route('users.create', { school: school.id })}>
+                                                <Button icon={PlusIcon}>
+                                                    Add Professor
+                                                </Button>
+                                            </Link>
+                                            <Link href={route('users.index', { school: school.id })}>
+                                                <Button variant="light" size="xs">
+                                                    View All Users
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                    <Divider />
+                                    
+                                    {hasProfessors ? (
+                                        <Table className="mt-4">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableHeaderCell>Name</TableHeaderCell>
+                                                    <TableHeaderCell>Email</TableHeaderCell>
+                                                    <TableHeaderCell>Office Location</TableHeaderCell>
+                                                    <TableHeaderCell>Phone Number</TableHeaderCell>
+                                                    <TableHeaderCell>Actions</TableHeaderCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {department.professorProfiles.map((professor) => (
+                                                    <TableRow key={professor.id}>
+                                                        <TableCell className="font-medium">
+                                                            {professor.user ? professor.user.name : "User not found"}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {professor.user ? professor.user.email : "N/A"}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {professor.office_location || "N/A"}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {professor.phone_number || "N/A"}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {professor.user_id && (
+                                                                <Link href={route('users.show', { 
+                                                                    school: school.id, 
+                                                                    user: professor.user_id 
+                                                                })}>
+                                                                    <Button size="xs" variant="light">View</Button>
+                                                                </Link>
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    ) : (
+                                        <div className="py-12 text-center">
+                                            <UserGroupIcon className="h-12 w-12 mx-auto text-gray-300" />
+                                            <Text className="mt-3 text-gray-500">No professors assigned to this department yet</Text>
+                                            <Link href={route('users.create', { school: school.id })} className="mt-4 inline-block">
+                                                <Button variant="light" icon={PlusIcon}>
+                                                    Add your first professor
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                </Card>
+                            </TabPanel>
+                        </TabPanels>
+                    </TabGroup>
                 </div>
-
-                {/* Modal for adding new major */}
-                {isModalOpen && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                        <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-medium text-gray-900">
-                                    Add New Major
-                                </h3>
-                                <button
+                
+                {/* Add Major Modal */}
+                <Dialog
+                    open={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    static={true}
+                >
+                    <div className="p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <Title>Add New Major</Title>
+                            <button 
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="text-gray-400 hover:text-gray-500"
+                            >
+                                <span className="sr-only">Close</span>
+                                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={handleSubmit}>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Major Code <span className="text-red-500">*</span>
+                                    </label>
+                                    <TextInput
+                                        placeholder="e.g. CS-BA"
+                                        value={data.code}
+                                        onChange={(e) => setData('code', e.target.value)}
+                                        error={errors.code}
+                                        errorMessage={errors.code}
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Major Name
+                                    </label>
+                                    <TextInput
+                                        placeholder="e.g. Bachelor of Science in Computer Science"
+                                        value={data.name}
+                                        onChange={(e) => setData('name', e.target.value)}
+                                        error={errors.name}
+                                        errorMessage={errors.name}
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Description
+                                    </label>
+                                    <TextInput
+                                        placeholder="Brief description of the major"
+                                        value={data.description}
+                                        onChange={(e) => setData('description', e.target.value)}
+                                        error={errors.description}
+                                        errorMessage={errors.description}
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-end gap-3 mt-6">
+                                <Button 
+                                    type="button"
+                                    variant="secondary"
                                     onClick={() => {
                                         setIsModalOpen(false);
                                         reset();
                                     }}
-                                    className="text-gray-400 hover:text-gray-500"
                                 >
-                                    <span className="sr-only">Close</span>
-                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    loading={processing}
+                                >
+                                    Add Major
+                                </Button>
                             </div>
-
-                            <form onSubmit={handleSubmit}>
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Major Code
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={data.code}
-                                        onChange={e => setData('code', e.target.value)}
-                                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200"
-                                    />
-                                    {errors.code && (
-                                        <div className="mt-1 text-sm text-red-600">
-                                            {errors.code}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setIsModalOpen(false);
-                                            reset();
-                                        }}
-                                        className="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                                    >
-                                        Add Major
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                        </form>
                     </div>
-                )}
-
-                {/* Courses Section */}
-                <div className="bg-white shadow sm:rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                            Courses
-                        </h2>
-                        {department.courses?.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Course Code
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Title
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Capacity
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {department.courses.map((course) => (
-                                            <tr key={course.id}>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    {course.course_code}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    {course.title}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    {course.capacity}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <p className="text-gray-600">No courses found in this department.</p>
-                        )}
-                    </div>
-                </div>
+                </Dialog>
             </div>
         </AppLayout>
     );

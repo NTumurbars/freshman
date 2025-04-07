@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Department;
 use App\Models\School;
+use App\Models\ProfessorProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class DepartmentController extends Controller
 {
@@ -42,20 +44,32 @@ class DepartmentController extends Controller
         return Inertia::render('Departments/Index', [
             'departments' => $departments,
             'school' => $school,
-            'can_create' => $user->can('create', Department::class)
+            'can_create' => Gate::allows('create', Department::class)
         ]);
     }
 
     // GET /departments/{id}
     public function show(School $school, $id)
     {
-        $department = Department::with(['majors', 'courses'])->findOrFail($id);
+        $department = Department::findOrFail($id);
+        
         $this->authorize('view', $department);
 
         // Verify department belongs to the school
         if ($department->school_id !== $school->id) {
             abort(404, 'Department not found in this school');
         }
+        
+        // Load relationships manually to ensure they work correctly
+        $department->load(['majors', 'courses']);
+        
+        // Explicitly load the professor profiles with their users
+        $professorProfiles = ProfessorProfile::where('department_id', $department->id)
+            ->with('user')
+            ->get();
+        
+        // Assign the profiles to the department
+        $department->professorProfiles = $professorProfiles;
 
         return Inertia::render('Departments/Show', [
             'department' => $department,
@@ -93,11 +107,21 @@ class DepartmentController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:10',
+            'contact.email' => 'nullable|email|max:255',
+            'contact.phone' => 'nullable|string|max:20',
+            'contact.office' => 'nullable|string|max:255',
         ]);
 
         $department = Department::create([
             'name' => $validated['name'],
+            'code' => $validated['code'] ?? null,
             'school_id' => $school->id,
+            'contact' => [
+                'email' => $validated['contact']['email'] ?? null,
+                'phone' => $validated['contact']['phone'] ?? null,
+                'office' => $validated['contact']['office'] ?? null,
+            ]
         ]);
 
         return redirect()
@@ -135,9 +159,21 @@ class DepartmentController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:10',
+            'contact.email' => 'nullable|email|max:255',
+            'contact.phone' => 'nullable|string|max:20',
+            'contact.office' => 'nullable|string|max:255',
         ]);
 
-        $department->update($validated);
+        $department->update([
+            'name' => $validated['name'],
+            'code' => $validated['code'] ?? $department->code,
+            'contact' => [
+                'email' => $validated['contact']['email'] ?? null,
+                'phone' => $validated['contact']['phone'] ?? null,
+                'office' => $validated['contact']['office'] ?? null,
+            ]
+        ]);
 
         return redirect()
             ->back()

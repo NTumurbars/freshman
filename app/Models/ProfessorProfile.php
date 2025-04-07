@@ -16,10 +16,12 @@ class ProfessorProfile extends Model
         'phone_number',
     ];
 
+    // Make sure we have proper eager loading
+    protected $with = ['user'];
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function department()

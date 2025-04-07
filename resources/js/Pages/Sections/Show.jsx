@@ -1,31 +1,113 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ChevronLeft, Users, Calendar, Clock, BookOpen, MapPin, User } from 'lucide-react';
+import { ChevronLeft, Users, Calendar, Clock, BookOpen, MapPin, User, CalendarPlus, Edit } from 'lucide-react';
+import { Button } from '@tremor/react';
+import React, { useState, useEffect } from 'react';
 
 export default function Show({ section, school }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const userSchool = auth.user.school;
 
-    // Format day and time
-    const formatSchedule = (schedule) => {
-        if (!schedule) return 'Not scheduled';
-        return `${schedule.day_of_week}, ${schedule.start_time} - ${schedule.end_time}`;
+    useEffect(() => {
+        console.log("Section data:", section);
+        console.log("Section schedules:", section.schedules);
+        if (section.schedules && section.schedules.length > 0) {
+            console.log("First schedule:", section.schedules[0]);
+        }
+    }, [section]);
+
+    // Function to group schedules by time and pattern
+    const groupSchedulesByPattern = (schedules) => {
+        if (!Array.isArray(schedules) || schedules.length === 0) return [];
+        
+        // First, group by start and end time
+        const timeGroups = {};
+        schedules.forEach(schedule => {
+            const timeKey = `${schedule.start_time}-${schedule.end_time}`;
+            if (!timeGroups[timeKey]) {
+                timeGroups[timeKey] = [];
+            }
+            timeGroups[timeKey].push(schedule);
+        });
+        
+        // Then for each time group, check if they form a common pattern
+        const result = [];
+        Object.values(timeGroups).forEach(group => {
+            // Sort by day of week to ensure consistent ordering
+            const sortedGroup = [...group].sort((a, b) => {
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                return days.indexOf(a.day_of_week) - days.indexOf(b.day_of_week);
+            });
+            
+            // Get array of days
+            const days = sortedGroup.map(s => s.day_of_week);
+            
+            // Check if it's a standard pattern
+            let patternName = '';
+            if (arraysEqual(days, ['Monday', 'Wednesday', 'Friday'])) {
+                patternName = 'MWF';
+            } else if (arraysEqual(days, ['Tuesday', 'Thursday'])) {
+                patternName = 'TTh';
+            } else if (arraysEqual(days, ['Monday', 'Wednesday'])) {
+                patternName = 'MW';
+            } else if (arraysEqual(days, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) {
+                patternName = 'Weekly';
+            }
+            
+            // Create a merged schedule object
+            result.push({
+                group: sortedGroup,
+                pattern: patternName || (days.length > 1 ? days.join('/') : days[0]),
+                start_time: sortedGroup[0].start_time,
+                end_time: sortedGroup[0].end_time,
+                room: sortedGroup[0].room, // Use the first room (assuming all are the same)
+                location_type: sortedGroup[0].location_type,
+                virtual_meeting_url: sortedGroup[0].virtual_meeting_url
+            });
+        });
+        
+        return result;
+    };
+    
+    // Helper to check if arrays are equal
+    const arraysEqual = (a, b) => {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) return false;
+        }
+        return true;
     };
 
-    // Group features by category
-    const groupFeaturesByCategory = (features) => {
-        if (!features || features.length === 0) return {};
+    const formatSchedule = (schedule) => {
+        if (!schedule) return 'Not scheduled';
+        
+        const formatTime = (time) => time ? time.substring(0, 5) : '';
+        return `${schedule.pattern}, ${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}`;
+    };
 
+    const formatIndividualSchedule = (schedule) => {
+        if (!schedule) return 'Not scheduled';
+        
+        const formatTime = (time) => time ? time.substring(0, 5) : '';
+        return `${schedule.day_of_week}, ${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}`;
+    };
+
+    const groupedSchedules = groupSchedulesByPattern(section.schedules || []);
+    
+    // Group features by category
+    const featuresGrouped = groupFeaturesByCategory(section.requiredFeatures);
+    
+    function groupFeaturesByCategory(features) {
+        if (!Array.isArray(features)) return {};
+        
         return features.reduce((acc, feature) => {
             const category = feature.category || 'Other';
             if (!acc[category]) acc[category] = [];
             acc[category].push(feature);
             return acc;
         }, {});
-    };
-
-    const featuresGrouped = groupFeaturesByCategory(section.requiredFeatures);
+    }
 
     return (
         <AppLayout userRole={userRole} school={userSchool}>
@@ -56,6 +138,7 @@ export default function Show({ section, school }) {
                             href={route('sections.edit', [school.id, section.id])}
                             className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
+                            <Edit className="mr-2 h-4 w-4" />
                             Edit Section
                         </Link>
                     </div>
@@ -66,8 +149,26 @@ export default function Show({ section, school }) {
                 {/* Main Section Info */}
                 <div className="col-span-2 space-y-6">
                     <div className="overflow-hidden rounded-lg bg-white shadow">
-                        <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                        <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex justify-between items-center">
                             <h2 className="text-lg font-medium text-gray-900">Section Information</h2>
+                            
+                            {!section.schedules || section.schedules.length === 0 ? (
+                                <Link
+                                    href={route('schedules.create', { school: school.id, section_id: section.id })}
+                                    className="inline-flex items-center rounded-md bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                                >
+                                    <CalendarPlus className="mr-1.5 h-4 w-4" />
+                                    Add Schedule
+                                </Link>
+                            ) : (
+                                <Link
+                                    href={route('schedules.edit', [school.id, section.schedules[0].id])}
+                                    className="inline-flex items-center rounded-md bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2"
+                                >
+                                    <Calendar className="mr-1.5 h-4 w-4" />
+                                    Edit Schedule
+                                </Link>
+                            )}
                         </div>
                         <div className="px-6 py-4">
                             <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
@@ -113,8 +214,8 @@ export default function Show({ section, school }) {
                                         <MapPin className="mr-1 h-4 w-4" /> Room
                                     </dt>
                                     <dd className="mt-1 text-sm text-gray-900">
-                                        {section.schedules && section.schedules[0]?.room
-                                            ? `${section.schedules[0].room.room_number} (${section.schedules[0].room.floor?.building?.name || ''})`
+                                        {groupedSchedules.length > 0 && groupedSchedules[0].room
+                                            ? `${groupedSchedules[0].room.room_number} (${groupedSchedules[0].room.floor?.building?.name || ''})`
                                             : 'Not assigned'}
                                     </dd>
                                 </div>
@@ -124,13 +225,139 @@ export default function Show({ section, school }) {
                                         <Clock className="mr-1 h-4 w-4" /> Schedule
                                     </dt>
                                     <dd className="mt-1 text-sm text-gray-900">
-                                        {section.schedules && section.schedules.length > 0
-                                            ? formatSchedule(section.schedules[0])
+                                        {groupedSchedules.length > 0
+                                            ? formatSchedule(groupedSchedules[0])
                                             : 'Not scheduled'}
                                     </dd>
                                 </div>
                             </dl>
                         </div>
+                    </div>
+
+                    {/* Schedule Information */}
+                    <div className="overflow-hidden rounded-lg bg-white shadow">
+                        <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                            <h2 className="text-lg font-medium text-gray-900">Schedule Information</h2>
+                        </div>
+                        
+                        {groupedSchedules.length > 0 ? (
+                            <div className="px-6 py-4 space-y-6">
+                                {groupedSchedules.map((scheduleGroup, idx) => (
+                                    <div key={idx} className="rounded-md bg-blue-50 p-4">
+                                        <div className="flex">
+                                            <div className="flex-shrink-0">
+                                                <Clock className="h-5 w-5 text-blue-400" />
+                                            </div>
+                                            <div className="ml-3 w-full">
+                                                <h3 className="text-sm font-medium text-blue-800">
+                                                    {scheduleGroup.pattern}
+                                                </h3>
+                                                <div className="mt-2 text-sm text-blue-700">
+                                                    <p>
+                                                        <span className="font-medium">Time:</span> {scheduleGroup.start_time.substring(0, 5)} - {scheduleGroup.end_time.substring(0, 5)}
+                                                    </p>
+                                                    <p className="mt-1">
+                                                        <span className="font-medium">Room:</span>{' '}
+                                                        {scheduleGroup.room 
+                                                            ? `${scheduleGroup.room.room_number} (${scheduleGroup.room.floor?.building?.name || 'Unknown Building'})` 
+                                                            : 'No room assigned'}
+                                                    </p>
+                                                    
+                                                    {scheduleGroup.location_type && scheduleGroup.location_type !== 'in_person' && (
+                                                        <>
+                                                            <p className="mt-1">
+                                                                <span className="font-medium">Type:</span>{' '}
+                                                                {scheduleGroup.location_type === 'virtual' 
+                                                                    ? 'Virtual (Online)' 
+                                                                    : scheduleGroup.location_type === 'hybrid'
+                                                                    ? 'Hybrid' 
+                                                                    : 'In Person'}
+                                                            </p>
+                                                            
+                                                            {scheduleGroup.virtual_meeting_url && (
+                                                                <p className="mt-1">
+                                                                    <span className="font-medium">Meeting Link:</span>{' '}
+                                                                    <a 
+                                                                        href={scheduleGroup.virtual_meeting_url} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        className="text-blue-800 underline hover:text-blue-900"
+                                                                    >
+                                                                        Join Meeting
+                                                                    </a>
+                                                                </p>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                                
+                                                {/* Individual days */}
+                                                {scheduleGroup.group.length > 1 && (
+                                                    <div className="mt-3 border-t border-blue-200 pt-3">
+                                                        <h4 className="text-xs font-medium text-blue-800 mb-2">Individual Schedules:</h4>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                            {scheduleGroup.group.map((schedule, i) => (
+                                                                <div key={i} className="flex justify-between items-center">
+                                                                    <span className="text-xs">{formatIndividualSchedule(schedule)}</span>
+                                                                    <Link
+                                                                        href={route('schedules.edit', [school.id, schedule.id])}
+                                                                        className="text-xs text-blue-800 hover:text-blue-900"
+                                                                    >
+                                                                        Edit
+                                                                    </Link>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Actions */}
+                                                <div className="mt-4 flex justify-between">
+                                                    {scheduleGroup.group.length === 1 ? (
+                                                        <Link
+                                                            href={route('schedules.edit', [school.id, scheduleGroup.group[0].id])}
+                                                            className="inline-flex items-center rounded-md bg-blue-200 px-2.5 py-1.5 text-sm font-medium text-blue-800 hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                                                        >
+                                                            <Edit className="mr-1 h-3 w-3" />
+                                                            Edit Schedule
+                                                        </Link>
+                                                    ) : (
+                                                        <span></span> // Empty placeholder for flex spacing
+                                                    )}
+                                                    
+                                                    <Link
+                                                        href={route('schedules.create', { school: school.id, section_id: section.id })}
+                                                        className="inline-flex items-center rounded-md bg-green-100 px-2.5 py-1.5 text-sm font-medium text-green-800 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                                                    >
+                                                        <CalendarPlus className="mr-1 h-3 w-3" />
+                                                        Add Schedule
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="px-6 py-8 text-center">
+                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                                    <Calendar className="h-6 w-6 text-gray-400" />
+                                </div>
+                                <h3 className="mt-2 text-sm font-semibold text-gray-900">No Schedule Assigned</h3>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    This section doesn't have a schedule yet. Create one to assign time and location.
+                                </p>
+                                <div className="mt-6">
+                                    <Link
+                                        href={route('schedules.create', { school: school.id, section_id: section.id })}
+                                        className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                    >
+                                        <CalendarPlus className="mr-1.5 h-4 w-4" />
+                                        Add Schedule
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Department & Major */}

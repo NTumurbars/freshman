@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Models\User;
 use App\Models\School;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 // Controllers
 use App\Http\Controllers\{
@@ -99,6 +100,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'users' => UserController::class,
     ]);
 
+    // Professor Profile Update
+    Route::post('/users/{userId}/professor-profile', [ProfessorProfileController::class, 'update'])
+        ->name('professorProfile.update');
+
     // Nested Resources Under Schools
     Route::prefix('schools/{school}')->group(function () {
         Route::resources([
@@ -116,6 +121,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'buildings.floors' => FloorController::class,
             'buildings.floors.rooms' => RoomController::class,
         ]);
+        
+        // Batch schedule creation routes - adding an alias to make more flexible
+        Route::post('schedules-batch', [ScheduleController::class, 'storeBatch'])->name('schedules.store-batch');
+        Route::post('api/schedules/batch', [ScheduleController::class, 'storeBatch'])->name('api.schedules.batch');
+        
+        // Delete all schedules for a section
+        Route::delete('sections/{section}/schedules', [ScheduleController::class, 'destroyAll'])
+            ->name('schedules.destroyAll');
+        
+        // Section calendar view
+        Route::get('sections/calendar', [SectionController::class, 'calendar'])->name('sections.calendar');
+        
+        // Direct route for creating room with floor
+        Route::get('rooms/create/{floor}', [RoomController::class, 'create'])->name('rooms.create.with.floor');
+        
+        // Explicit debug route to force direct access
+        Route::get('direct-room-create/{floor_id}', function(Request $request, $floor_id) {
+            $floor = \App\Models\Floor::findOrFail($floor_id);
+            return app(RoomController::class)->create($request, $floor->building->school, $floor);
+        });
     });
 });
 

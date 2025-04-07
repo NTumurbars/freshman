@@ -17,6 +17,9 @@ class Course extends Model
         'title',
         'description',
         'capacity',
+        'credits',
+        'level',
+        'is_active',
     ];
 
     protected $appends = ['school'];
@@ -37,10 +40,18 @@ class Course extends Model
     }
 
     /**
+     * Get the school through the department relationship
+     */
+    public function school()
+    {
+        return $this->department ? $this->department->school() : null;
+    }
+
+    /**
      * Get the school this course belongs to through department
      */
     public function getSchoolAttribute()
     {
-        return $this->department->school ?? null;
+        return $this->department ? $this->department->school : null;
     }
 }

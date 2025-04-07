@@ -1,9 +1,21 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, Link } from '@inertiajs/react';
+import { PencilIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { Badge, Card, Title } from '@tremor/react';
 
 export default function Show({ course, school }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
+    
+    // Debug output
+    console.log('Course data:', course);
+    console.log('School data:', school);
+
+    // Helper function to format time
+    const formatTime = (timeString) => {
+        if (!timeString) return '';
+        return timeString;
+    };
 
     return (
         <AppLayout userRole={userRole} school={school}>
@@ -13,22 +25,22 @@ export default function Show({ course, school }) {
                 <div className="flex items-center justify-between pb-6">
                     <h1 className="text-2xl font-bold">{course.course_code}: {course.title}</h1>
                     <div className="flex space-x-2">
-                        <a
+                        <Link
                             href={route('courses.edit', { school: school.id, course: course.id })}
                             className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none"
                         >
                             Edit
-                        </a>
-                        <a
+                        </Link>
+                        <Link
                             href={route('courses.index', { school: school.id })}
                             className="rounded bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400 focus:outline-none"
                         >
                             Back to Courses
-                        </a>
+                        </Link>
                     </div>
                 </div>
 
-                <div className="mb-8 overflow-hidden rounded-lg bg-white shadow">
+                <Card className="mb-8">
                     <div className="px-6 py-5">
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
@@ -54,12 +66,21 @@ export default function Show({ course, school }) {
                             <p className="text-base">{course.description || 'No description available.'}</p>
                         </div>
                     </div>
+                </Card>
+
+                <div className="mb-4 flex items-center justify-between">
+                    <Title>Sections</Title>
+                    <Link
+                        href={route('sections.create', { school: school.id, course: course.id })}
+                        className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    >
+                        Add Section
+                    </Link>
                 </div>
 
                 {course.sections && course.sections.length > 0 ? (
-                    <div>
-                        <h2 className="mb-4 text-xl font-semibold">Sections</h2>
-                        <div className="overflow-hidden rounded-lg bg-white shadow">
+                    <Card>
+                        <div className="overflow-hidden">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
@@ -75,36 +96,113 @@ export default function Show({ course, school }) {
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                             Schedule
                                         </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            Actions
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 bg-white">
                                     {course.sections.map((section) => (
-                                        <tr key={section.id}>
+                                        <tr key={section.id} className="hover:bg-gray-50">
                                             <td className="whitespace-nowrap px-6 py-4">
-                                                {section.section_number}
+                                                <Link 
+                                                    href={route('sections.show', [school.id, section.id])}
+                                                    className="text-blue-600 hover:text-blue-900"
+                                                >
+                                                    {section.section_code}
+                                                </Link>
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4">
-                                                {section.professor_profile?.user?.name || 'TBA'}
+                                                {section.professor?.name || (
+                                                    <Badge color="gray">Not Assigned</Badge>
+                                                )}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4">
-                                                {section.room?.name || 'TBA'}
-                                            </td>
-                                            <td className="whitespace-nowrap px-6 py-4">
-                                                {section.schedule?.day_of_week
-                                                    ? `${section.schedule.day_of_week} ${section.schedule.start_time} - ${section.schedule.end_time}`
-                                                    : 'TBA'
+                                                {section.schedules && section.schedules.length > 0 
+                                                    ? section.schedules[0]?.room?.room_number || (
+                                                        <Badge color="gray">Not Assigned</Badge>
+                                                    )
+                                                    : (
+                                                        <Badge color="gray">Not Scheduled</Badge>
+                                                    )
                                                 }
+                                            </td>
+                                            <td className="whitespace-nowrap px-6 py-4">
+                                                {section.schedules && section.schedules.length > 0
+                                                    ? (
+                                                        <div>
+                                                            {section.schedules.length === 1 ? (
+                                                                <span>
+                                                                    {section.schedules[0].day_of_week},{' '}
+                                                                    <span className="text-gray-500">
+                                                                        {formatTime(section.schedules[0].start_time)} - {formatTime(section.schedules[0].end_time)}
+                                                                    </span>
+                                                                </span>
+                                                            ) : (
+                                                                <span>
+                                                                    {section.schedules.map(schedule => schedule.day_of_week).join('/')}
+                                                                    {' '}
+                                                                    <span className="text-gray-500">
+                                                                        {formatTime(section.schedules[0].start_time)} - {formatTime(section.schedules[0].end_time)}
+                                                                    </span>
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                    : (
+                                                        <Badge color="gray">Not Scheduled</Badge>
+                                                    )
+                                                }
+                                            </td>
+                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
+                                                <div className="flex justify-end space-x-2">
+                                                    <Link
+                                                        href={route('sections.edit', [school.id, section.id])}
+                                                        className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    >
+                                                        <PencilIcon className="mr-1 h-3 w-3" />
+                                                        Edit
+                                                    </Link>
+                                                    
+                                                    {(!section.schedules || section.schedules.length === 0) && (
+                                                        <Link
+                                                            href={route('schedules.create', { school: school.id, section_id: section.id })}
+                                                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-green-700 shadow-sm hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                        >
+                                                            <CalendarIcon className="mr-1 h-3 w-3" />
+                                                            Add Schedule
+                                                        </Link>
+                                                    )}
+                                                    
+                                                    {section.schedules && section.schedules.length > 0 && (
+                                                        <Link
+                                                            href={route('schedules.edit', [school.id, section.schedules[0].id])}
+                                                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-amber-700 shadow-sm hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                        >
+                                                            <CalendarIcon className="mr-1 h-3 w-3" />
+                                                            Edit Schedule
+                                                        </Link>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    </Card>
                 ) : (
-                    <div className="rounded-lg bg-white p-4 shadow">
-                        <p className="text-gray-500">No sections available for this course.</p>
-                    </div>
+                    <Card>
+                        <div className="p-4 text-center">
+                            <p className="text-gray-500">No sections available for this course.</p>
+                            <Link
+                                href={route('sections.create', { school: school.id, course: course.id })}
+                                className="mt-4 inline-flex items-center rounded-md border border-transparent bg-indigo-100 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            >
+                                Create First Section
+                            </Link>
+                        </div>
+                    </Card>
                 )}
             </div>
         </AppLayout>

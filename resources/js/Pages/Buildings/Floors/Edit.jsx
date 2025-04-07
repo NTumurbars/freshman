@@ -7,8 +7,8 @@ import {
     Text,
     Button,
     Flex,
-    TextInput,
     Divider,
+    NumberInput,
 } from '@tremor/react';
 import {
     BuildingOffice2Icon,
@@ -21,7 +21,7 @@ export default function Edit({ floor, building, school }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data, setData, put, processing, errors } = useForm({
-        name: floor.name || '',
+        number: floor.number || '',
     });
 
     const handleSubmit = (e) => {
@@ -44,7 +44,7 @@ export default function Edit({ floor, building, school }) {
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <Head title={`Edit Floor - ${floor.name}`} />
+            <Head title={`Edit Floor ${floor.number}`} />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8">
                 <div className="sm:flex sm:items-center sm:justify-between mb-6">
@@ -63,7 +63,7 @@ export default function Edit({ floor, building, school }) {
                             <BuildingOffice2Icon className="h-8 w-8 text-blue-600 mr-3" />
                             <div>
                                 <Title>Edit Floor</Title>
-                                <Text>Update details for {floor.name}</Text>
+                                <Text>Update details for Floor {floor.number}</Text>
                             </div>
                         </div>
                     </div>
@@ -72,15 +72,14 @@ export default function Edit({ floor, building, school }) {
                 <Card>
                     <form onSubmit={handleSubmit}>
                         <div className="mb-6">
-                            <Text>Floor Name</Text>
-                            <TextInput
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
-                                placeholder="Enter floor name"
+                            <Text>Floor Number</Text>
+                            <NumberInput
+                                value={data.number}
+                                onValueChange={(value) => setData('number', value)}
+                                placeholder="Enter floor number"
                                 className="mt-1"
-                                error={errors.name}
-                                errorMessage={errors.name}
-                                required
+                                error={errors.number}
+                                errorMessage={errors.number}
                             />
                         </div>
 

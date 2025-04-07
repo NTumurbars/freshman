@@ -1,11 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Building, Users, GraduationCap, BookOpen, FileBarChart, School, BarChart3, Calendar, Clock, ChevronDown, ChevronRight, LayoutGrid, DoorOpen } from 'lucide-react';
+import { Building, Users, GraduationCap, BookOpen, FileBarChart, School, BarChart3, Calendar, Clock, ChevronDown, ChevronRight, LayoutGrid, DoorOpen, Warehouse, Hotel, Layers, CalendarDays, LayoutList } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function AdminSideBar({ school }) {
     const [expandedSections, setExpandedSections] = useState({
-        campus: true,
-        buildings: false
+        campus: false,
+        buildings: false,
+        academics: false
     });
 
     const [buildings, setBuildings] = useState([]);
@@ -162,15 +163,67 @@ export default function AdminSideBar({ school }) {
                     <NavItem href={schoolRoute('schools.edit')} icon={School}>
                         School Settings
                     </NavItem>
-                    <NavItem href={schoolRoute('departments.index')} icon={GraduationCap}>
+                    
+                    <NavItem
+                        href={schoolRoute('departments.index')}
+                        icon={Warehouse}
+                    >
                         Departments
                     </NavItem>
+                    
+                    <NavItem
+                        href={schoolRoute('majors.index')}
+                        icon={GraduationCap}
+                    >
+                        Majors
+                    </NavItem>
+                </NavGroup>
+
+                <NavGroup title="Academics">
+                    <CollapsibleNavItem
+                        title="Academic Management"
+                        icon={BookOpen}
+                        isExpanded={expandedSections.academics}
+                        onToggle={() => toggleSection('academics')}
+                    >
+                        <NavItem
+                            href={schoolRoute('courses.index')}
+                            icon={BookOpen}
+                            indent={1}
+                        >
+                            Courses
+                        </NavItem>
+                        
+                        <NavItem
+                            href={schoolRoute('sections.index')}
+                            icon={LayoutList}
+                            indent={1}
+                        >
+                            Sections
+                        </NavItem>
+                        
+                        <NavItem
+                            href={schoolRoute('schedules.index')}
+                            icon={Clock}
+                            indent={1}
+                        >
+                            Class Schedules
+                        </NavItem>
+                        
+                        <NavItem
+                            href={schoolRoute('terms.index')}
+                            icon={Calendar}
+                            indent={1}
+                        >
+                            Academic Terms
+                        </NavItem>
+                    </CollapsibleNavItem>
                 </NavGroup>
 
                 <NavGroup title="Campus">
                     <CollapsibleNavItem
                         title="Campus Management"
-                        icon={Building}
+                        icon={Warehouse}
                         isExpanded={expandedSections.campus}
                         onToggle={() => toggleSection('campus')}
                     >
@@ -202,7 +255,7 @@ export default function AdminSideBar({ school }) {
                                     <CollapsibleNavItem
                                         key={building.id}
                                         title={building.name}
-                                        icon={Building}
+                                        icon={Hotel}
                                         isExpanded={expandedSections[`building_${building.id}`]}
                                         onToggle={() => toggleBuilding(building.id)}
                                         href={schoolRoute('buildings.show', { building: building.id })}
@@ -210,7 +263,7 @@ export default function AdminSideBar({ school }) {
                                     >
                                         <NavItem
                                             href={schoolRoute('buildings.floors.index', { building: building.id })}
-                                            icon={LayoutGrid}
+                                            icon={Layers}
                                             indent={2}
                                         >
                                             Manage Floors
@@ -220,18 +273,6 @@ export default function AdminSideBar({ school }) {
                             </div>
                         )}
                     </CollapsibleNavItem>
-                </NavGroup>
-
-                <NavGroup title="Academics">
-                    <NavItem href={schoolRoute('courses.index')} icon={BookOpen}>
-                        Courses & Sections
-                    </NavItem>
-                    <NavItem href={schoolRoute('terms.index')} icon={Calendar}>
-                        Academic Terms
-                    </NavItem>
-                    <NavItem href={schoolRoute('schedules.index')} icon={Clock}>
-                        Class Schedules
-                    </NavItem>
                 </NavGroup>
 
                 <NavGroup title="Reporting">

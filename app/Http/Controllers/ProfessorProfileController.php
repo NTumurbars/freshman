@@ -6,6 +6,8 @@ use Inertia\Inertia;
 use App\Models\ProfessorProfile;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Redirect;
 
 class ProfessorProfileController extends Controller
 {
@@ -52,19 +54,36 @@ class ProfessorProfileController extends Controller
         ]);
     }
 
-    // PUT /professor-profiles/{id}
-    public function update(Request $request, $id)
+    /**
+     * Update the professor's profile information.
+     */
+    public function update(Request $request, $userId)
     {
-        $profile = ProfessorProfile::findOrFail($id);
-        $this->authorize('update', $profile);
-        $data = $request->validate([
+        $user = User::findOrFail($userId);
+        
+        // Authorization check: user can only update their own profile
+        // or admins can update any profile
+        if ($request->user()->id !== $user->id && 
+            !in_array($request->user()->role->name, ['super_admin', 'school_admin'])) {
+            abort(403);
+        }
+        
+        $validated = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'office_location' => 'nullable|string|max:255',
-            'phone_number'  => 'nullable|string|max:50',
+            'phone_number' => 'nullable|string|max:30',
         ]);
-
-        $profile->update($data);
-        return redirect()->route('professor-profiles.index')->with('success', 'Professor profile updated successfully');
+        
+        // Get or create professor profile
+        $profile = $user->professorProfile;
+        
+        if (!$profile) {
+            return response()->json(['message' => 'Professor profile not found'], 404);
+        }
+        
+        $profile->update($validated);
+        
+        return Redirect::back()->with('success', 'Professor profile updated successfully');
     }
 
     // DELETE /professor-profiles/{id}

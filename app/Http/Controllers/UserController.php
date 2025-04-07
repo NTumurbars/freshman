@@ -37,14 +37,6 @@ class UserController extends Controller
             $query->where('role_id', $request->role);
         }
 
-        if ($request->status) {
-            $query->when($request->status === 'active', function($q) {
-                return $q->whereNotNull('email_verified_at');
-            }, function($q) {
-                return $q->whereNull('email_verified_at');
-            });
-        }
-
         // Sorting
         $sortField = $request->sort_by ?? 'created_at';
         $sortDirection = $request->sort_direction ?? 'desc';
@@ -63,7 +55,6 @@ class UserController extends Controller
             'filters' => [
                 'search' => $request->search,
                 'role' => $request->role,
-                'status' => $request->status,
                 'sort_by' => $sortField,
                 'sort_direction' => $sortDirection
             ]
@@ -90,13 +81,29 @@ class UserController extends Controller
     // POST /users
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $currentUser = Auth::user();
+        
+        // Base validation rules
+        $rules = [
             'name'      => 'required|string',
             'email'     => 'required|email|unique:users,email',
             'role_id'   => 'required|exists:roles,id',
-            'school_id' => 'required|exists:schools,id',
             'department_id' => 'nullable|exists:departments,id',
-        ]);
+            'office_location' => 'nullable|string',
+            'phone_number' => 'nullable|string',
+        ];
+        
+        // Super admin can specify school, others must use their own school
+        if ($currentUser->role_id === 1) {
+            $rules['school_id'] = 'required|exists:schools,id';
+        }
+        
+        $data = $request->validate($rules);
+        
+        // For non-super admins, force the school to be their own school
+        if ($currentUser->role_id !== 1) {
+            $data['school_id'] = $currentUser->school_id;
+        }
 
         $tempPassword = Str::random(12);
         $user = User::create([
@@ -110,7 +117,9 @@ class UserController extends Controller
         if ($request->department_id)
         {
             $user->professorProfile()->create([
-            'department_id' => $data['department_id'],
+                'department_id' => $data['department_id'],
+                'office_location' => $data['office_location'] ?? null,
+                'phone_number' => $data['phone_number'] ?? null,
             ]);
         }
 
@@ -124,8 +133,22 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        $roles = Role::all();
-        $schools = School::all();
+        $currentUser = Auth::user();
+        
+        // Check if the current user is authorized to edit this user
+        // School admins can only edit users from their own school
+        if ($currentUser->role_id !== 1 && $user->school_id !== $currentUser->school_id) {
+            abort(403, 'You are not authorized to edit users from other schools.');
+        }
+        
+        // Get roles - super admin can see all roles, others have restrictions
+        $roles = Role::when($currentUser->role_id != 1, function($q) {
+            return $q->where('id', '>', 1);
+        })->get();
+        
+        // Get schools - only super admin can see all schools, others only see their own
+        $schools = $currentUser->role_id === 1 ? School::all() : [$currentUser->school];
+        
         return Inertia::render('Users/Edit', [
             'user' => $user,
             'roles' => $roles,
@@ -137,12 +160,27 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        $data = $request->validate([
+        $currentUser = Auth::user();
+        
+        // Prepare validation rules
+        $rules = [
             'name'      => 'required|string',
             'email'     => 'required|email|unique:users,email,' . $user->id,
             'role_id'   => 'required|exists:roles,id',
-            'school_id' => 'required|exists:schools,id',
-        ]);
+        ];
+        
+        // Only allow super admins to change school
+        if ($currentUser->role_id === 1) {
+            $rules['school_id'] = 'required|exists:schools,id';
+        }
+        
+        $data = $request->validate($rules);
+        
+        // For school admins, keep the original school
+        if ($currentUser->role_id !== 1) {
+            // Remove school_id if present in the request
+            unset($data['school_id']);
+        }
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
@@ -156,6 +194,14 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
+        $currentUser = Auth::user();
+        
+        // Check if current user can delete this user
+        // Only super admin can delete any user, school admins can only delete from their school
+        if ($currentUser->role_id !== 1 && $user->school_id !== $currentUser->school_id) {
+            abort(403, 'You are not authorized to delete users from other schools.');
+        }
+        
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User deleted successfully');
     }
@@ -165,13 +211,13 @@ class UserController extends Controller
         $this->authorize('view', $user);
 
         $user->load(['role', 'school', 'professorProfile.department']);
+        
+        // Get departments for the school
+        $departments = $user->school->departments ?? [];
 
         return Inertia::render('Users/Show', [
             'user' => $user,
-            'activityLog' => $user->activities()
-                ->latest()
-                ->take(10)
-                ->get()
+            'departments' => $departments
         ]);
     }
 }

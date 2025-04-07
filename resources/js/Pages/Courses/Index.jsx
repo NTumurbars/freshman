@@ -13,8 +13,8 @@ export default function Index({ courses, flash, school }) {
 
     // Filter courses based on search term
     const filteredCourses = courses.filter(course =>
-        course.course_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (course.course_code && course.course_code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (course.title && course.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (course.department?.name && course.department.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 

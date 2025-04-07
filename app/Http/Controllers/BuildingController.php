@@ -34,8 +34,7 @@ class BuildingController extends Controller
 
         return Inertia::render('Buildings/Index', [
             'buildings' => $buildings,
-            'school' => $school,
-            'can_create' => Auth::user()->can('create', Building::class)
+            'school' => $school
         ]);
     }
 
@@ -90,7 +89,7 @@ class BuildingController extends Controller
                 'floors' => $building->floors->map(function($floor) {
                     return [
                         'id' => $floor->id,
-                        'name' => $floor->name,
+                        'number' => $floor->number,
                         'rooms' => $floor->rooms->map(function($room) {
                             return [
                                 'id' => $room->id,

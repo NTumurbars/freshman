@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('floors', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('building_id')->constrained()->onDelete('cascade');
-            $table->string('name');
-            $table->timestamps();
+        Schema::table('departments', function (Blueprint $table) {
+            $table->string('code')->nullable()->after('name');
+            $table->json('contact')->nullable()->after('code');
         });
     }
 
@@ -24,6 +22,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('floors');
+        Schema::table('departments', function (Blueprint $table) {
+            $table->dropColumn('code');
+            $table->dropColumn('contact');
+        });
     }
 };

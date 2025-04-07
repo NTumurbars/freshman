@@ -24,33 +24,39 @@ const RoomCard = ({ room, school, building, floor }) => {
     const features = room.features || [];
 
     return (
-        <Card>
-            <div className="flex items-start justify-between">
-                <div>
-                    <Title>{room.room_number}</Title>
-                    <Text className="mt-1">Capacity: {room.capacity}</Text>
-                </div>
-                <HomeModernIcon className="h-8 w-8 text-blue-500" />
-            </div>
-
-            {features.length > 0 && (
-                <div className="mt-4">
-                    <Text className="font-medium">Features:</Text>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                        {features.map(feature => (
-                            <Badge key={feature.id} color="blue">
-                                {feature.name}
-                            </Badge>
-                        ))}
+        <Card className="hover:shadow-lg transition-shadow">
+            <Link href={route('rooms.show', {
+                school: school.id,
+                room: room.id
+            })} className="block">
+                <div className="flex items-start justify-between">
+                    <div>
+                        <Title>{room.room_number}</Title>
+                        <Text className="mt-1">Capacity: {room.capacity}</Text>
                     </div>
+                    <HomeModernIcon className="h-8 w-8 text-blue-500" />
                 </div>
-            )}
+
+                {features.length > 0 && (
+                    <div className="mt-4">
+                        <Text className="font-medium">Features:</Text>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {features.map(feature => (
+                                <Badge key={feature.id} color="blue">
+                                    {feature.name}
+                                </Badge>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </Link>
 
             <Divider className="my-4" />
 
             <Flex justifyContent="end">
                 <Link href={route('rooms.edit', {
-                    id: room.id,
+                    school: school.id,
+                    room: room.id,
                     return_url: route('buildings.floors.show', {
                         school: school.id,
                         building: building.id,
@@ -75,7 +81,7 @@ export default function Show({ floor, building, school }) {
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <Head title={`${floor.name} - ${building.name}`} />
+            <Head title={`Floor ${floor.number} - ${building.name}`} />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8">
                 <div className="sm:flex sm:items-center sm:justify-between mb-6">
@@ -96,7 +102,7 @@ export default function Show({ floor, building, school }) {
                         <div className="flex items-center">
                             <BuildingOffice2Icon className="h-8 w-8 text-blue-600 mr-3" />
                             <div>
-                                <Title>{floor.name}</Title>
+                                <Title>Floor {floor.number}</Title>
                                 <Text>Floor details in {building.name}</Text>
                             </div>
                         </div>
@@ -163,6 +169,7 @@ export default function Show({ floor, building, school }) {
                                 <HomeModernIcon className="h-12 w-12 text-gray-400" />
                                 <Text className="mt-2">No rooms found in this floor</Text>
                                 <Link href={route('rooms.create', {
+                                    school: school.id,
                                     floor_id: floor.id,
                                     return_url: route('buildings.floors.show', {
                                         school: school.id,

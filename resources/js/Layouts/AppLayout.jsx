@@ -77,7 +77,7 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
                     className={`
                         fixed top-16 left-0 h-[calc(100vh-4rem)]
                         w-64 z-40 bg-white shadow-lg
-                        transition-all duration-300 ease-in-out
+                        transition-transform duration-300 ease-in-out
                         ${sidebarOpen ? 'translate-x-0' : '-translate-x-64'}
                     `}
                 >
@@ -95,10 +95,9 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
                 </aside>
 
                 {/* Sidebar toggle button (positioned in a fixed container) */}
-                <div className="fixed z-50 top-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out"
+                <div className="fixed z-50 top-1/2 left-0 transition-transform duration-300 ease-in-out"
                      style={{
-                        left: sidebarOpen ? '15.5rem' : '0',
-                        transform: `translateY(-50%) ${sidebarOpen ? 'translateX(1rem)' : 'translateX(0)'}`
+                        transform: `translateY(-50%) ${sidebarOpen ? 'translateX(16rem)' : 'translateX(0)'}`
                      }}>
                     <button
                         onClick={toggleSidebar}
@@ -126,7 +125,7 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
                 {/* Main Content */}
                 <main
                     className={`
-                        w-full transition-all duration-300
+                        w-full transition-all duration-300 ease-in-out
                         ${sidebarOpen ? 'md:ml-64' : 'md:ml-0'}
                     `}
                 >

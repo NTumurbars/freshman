@@ -9,6 +9,7 @@ import {
     Flex,
     TextInput,
     Divider,
+    NumberInput,
 } from '@tremor/react';
 import {
     BuildingOffice2Icon,
@@ -21,7 +22,7 @@ export default function Create({ building, school }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
-        name: '',
+        number: '',
         building_id: building.id,
     });
 
@@ -44,54 +45,59 @@ export default function Create({ building, school }) {
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <Head title={`Add Floor - ${building.name}`} />
+            <Head title="Add New Floor" />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8">
-                <div className="sm:flex sm:items-center sm:justify-between mb-6">
+                <div className="flex items-center mb-6">
+                    <Link href={route('buildings.floors.index', {
+                        building: building.id,
+                        school: school.id,
+                    })}>
+                        <Button
+                            variant="light"
+                            color="gray"
+                            icon={ArrowLeftIcon}
+                            className="mr-4"
+                        >
+                            Back to Floors
+                        </Button>
+                    </Link>
                     <div className="flex items-center">
-                        <Link href={route('buildings.floors.index', { school: school.id, building: building.id })}>
-                            <Button
-                                variant="light"
-                                color="gray"
-                                icon={ArrowLeftIcon}
-                                className="mr-4"
-                            >
-                                Back to Floors
-                            </Button>
-                        </Link>
-                        <div className="flex items-center">
-                            <BuildingOffice2Icon className="h-8 w-8 text-blue-600 mr-3" />
-                            <div>
-                                <Title>Add New Floor</Title>
-                                <Text>Create a new floor in {building.name}</Text>
-                            </div>
+                        <BuildingOffice2Icon className="h-8 w-8 text-blue-600 mr-3" />
+                        <div>
+                            <Title>Add New Floor</Title>
+                            <Text>Create a new floor for {building.name}</Text>
                         </div>
                     </div>
                 </div>
 
-                <Card>
+                <Card className="mt-6">
                     <form onSubmit={handleSubmit}>
-                        <div className="mb-6">
-                            <Text>Floor Name</Text>
-                            <TextInput
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
-                                placeholder="Enter floor name (e.g. First Floor, Basement)"
-                                className="mt-1"
-                                error={errors.name}
-                                errorMessage={errors.name}
-                                required
-                            />
-                        </div>
+                        <Flex flexDirection="col" alignItems="start">
+                            <div className="w-full mb-4">
+                                <div className="mb-2">
+                                    <Text>Floor Number</Text>
+                                </div>
+                                <NumberInput
+                                    placeholder="Enter floor number"
+                                    value={data.number}
+                                    onValueChange={(value) => setData('number', value)}
+                                    error={errors.number ? true : false}
+                                    errorMessage={errors.number}
+                                    required
+                                />
+                            </div>
+                        </Flex>
 
-                        <Divider />
+                        <Divider className="my-4" />
 
-                        <Flex justifyContent="end" className="mt-6">
+                        <Flex justifyContent="end">
                             <Button
                                 type="submit"
-                                loading={isSubmitting || processing}
+                                loading={isSubmitting}
+                                disabled={processing}
                             >
-                                Create Floor
+                                Save Floor
                             </Button>
                         </Flex>
                     </form>

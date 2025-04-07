@@ -12,7 +12,6 @@ import {
     Badge,
     Button,
     TextInput,
-    Select,
     Title,
 } from '@tremor/react';
 import {
@@ -127,12 +126,12 @@ export default function Index({ users, roles, filters }) {
                                 onChange={handleSearch}
                                 className="sm:max-w-xs"
                             />
-                            <Select
+                            <select
                                 value={filters.role || ''}
-                                onValueChange={(value) =>
-                                    get(route('users.index', { ...filters, role: value, page: 1 }))
+                                onChange={(e) => 
+                                    get(route('users.index', { ...filters, role: e.target.value, page: 1 }))
                                 }
-                                placeholder="Filter by role"
+                                className="sm:max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                             >
                                 <option value="">All Roles</option>
                                 {roles.map(role => (
@@ -140,18 +139,7 @@ export default function Index({ users, roles, filters }) {
                                         {role.name}
                                     </option>
                                 ))}
-                            </Select>
-                            <Select
-                                value={filters.status || ''}
-                                onValueChange={(value) =>
-                                    get(route('users.index', { ...filters, status: value, page: 1 }))
-                                }
-                                placeholder="Filter by status"
-                            >
-                                <option value="">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </Select>
+                            </select>
                         </div>
 
                         <Table>
@@ -168,7 +156,6 @@ export default function Index({ users, roles, filters }) {
                                     </TableHeaderCell>
                                     <TableHeaderCell>Role</TableHeaderCell>
                                     <TableHeaderCell>School</TableHeaderCell>
-                                    <TableHeaderCell>Status</TableHeaderCell>
                                     <TableHeaderCell>Actions</TableHeaderCell>
                                 </TableRow>
                             </TableHead>
@@ -188,11 +175,6 @@ export default function Index({ users, roles, filters }) {
                                         </TableCell>
                                         <TableCell>
                                             {user.school?.name || 'N/A'}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge color={user.email_verified_at ? 'green' : 'red'}>
-                                                {user.email_verified_at ? 'Active' : 'Inactive'}
-                                            </Badge>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex gap-2">

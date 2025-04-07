@@ -30,57 +30,76 @@ import {
     TagIcon,
     PlusIcon,
     CalendarIcon,
+    PencilIcon,
+    ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
+import { DoorOpen, Hotel, Layers } from 'lucide-react';
 
-const RoomCard = ({ room, parentSchool, schoolId }) => {
+const RoomCard = ({ room, school }) => {
     const features = room.features || [];
-    const building = room.floor?.building;
-    const school = parentSchool || building?.school;
+    const floor = room.floor || {};
+    const building = floor.building || {};
 
     return (
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
             <div className="flex items-start justify-between">
                 <div>
                     <Title>{room.room_number}</Title>
-                    <div className="flex items-center mt-1 text-sm text-gray-500">
-                        <BuildingOffice2Icon className="h-4 w-4 mr-1" />
-                        <span>{building?.name || 'Unknown Building'}</span>
-                        <span className="mx-1">•</span>
-                        <span>{room.floor?.name || 'Unknown Floor'}</span>
-                    </div>
+                    <Text className="mt-1">Capacity: {room.capacity}</Text>
                 </div>
-                <Badge size="lg" color="gray">
-                    Capacity: {room.capacity}
-                </Badge>
+                <DoorOpen className="h-8 w-8 text-blue-500" />
+            </div>
+
+            <div className="mt-4">
+                <div className="flex items-center">
+                    <Hotel className="h-4 w-4 text-gray-500 mr-1" />
+                    <Text className="text-sm">{building.name || 'Unknown Building'}</Text>
+                </div>
+                <div className="flex items-center mt-1">
+                    <Layers className="h-4 w-4 text-gray-500 mr-1" />
+                    <Text className="text-sm">{floor.name || 'Unknown Floor'}</Text>
+                </div>
             </div>
 
             {features.length > 0 && (
                 <div className="mt-4">
-                    <Text className="font-medium">Features:</Text>
+                    <Text className="font-medium text-sm">Features:</Text>
                     <div className="mt-2 flex flex-wrap gap-2">
-                        {features.map(feature => (
-                            <Badge key={feature.id} color="blue">
+                        {features.slice(0, 3).map(feature => (
+                            <Badge key={feature.id} color="blue" size="sm">
                                 {feature.name}
                             </Badge>
                         ))}
+                        {features.length > 3 && (
+                            <Badge color="gray" size="sm">
+                                +{features.length - 3} more
+                            </Badge>
+                        )}
                     </div>
                 </div>
             )}
 
-            <div className="mt-4">
-                <Text className="font-medium">Scheduled Sessions:</Text>
-                <Metric>{room.schedules?.length || 0}</Metric>
-            </div>
-
             <Divider className="my-4" />
 
-            <Flex justifyContent="end">
-                <Link href={route('rooms.edit', {
-                    school: schoolId || school?.id || room.floor?.building?.school_id,
-                    room: room.id
-                })}>
-                    <Button variant="light" icon={WrenchScrewdriverIcon}>
-                        Manage Room
+            <Flex justifyContent="end" className="space-x-2">
+                <Link href={route('rooms.show', { school: school.id, room: room.id })}>
+                    <Button 
+                        variant="light" 
+                        color="blue"
+                        icon={ArrowTopRightOnSquareIcon}
+                        size="xs"
+                    >
+                        View
+                    </Button>
+                </Link>
+                <Link href={route('rooms.edit', { school: school.id, room: room.id })}>
+                    <Button 
+                        variant="light" 
+                        color="yellow"
+                        icon={PencilIcon}
+                        size="xs"
+                    >
+                        Edit
                     </Button>
                 </Link>
             </Flex>
@@ -92,283 +111,116 @@ export default function Index({ rooms }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const school = auth.user.school;
-
-    // If no school directly available, try to get it from the first room
-    const schoolId = school?.id || (rooms[0]?.floor?.building?.school_id);
-
-    const [search, setSearch] = useState('');
-    const [selectedBuilding, setSelectedBuilding] = useState('');
-    const [selectedFloor, setSelectedFloor] = useState('');
-    const [selectedFeature, setSelectedFeature] = useState('');
-
-    // Extract unique buildings, floors and features for filters
+    
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterBuilding, setFilterBuilding] = useState('');
+    
+    // Extract unique buildings from rooms for filter dropdown
     const buildings = [...new Map(
         rooms
             .filter(room => room.floor?.building)
-            .map(room => [room.floor.building.id, {
-                id: room.floor.building.id,
-                name: room.floor.building.name
-            }])
+            .map(room => [room.floor.building.id, room.floor.building])
     ).values()];
-
-    const floors = [...new Map(
-        rooms
-            .filter(room => room.floor &&
-                   (!selectedBuilding || room.floor.building_id.toString() === selectedBuilding))
-            .map(room => [room.floor.id, {
-                id: room.floor.id,
-                name: room.floor.name,
-                building_id: room.floor.building_id
-            }])
-    ).values()];
-
-    const features = [...new Map(
-        rooms.flatMap(room => room.features || [])
-            .map(feature => [feature.id, {
-                id: feature.id,
-                name: feature.name
-            }])
-    ).values()];
-
-    // Filter rooms based on search and selections
+    
+    // Filter rooms based on search and building filter
     const filteredRooms = rooms.filter(room => {
-        const matchesSearch = search === '' ||
-            room.room_number.toLowerCase().includes(search.toLowerCase()) ||
-            room.floor?.name?.toLowerCase().includes(search.toLowerCase()) ||
-            room.floor?.building?.name?.toLowerCase().includes(search.toLowerCase());
-
-        const matchesBuilding = selectedBuilding === '' ||
-            (room.floor?.building_id && room.floor.building_id.toString() === selectedBuilding);
-
-        const matchesFloor = selectedFloor === '' ||
-            (room.floor_id && room.floor_id.toString() === selectedFloor);
-
-        const matchesFeature = selectedFeature === '' ||
-            room.features?.some(f => f.id.toString() === selectedFeature);
-
-        return matchesSearch && matchesBuilding && matchesFloor && matchesFeature;
+        const matchesSearch = !searchTerm || 
+            (room.room_number && room.room_number.toLowerCase().includes(searchTerm.toLowerCase()));
+            
+        const matchesBuilding = !filterBuilding || 
+            (room.floor?.building && room.floor.building.id.toString() === filterBuilding);
+            
+        return matchesSearch && matchesBuilding;
     });
-
-    // Calculate statistics
-    const totalCapacity = filteredRooms.reduce((sum, room) => sum + room.capacity, 0);
-    const totalScheduledSessions = filteredRooms.reduce(
-        (sum, room) => sum + (room.schedules?.length || 0), 0
-    );
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <Head title="Rooms Management" />
+            <Head title="Room Management" />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8">
                 <div className="sm:flex sm:items-center sm:justify-between mb-6">
-                    <div>
-                        <Title>Room Management</Title>
-                        <Text>Manage rooms across all buildings and floors</Text>
+                    <div className="flex items-center">
+                        <DoorOpen className="h-8 w-8 text-blue-600 mr-3" />
+                        <div>
+                            <Title>Room Management</Title>
+                            <Text>View and manage all rooms across campus</Text>
+                        </div>
                     </div>
                     <div className="mt-4 sm:mt-0">
-                        <Link href={route('rooms.create', { school: schoolId })}>
-                            <Button icon={PlusIcon}>Add Room</Button>
+                        <Link href={route('rooms.create', { school: school.id })}>
+                            <Button icon={PlusIcon}>
+                                Add Room
+                            </Button>
                         </Link>
                     </div>
                 </div>
 
                 <Card className="mb-6">
-                    <Flex>
-                        <div>
-                            <Title>Room Summary</Title>
-                            <Text>Filtered overview of rooms and capacity</Text>
-                        </div>
-                    </Flex>
-
-                    <Divider className="my-4" />
-
-                    <Grid numItems={1} numItemsSm={3} className="gap-6">
-                        <Card decoration="top" decorationColor="blue">
-                            <Flex alignItems="center">
-                                <HomeModernIcon className="h-6 w-6 text-blue-600 mr-2" />
-                                <Text>Total Rooms</Text>
-                            </Flex>
-                            <Metric>{filteredRooms.length}</Metric>
-                        </Card>
-                        <Card decoration="top" decorationColor="indigo">
-                            <Flex alignItems="center">
-                                <UsersIcon className="h-6 w-6 text-indigo-600 mr-2" />
-                                <Text>Total Capacity</Text>
-                            </Flex>
-                            <Metric>{totalCapacity}</Metric>
-                        </Card>
-                        <Card decoration="top" decorationColor="purple">
-                            <Flex alignItems="center">
-                                <CalendarIcon className="h-6 w-6 text-purple-600 mr-2" />
-                                <Text>Scheduled Sessions</Text>
-                            </Flex>
-                            <Metric>{totalScheduledSessions}</Metric>
-                        </Card>
-                    </Grid>
-                </Card>
-
-                <Card className="mb-6">
-                    <Flex flexDirection="col" className="space-y-4">
+                    <div className="sm:flex sm:items-center sm:justify-between">
                         <Title>Filters</Title>
-
+                        <Text className="text-gray-500">
+                            {filteredRooms.length} rooms found
+                        </Text>
+                    </div>
+                    <Divider className="my-4" />
+                    
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <div>
                             <Text>Search Rooms</Text>
                             <TextInput
                                 icon={MagnifyingGlassIcon}
-                                placeholder="Search by room number, building, or floor..."
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Search by room number..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
                                 className="mt-1"
                             />
                         </div>
-
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <div>
-                                <Text>Building</Text>
-                                <Select
-                                    value={selectedBuilding}
-                                    onValueChange={setSelectedBuilding}
-                                    placeholder="All Buildings"
-                                    className="mt-1"
-                                >
-                                    <SelectItem value="">All Buildings</SelectItem>
-                                    {buildings.map(building => (
-                                        <SelectItem key={building.id} value={building.id.toString()}>
-                                            {building.name}
-                                        </SelectItem>
-                                    ))}
-                                </Select>
-                            </div>
-
-                            <div>
-                                <Text>Floor</Text>
-                                <Select
-                                    value={selectedFloor}
-                                    onValueChange={setSelectedFloor}
-                                    placeholder="All Floors"
-                                    className="mt-1"
-                                    disabled={!selectedBuilding}
-                                >
-                                    <SelectItem value="">All Floors</SelectItem>
-                                    {floors.map(floor => (
-                                        <SelectItem key={floor.id} value={floor.id.toString()}>
-                                            {floor.name}
-                                        </SelectItem>
-                                    ))}
-                                </Select>
-                            </div>
-
-                            <div>
-                                <Text>Feature</Text>
-                                <Select
-                                    value={selectedFeature}
-                                    onValueChange={setSelectedFeature}
-                                    placeholder="All Features"
-                                    className="mt-1"
-                                >
-                                    <SelectItem value="">All Features</SelectItem>
-                                    {features.map(feature => (
-                                        <SelectItem key={feature.id} value={feature.id.toString()}>
-                                            {feature.name}
-                                        </SelectItem>
-                                    ))}
-                                </Select>
-                            </div>
+                        
+                        <div>
+                            <Text>Filter by Building</Text>
+                            <Select
+                                value={filterBuilding}
+                                onValueChange={setFilterBuilding}
+                                placeholder="All Buildings"
+                                className="mt-1"
+                                icon={Hotel}
+                            >
+                                <SelectItem value="">All Buildings</SelectItem>
+                                {buildings.map(building => (
+                                    <SelectItem key={building.id} value={building.id.toString()}>
+                                        {building.name}
+                                    </SelectItem>
+                                ))}
+                            </Select>
                         </div>
-                    </Flex>
+                    </div>
                 </Card>
 
-                <TabGroup>
-                    <TabList>
-                        <Tab>All Rooms ({filteredRooms.length})</Tab>
-                        <Tab>Available Now ({filteredRooms.filter(r => (r.schedules || []).length === 0).length})</Tab>
-                    </TabList>
-
-                    <TabPanels>
-                        <TabPanel>
-                            <div className="mt-8">
-                                {filteredRooms.length === 0 ? (
-                                    <Card>
-                                        <div className="flex flex-col items-center justify-center py-12">
-                                            <HomeModernIcon className="h-12 w-12 text-gray-400" />
-                                            <Text className="mt-2">No rooms found with the current filters</Text>
-                                            <Button
-                                                variant="light"
-                                                onClick={() => {
-                                                    setSearch('');
-                                                    setSelectedBuilding('');
-                                                    setSelectedFloor('');
-                                                    setSelectedFeature('');
-                                                }}
-                                                className="mt-4"
-                                            >
-                                                Clear Filters
-                                            </Button>
-                                            {filteredRooms.length === 0 && rooms.length === 0 && (
-                                                <Link href={route('rooms.create', { school: schoolId })} className="mt-4">
-                                                    <Button variant="light" icon={PlusIcon}>
-                                                        Add your first room
-                                                    </Button>
-                                                </Link>
-                                            )}
-                                        </div>
-                                    </Card>
-                                ) : (
-                                    <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
-                                        {filteredRooms.map(room => (
-                                            <Col key={room.id}>
-                                                <RoomCard room={room} parentSchool={school} schoolId={schoolId} />
-                                            </Col>
-                                        ))}
-                                    </Grid>
-                                )}
-                            </div>
-                        </TabPanel>
-
-                        <TabPanel>
-                            <div className="mt-8">
-                                {filteredRooms.filter(r => (r.schedules || []).length === 0).length === 0 ? (
-                                    <Card>
-                                        <div className="flex flex-col items-center justify-center py-12">
-                                            <HomeModernIcon className="h-12 w-12 text-gray-400" />
-                                            <Text className="mt-2">No available rooms found with the current filters</Text>
-                                            <Button
-                                                variant="light"
-                                                onClick={() => {
-                                                    setSearch('');
-                                                    setSelectedBuilding('');
-                                                    setSelectedFloor('');
-                                                    setSelectedFeature('');
-                                                }}
-                                                className="mt-4"
-                                            >
-                                                Clear Filters
-                                            </Button>
-                                            {filteredRooms.length === 0 && rooms.length === 0 && (
-                                                <Link href={route('rooms.create', { school: schoolId })} className="mt-4">
-                                                    <Button variant="light" icon={PlusIcon}>
-                                                        Add your first room
-                                                    </Button>
-                                                </Link>
-                                            )}
-                                        </div>
-                                    </Card>
-                                ) : (
-                                    <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
-                                        {filteredRooms
-                                            .filter(r => (r.schedules || []).length === 0)
-                                            .map(room => (
-                                                <Col key={room.id}>
-                                                    <RoomCard room={room} parentSchool={school} schoolId={schoolId} />
-                                                </Col>
-                                            ))
-                                        }
-                                    </Grid>
-                                )}
-                            </div>
-                        </TabPanel>
-                    </TabPanels>
-                </TabGroup>
+                {filteredRooms.length === 0 ? (
+                    <Card>
+                        <div className="flex flex-col items-center justify-center py-12">
+                            <DoorOpen className="h-12 w-12 text-gray-400" />
+                            <Text className="mt-2">
+                                {searchTerm || filterBuilding 
+                                    ? 'No rooms found matching your filters' 
+                                    : 'No rooms found'}
+                            </Text>
+                            <Link href={route('rooms.create', { school: school.id })} className="mt-4">
+                                <Button variant="light" icon={PlusIcon}>
+                                    Add your first room
+                                </Button>
+                            </Link>
+                        </div>
+                    </Card>
+                ) : (
+                    <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
+                        {filteredRooms.map(room => (
+                            <Col key={room.id}>
+                                <RoomCard room={room} school={school} />
+                            </Col>
+                        ))}
+                    </Grid>
+                )}
             </div>
         </AppLayout>
     );

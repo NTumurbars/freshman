@@ -10,6 +10,7 @@ import {
     Button,
     Flex,
     Divider,
+    Badge,
 } from '@tremor/react';
 import {
     BuildingOffice2Icon,
@@ -28,7 +29,7 @@ const FloorCard = ({ floor }) => {
         <Card>
             <div className="flex items-start justify-between">
                 <div>
-                    <Title>{floor.name}</Title>
+                    <Title>Floor {floor.number}</Title>
                     <Text className="mt-1">Floor ID: {floor.id}</Text>
                 </div>
                 <HomeModernIcon className="h-8 w-8 text-blue-500" />
@@ -56,6 +57,8 @@ export default function Show({ building, school }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
 
+    // Sort floors by number in descending order (top floor first)
+    const sortedFloors = [...building.floors].sort((a, b) => b.number - a.number);
     const totalFloors = building.floors.length;
     const totalRooms = building.floors.reduce(
         (sum, floor) => sum + floor.rooms.length, 0
@@ -131,8 +134,16 @@ export default function Show({ building, school }) {
                 </Card>
 
                 <div className="mt-8">
-                    <Title className="mb-4">Floors</Title>
-                    {building.floors.length === 0 ? (
+                    <Flex justifyContent="between" alignItems="center" className="mb-4">
+                        <Title>Building Layout</Title>
+                        <Link href={route('buildings.floors.create', { school: school.id, building: building.id })}>
+                            <Button variant="light" icon={PencilIcon}>
+                                Add Floor
+                            </Button>
+                        </Link>
+                    </Flex>
+
+                    {sortedFloors.length === 0 ? (
                         <Card>
                             <div className="flex flex-col items-center justify-center py-12">
                                 <HomeModernIcon className="h-12 w-12 text-gray-400" />
@@ -145,11 +156,47 @@ export default function Show({ building, school }) {
                             </div>
                         </Card>
                     ) : (
-                        <div className="space-y-6">
-                            {building.floors.map((floor) => (
-                                <FloorCard key={floor.id} floor={floor} />
-                            ))}
-                        </div>
+                        <Card>
+                            <div className="building-layout">
+                                {sortedFloors.map((floor) => (
+                                    <div key={floor.id} className="floor-box">
+                                        <div className="floor-header">
+                                            <h3>Floor {floor.number}</h3>
+                                            <Link href={route('buildings.floors.show', {
+                                                school: school.id,
+                                                building: building.id,
+                                                floor: floor.id
+                                            })}>
+                                                <Button variant="light" size="xs">
+                                                    Manage
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                        <div className="rooms-container">
+                                            {floor.rooms && floor.rooms.length > 0 ? (
+                                                <div className="rooms-grid">
+                                                    {floor.rooms.map((room) => (
+                                                        <div key={room.id} className="room-box">
+                                                            <span>{room.room_number}</span>
+                                                            <div className="mt-1 text-xs text-gray-500">
+                                                                Cap: {room.capacity}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="no-rooms">
+                                                    <Text>No rooms</Text>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="floor-footer">
+                                            <Badge color="indigo">{floor.rooms ? floor.rooms.length : 0} Rooms</Badge>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
                     )}
                 </div>
             </div>
