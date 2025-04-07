@@ -79,13 +79,4 @@ class DepartmentController extends Controller
         return redirect()->route('departments.index', ['school' => $school])->with('success', 'Department deleted successfully');
     }
 
-    // GET  schools/{school}/departments/{department} 
-    public function show($id)
-    {
-        $department = Department::with(['majors', 'professorProfiles', 'courses'])->findOrFail($id);
-
-        return Inertia::render('Departments/Show', [
-            'department' => $department,
-        ]);
-    }
 }
