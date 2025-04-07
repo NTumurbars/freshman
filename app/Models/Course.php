@@ -19,6 +19,8 @@ class Course extends Model
         'capacity',
     ];
 
+    protected $appends = ['school'];
+
     public function department()
     {
         return $this->belongsTo(Department::class);
@@ -32,5 +34,13 @@ class Course extends Model
     public function sections()
     {
         return $this->hasMany(Section::class);
+    }
+
+    /**
+     * Get the school this course belongs to through department
+     */
+    public function getSchoolAttribute()
+    {
+        return $this->department->school ?? null;
     }
 }

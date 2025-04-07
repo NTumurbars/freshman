@@ -5,6 +5,7 @@ use Inertia\Inertia;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Models\User;
 use App\Models\School;
+use Illuminate\Support\Facades\Auth;
 
 // Controllers
 use App\Http\Controllers\{
@@ -32,15 +33,48 @@ use App\Http\Controllers\{
 | Public Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/', fn() => Inertia::render('Welcome', [
-    'users' => User::all()->count(),
-    'schools' => School::all()->count(),
-]))->name('welcome');
+Route::get('/', function () {
+    return Inertia::render('Welcome', [
+        'auth' => [
+            'user' => Auth::user(),
+        ],
+        'users' => User::count(),
+        'schools' => School::count(),
+    ]);
+})->name('welcome');
 
 Route::get('/dashboard/all/stats', [StatsController::class, 'superUser'])->name('superuser.stats');
 Route::get('/dashboard/admin/stats', [StatsController::class, 'schoolAdmin'])->name('school.admin.stats');
 
 require __DIR__ . '/auth.php';
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->prefix('api')->group(function () {
+    // API route for fetching buildings by school
+    Route::get('/schools/{school}/buildings', function (School $school) {
+        return $school->buildings()
+            ->with('school')
+            ->withCount('floors')
+            ->withCount('rooms')
+            ->get()
+            ->map(function($building) {
+                return [
+                    'id' => $building->id,
+                    'name' => $building->name,
+                    'stats' => [
+                        'floors' => $building->floors_count,
+                        'rooms' => $building->rooms_count,
+                    ],
+                    'school_id' => $building->school_id,
+                    'school_name' => $building->school->name
+                ];
+            });
+    })->name('api.buildings.list');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -80,6 +114,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'course-registrations' => CourseRegistrationController::class,
             'buildings' => BuildingController::class,
             'buildings.floors' => FloorController::class,
+            'buildings.floors.rooms' => RoomController::class,
         ]);
     });
 });

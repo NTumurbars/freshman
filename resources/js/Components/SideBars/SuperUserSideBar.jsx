@@ -1,30 +1,71 @@
 import { Link } from '@inertiajs/react';
+import { Building, User, School, FileBarChart, Settings, ShieldCheck, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function SuperUserSideBar() {
-    const [clicked, setClicked] = useState(0);
+    const NavItem = ({ href, icon, children }) => {
+        const Icon = icon;
+        return (
+            <Link
+                href={href}
+                className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+            >
+                <Icon className="mr-2 h-5 w-5" />
+                <span>{children}</span>
+            </Link>
+        );
+    };
+
+    const NavGroup = ({ title, children }) => (
+        <div className="mb-4">
+            <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                {title}
+            </h3>
+            <div className="space-y-1">
+                {children}
+            </div>
+        </div>
+    );
+
     return (
-        <aside className="min-h-screen border-r border-gray-200 bg-gray-50 p-4">
-            <nav className="space-y-2">
-                <Link
-                    href="/dashboard"
-                    className="block rounded px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
-                >
+        <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4">
+            <div className="mb-6 border-b border-gray-100 pb-4">
+                <h2 className="text-lg font-semibold text-gray-800">System Administration</h2>
+                <p className="text-sm text-gray-500">Super Admin</p>
+            </div>
+
+            <div className="space-y-6">
+                <NavItem href={route('dashboard')} icon={BarChart3}>
                     Dashboard
-                </Link>
-                <Link
-                    href="/schools"
-                    className="block rounded px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
-                >
-                    Manage Schools
-                </Link>
-                <Link
-                    href="/reports"
-                    className="block rounded px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
-                >
-                    Reports
-                </Link>
-            </nav>
+                </NavItem>
+
+                <NavGroup title="Schools">
+                    <NavItem href={route('schools.index')} icon={School}>
+                        Manage Schools
+                    </NavItem>
+                    <NavItem href={route('schools.create')} icon={Building}>
+                        Add New School
+                    </NavItem>
+                </NavGroup>
+
+                <NavGroup title="Users">
+                    <NavItem href={route('users.index')} icon={User}>
+                        All Users
+                    </NavItem>
+                    <NavItem href="#" icon={ShieldCheck}>
+                        Permissions
+                    </NavItem>
+                </NavGroup>
+
+                <NavGroup title="System">
+                    <NavItem href="#" icon={Settings}>
+                        System Settings
+                    </NavItem>
+                    <NavItem href={route('reports.view')} icon={FileBarChart}>
+                        Reports
+                    </NavItem>
+                </NavGroup>
+            </div>
         </aside>
     );
 }

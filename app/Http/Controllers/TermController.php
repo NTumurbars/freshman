@@ -6,6 +6,8 @@ use Inertia\Inertia;
 use App\Models\Term;
 use App\Models\School;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 // we need to add show method for this class
 // GET|HEAD show schools/{school}/terms/{term}
 class TermController extends Controller
@@ -14,67 +16,191 @@ class TermController extends Controller
     public function index()
     {
         $this->authorize('viewAny', Term::class);
-        $terms = Term::with('school')->get();
-        return Inertia::render('Terms/Index', ['terms' => $terms]);
+
+        // Get the current user's school
+        $user = Auth::user();
+        $school = $user->school;
+
+        $terms = Term::with(['school', 'sections.course', 'sections.professor'])
+            ->withCount('sections')
+            ->get()
+            ->map(function ($term) {
+                return [
+                    'id' => $term->id,
+                    'school_id' => $term->school_id,
+                    'name' => $term->name,
+                    'school_name' => $term->school->name,
+                    'start_date' => $term->start_date,
+                    'end_date' => $term->end_date,
+                    'sections_count' => $term->sections_count,
+                    'is_current' => now()->between($term->start_date, $term->end_date)
+                ];
+            });
+
+        // Don't override the entire auth data, just add the school if needed
+        return Inertia::render('Terms/Index', [
+            'terms' => $terms
+        ]);
     }
 
-    // GET /terms/create
-    public function create()
+    // GET /schools/{school}/terms/create
+    public function create(School $school)
     {
         $this->authorize('create', Term::class);
-        $schools = School::all();
-        return Inertia::render('Terms/Create', ['schools' => $schools]);
+
+        return Inertia::render('Terms/Create', [
+            'school' => [
+                'id' => $school->id,
+                'name' => $school->name
+            ]
+        ]);
     }
 
-    // POST /terms
-    public function store(Request $request)
+    // POST /schools/{school}/terms
+    public function store(Request $request, School $school)
     {
         $this->authorize('create', Term::class);
+
         $data = $request->validate([
-            'school_id' => 'required|exists:schools,id',
-            'name'      => 'required|string',
-            'start_date'=> 'required|date',
-            'end_date'  => 'required|date|after_or_equal:start_date',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('terms')->where(function ($query) use ($school) {
+                    return $query->where('school_id', $school->id);
+                })
+            ],
+            'start_date' => [
+                'required',
+                'date',
+                'after_or_equal:' . now()->format('Y-m-d')
+            ],
+            'end_date' => [
+                'required',
+                'date',
+                'after:start_date',
+                'before:' . now()->addYears(2)->format('Y-m-d')
+            ],
         ]);
 
-        Term::create($data);
-        return redirect()->route('terms.index')->with('success', 'Term created successfully');
+        // Set the school_id from the route parameter
+        $data['school_id'] = $school->id;
+
+        $term = Term::create($data);
+
+        // Add the school parameter to the redirect
+        return redirect()->route('terms.index', ['school' => $school->id])
+                         ->with('success', 'Term created successfully');
     }
 
-    // GET /terms/{id}/edit
-    public function edit($id)
+    // GET /schools/{school}/terms/{term}/edit
+    public function edit(School $school, $term)
     {
-        $term = Term::findOrFail($id);
+        $term = Term::with('school')->findOrFail($term);
         $this->authorize('update', $term);
-        $schools = School::all();
+
+        // Make sure the term belongs to the specified school
+        if ($term->school_id !== $school->id) {
+            abort(404);
+        }
+
         return Inertia::render('Terms/Edit', [
             'term' => $term,
-            'schools' => $schools,
+            'school' => [
+                'id' => $school->id,
+                'name' => $school->name
+            ]
         ]);
     }
 
-    // PUT /terms/{id}
-    public function update(Request $request, $id)
+    // PUT /schools/{school}/terms/{term}
+    public function update(Request $request, School $school, $term)
     {
-        $term = Term::findOrFail($id);
+        $term = Term::findOrFail($term);
         $this->authorize('update', $term);
+
+        // Make sure the term belongs to the specified school
+        if ($term->school_id !== $school->id) {
+            abort(404);
+        }
+
         $data = $request->validate([
-            'school_id' => 'required|exists:schools,id',
-            'name'      => 'required|string',
+            'name' => [
+                'required',
+                'string',
+                Rule::unique('terms')->where(function ($query) use ($school, $term) {
+                    return $query->where('school_id', $school->id);
+                })->ignore($term)
+            ],
             'start_date'=> 'required|date',
-            'end_date'  => 'required|date|after_or_equal:start_date',
+            'end_date'  => 'required|date|after:start_date',
         ]);
+
+        // Ensure school_id remains the same
+        $data['school_id'] = $school->id;
 
         $term->update($data);
-        return redirect()->route('terms.index')->with('success', 'Term updated successfully');
+
+        // Also fix the redirect here
+        return redirect()->route('terms.index', ['school' => $school->id])
+                         ->with('success', 'Term updated successfully');
     }
 
-    // DELETE /terms/{id}
-    public function destroy($id)
+    // DELETE /schools/{school}/terms/{term}
+    public function destroy(School $school, $term)
     {
-        $term = Term::findOrFail($id);
+        $term = Term::findOrFail($term);
         $this->authorize('delete', $term);
+
+        // Make sure the term belongs to the specified school
+        if ($term->school_id !== $school->id) {
+            abort(404);
+        }
+
         $term->delete();
-        return redirect()->route('terms.index')->with('success', 'Term deleted successfully');
+
+        // Fix the redirect here too
+        return redirect()->route('terms.index', ['school' => $school->id])
+                         ->with('success', 'Term deleted successfully');
+    }
+
+    // GET schools/{school}/terms/{term}
+    public function show(School $school, $term)
+    {
+        $term = Term::with(['sections.course', 'sections.professor', 'sections.schedules.room'])
+            ->findOrFail($term);
+        $this->authorize('view', $term);
+
+        if ($term->school_id !== $school->id) {
+            abort(404);
+        }
+
+        return Inertia::render('Terms/Show', [
+            'term' => [
+                'id' => $term->id,
+                'name' => $term->name,
+                'start_date' => $term->start_date,
+                'end_date' => $term->end_date,
+                'sections' => $term->sections->map(function($section) {
+                    return [
+                        'id' => $section->id,
+                        'course_name' => $section->course->title,
+                        'section_code' => $section->section_code,
+                        'professor_name' => $section->professor ? $section->professor->name : 'Not assigned',
+                        'number_of_students' => $section->number_of_students,
+                        'schedules' => $section->schedules->map(function($schedule) {
+                            return [
+                                'id' => $schedule->id,
+                                'day_of_week' => $schedule->day_of_week,
+                                'start_time' => $schedule->start_time,
+                                'end_time' => $schedule->end_time,
+                                'room_name' => $schedule->room->name
+                            ];
+                        })
+                    ];
+                })
+            ],
+            'school' => $school
+        ]);
     }
 }

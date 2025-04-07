@@ -1,248 +1,123 @@
-import Block from '@/Components/ui/Block';
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import {
+    Card,
+    Title,
+    Text,
+    Grid,
+    Col,
+    Metric,
+    Badge,
+    Button,
+    Icon,
+} from '@tremor/react';
+import {
+    BuildingOffice2Icon,
+    BuildingStorefrontIcon,
+    PlusIcon,
+    ChevronRightIcon,
+} from '@heroicons/react/24/outline';
 
-export default function Index({ buildings }) {
-    const { auth, flash } = usePage().props;
+const BuildingCard = ({ building }) => (
+    <Card>
+        <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+                <Icon
+                    icon={BuildingOffice2Icon}
+                    variant="solid"
+                    size="lg"
+                    color="blue"
+                />
+                <div>
+                    <Title>{building.name}</Title>
+                    <Text className="mt-1">Building ID: {building.id}</Text>
+                </div>
+            </div>
+        </div>
+
+        <Grid numItems={1} numItemsSm={2} className="mt-6 gap-6">
+            <Card decoration="top" decorationColor="indigo">
+                <div className="flex items-center justify-between">
+                    <Text>Floors</Text>
+                    <BuildingStorefrontIcon className="h-5 w-5 text-indigo-500" />
+                </div>
+                <Metric>{building.stats.floors}</Metric>
+            </Card>
+            <Card decoration="top" decorationColor="cyan">
+                <div className="flex items-center justify-between">
+                    <Text>Total Rooms</Text>
+                    <BuildingStorefrontIcon className="h-5 w-5 text-cyan-500" />
+                </div>
+                <Metric>{building.stats.rooms}</Metric>
+            </Card>
+        </Grid>
+
+        <div className="mt-6 flex items-center justify-end gap-2">
+            <Link href={route('buildings.show', { school: building.school_id, building: building.id })}>
+                <Button
+                    variant="light"
+                    color="gray"
+                    icon={ChevronRightIcon}
+                >
+                    View Details
+                </Button>
+            </Link>
+            <Link href={route('buildings.floors.index', { school: building.school_id, building: building.id })}>
+                <Button variant="secondary">
+                    Manage Floors
+                </Button>
+            </Link>
+        </div>
+    </Card>
+);
+
+export default function Index({ buildings, school, can_create }) {
+    const { auth } = usePage().props;
     const userRole = auth.user.role.id;
-    const school = auth.user.school;
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [editBuilding, setEditBuilding] = useState(null);
-    const [editMode, setEditMode] = useState(false);
-
-    // Create Form
-    const { data, setData, post, processing, reset } = useForm({
-        name: '',
-        school_id: school.id,
-    });
-
-    const handleCreateSubmit = (e) => {
-        e.preventDefault();
-        post(route('buildings.store'), {
-            onSuccess: () => {
-                setShowCreateModal(false);
-                reset();
-            },
-        });
-    };
-
-    // Edit Form
-    const {
-        data: editData,
-        setData: setEditData,
-        put,
-        processing: updating,
-    } = useForm({
-        name: '',
-    });
-
-    const handleEditSubmit = (e) => {
-        e.preventDefault();
-        put(
-            route('buildings.update', {
-                school: school.id,
-                building: editBuilding.id,
-            }),
-            {
-                onSuccess: () => setEditBuilding(null),
-            },
-        );
-    };
-
-    // Delete Function
-    const { delete: destroy, processing: deleting } = useForm();
-    const handleDelete = (buildingId) => {
-        if (confirm('Are you sure you want to delete this building?')) {
-            destroy(
-                route('buildings.destroy', {
-                    school: school.id,
-                    building: buildingId,
-                }),
-            );
-        }
-    };
-
-    const navigateToFloors = (buildingId) => {
-        if (!editMode) {
-            router.get(
-                route('buildings.floors.index', {
-                    school: school.id,
-                    building: buildingId,
-                }),
-            );
-        }
-    };
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <Head title="Building Management" />
-            <h1 className="mb-4 text-3xl font-bold">Buildings</h1>
+            <Head title="Buildings" />
 
-            {/* Flash Messages */}
-            {flash?.success && (
-                <div className="mb-6 bg-green-100 p-4 text-green-800">
-                    {flash.success}
+            <div className="py-6 px-4 sm:px-6 lg:px-8">
+                <div className="sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <Title>Buildings</Title>
+                        <Text>Manage campus buildings for {school.name}</Text>
+                    </div>
+                    {can_create && (
+                        <Link href={route('buildings.create', school.id)}>
+                            <Button icon={PlusIcon}>Add Building</Button>
+                        </Link>
+                    )}
                 </div>
-            )}
-            {flash?.fail && (
-                <div className="mb-6 bg-red-100 p-4 text-red-800">
-                    {flash.fail}
-                </div>
-            )}
 
-            {/* Edit Mode Checkbox */}
-            <div className="mb-4">
-                <label className="flex items-center space-x-2">
-                    <input
-                        type="checkbox"
-                        checked={editMode}
-                        onChange={() => setEditMode(!editMode)}
-                        className="form-checkbox h-5 w-5"
-                    />
-                    <span>Edit Mode</span>
-                </label>
+                <div className="mt-6">
+                    {buildings.length === 0 ? (
+                        <Card>
+                            <div className="flex flex-col items-center justify-center py-12">
+                                <BuildingOffice2Icon className="h-12 w-12 text-gray-400" />
+                                <Text className="mt-2">No buildings found</Text>
+                                {can_create && (
+                                    <Link href={route('buildings.create', school.id)} className="mt-4">
+                                        <Button variant="light" icon={PlusIcon}>
+                                            Add your first building
+                                        </Button>
+                                    </Link>
+                                )}
+                            </div>
+                        </Card>
+                    ) : (
+                        <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
+                            {buildings.map((building) => (
+                                <Col key={building.id}>
+                                    <BuildingCard building={building} />
+                                </Col>
+                            ))}
+                        </Grid>
+                    )}
+                </div>
             </div>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {!editMode && (
-                    <div
-                        onClick={() => setShowCreateModal(true)}
-                        className="cursor-pointer"
-                    >
-                        <Block
-                            title=":)"
-                            children="Create New Building."
-                            tagline="Open form to add a building."
-                        />
-                    </div>
-                )}
-                {buildings.length > 0 &&
-                    buildings.map((building, index) => (
-                        <div
-                            key={building.id}
-                            className="relative cursor-pointer"
-                            onClick={() => navigateToFloors(building.id)}
-                        >
-                            <Block
-                                title={`Building ${index + 1}`}
-                                children={building.name}
-                                tagline={`Floors: ${building.floors_count}`}
-                                className={
-                                    editMode ? 'pointer-events-none' : ''
-                                }
-                            />
-                            {editMode && (
-                                <div className="absolute right-2 top-2 flex space-x-2">
-                                    <button
-                                        className="bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setEditBuilding(building);
-                                            setEditData({
-                                                name: building.name,
-                                            });
-                                        }}
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        className="bg-red-500 px-3 py-1 text-white hover:bg-red-600"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDelete(building.id);
-                                        }}
-                                        disabled={deleting}
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-            </div>
-
-            {/* Create Modal */}
-            {showCreateModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="w-96 bg-white p-6 shadow-lg">
-                        <h2 className="mb-4 text-xl font-semibold">
-                            Create Building
-                        </h2>
-                        <form onSubmit={handleCreateSubmit}>
-                            <div className="mb-4">
-                                <label className="block">Building Name</label>
-                                <input
-                                    type="text"
-                                    value={data.name}
-                                    onChange={(e) =>
-                                        setData('name', e.target.value)
-                                    }
-                                    className="w-full rounded border p-2"
-                                    required
-                                />
-                            </div>
-                            <div className="flex justify-end space-x-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCreateModal(false)}
-                                    className="bg-gray-300 px-4 py-2"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="bg-blue-500 px-4 py-2 text-white"
-                                    disabled={processing}
-                                >
-                                    {processing ? 'Saving...' : 'Save'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Edit Modal */}
-            {editBuilding && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="w-96 bg-white p-6 shadow-lg">
-                        <h2 className="mb-4 text-xl font-semibold">
-                            Edit Building
-                        </h2>
-                        <form onSubmit={handleEditSubmit}>
-                            <div className="mb-4">
-                                <label className="block">Building Name</label>
-                                <input
-                                    type="text"
-                                    value={editData.name}
-                                    onChange={(e) =>
-                                        setEditData('name', e.target.value)
-                                    }
-                                    className="w-full rounded border p-2"
-                                    required
-                                />
-                            </div>
-                            <div className="flex justify-end space-x-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setEditBuilding(null)}
-                                    className="bg-gray-300 px-4 py-2"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="bg-blue-500 px-4 py-2 text-white"
-                                    disabled={updating}
-                                >
-                                    {updating ? 'Updating...' : 'Update'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </AppLayout>
     );
 }

@@ -6,35 +6,78 @@ use Inertia\Inertia;
 use App\Models\Section;
 use App\Models\Course;
 use App\Models\Term;
+use App\Models\School;
+use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 // We need to add the show method for this class
-// GET|HEAD show schools/{school}/sections/{section} 
+// GET|HEAD show schools/{school}/sections/{section}
 class SectionController extends Controller
 {
-    // GET /sections
-    public function index()
+    // GET /schools/{school}/sections
+    public function index(School $school)
     {
         $this->authorize('viewAny', Section::class);
-        $sections = Section::with(['course', 'term', 'professor', 'schedules', 'requiredFeatures'])->get();
-        return Inertia::render('Sections/Index', ['sections' => $sections]);
-    }
 
-    // GET /sections/create
-    public function create()
-    {
-        $this->authorize('create', Section::class);
-        $courses = Course::all();
-        $terms = Term::all();
-        return Inertia::render('Sections/Create', [
-            'courses' => $courses,
-            'terms' => $terms,
+        $user = Auth::user();
+
+        // Get departments that belong to this school
+        $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+
+        // Get courses that belong to these departments
+        $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
+
+        // Get sections for these courses
+        $sections = Section::whereIn('course_id', $schoolCourseIds)
+            ->with(['course.department', 'term', 'professor', 'schedules', 'requiredFeatures'])
+            ->get();
+
+        return Inertia::render('Sections/Index', [
+            'sections' => $sections,
+            'school' => $school
         ]);
     }
 
-    // POST /sections
-    public function store(Request $request)
+    // GET /schools/{school}/sections/create
+    public function create(School $school)
     {
         $this->authorize('create', Section::class);
+
+        // Get departments that belong to this school
+        $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+
+        // Get courses that belong to these departments
+        $courses = Course::whereIn('department_id', $schoolDepartmentIds)->get();
+
+        // Get terms for this school
+        $terms = Term::where('school_id', $school->id)->get();
+
+        return Inertia::render('Sections/Create', [
+            'courses' => $courses,
+            'terms' => $terms,
+            'school' => $school
+        ]);
+    }
+
+    // POST /schools/{school}/sections
+    public function store(Request $request, School $school)
+    {
+        $this->authorize('create', Section::class);
+
+        // Validate course belongs to this school
+        $course = Course::findOrFail($request->course_id);
+        $department = Department::findOrFail($course->department_id);
+
+        if ($department->school_id !== $school->id) {
+            return back()->withErrors(['course_id' => 'Selected course does not belong to this school']);
+        }
+
+        // Validate term belongs to this school
+        $term = Term::findOrFail($request->term_id);
+        if ($term->school_id !== $school->id) {
+            return back()->withErrors(['term_id' => 'Selected term does not belong to this school']);
+        }
+
         $data = $request->validate([
             'course_id'          => 'required|exists:courses,id',
             'term_id'            => 'required|exists:terms,id',
@@ -49,29 +92,105 @@ class SectionController extends Controller
             $section->requiredFeatures()->sync($request->required_features);
         }
 
-        return redirect()->route('sections.index')->with('success', 'Section created successfully');
+        return redirect()->route('sections.index', ['school' => $school])->with('success', 'Section created successfully');
     }
 
-    // GET /sections/{id}/edit
-    public function edit($id)
+    // GET /schools/{school}/sections/{section}
+    public function show(School $school, $section)
     {
-        $section = Section::findOrFail($id);
+        $section = Section::with(['course.department', 'term', 'professor', 'schedules.room', 'requiredFeatures'])
+            ->findOrFail($section);
+
+        $this->authorize('view', $section);
+
+        // Verify section belongs to this school
+        $course = $section->course;
+        if (!$course) {
+            abort(404, 'Section not found');
+        }
+
+        $department = $course->department;
+        if (!$department || $department->school_id !== $school->id) {
+            abort(403, 'This section does not belong to your school');
+        }
+
+        return Inertia::render('Sections/Show', [
+            'section' => $section,
+            'school' => $school
+        ]);
+    }
+
+    // GET /schools/{school}/sections/{section}/edit
+    public function edit(School $school, $section)
+    {
+        $section = Section::findOrFail($section);
         $this->authorize('update', $section);
-        $section = Section::with(['course', 'term', 'professor', 'schedules', 'requiredFeatures'])->findOrFail($id);
-        $courses = Course::all();
-        $terms = Term::all();
+
+        // Verify section belongs to this school
+        $course = $section->course;
+        if (!$course) {
+            abort(404, 'Section not found');
+        }
+
+        $department = $course->department;
+        if (!$department || $department->school_id !== $school->id) {
+            abort(403, 'This section does not belong to your school');
+        }
+
+        $section->load(['course', 'term', 'professor', 'schedules', 'requiredFeatures']);
+
+        // Get departments that belong to this school
+        $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+
+        // Get courses that belong to these departments
+        $courses = Course::whereIn('department_id', $schoolDepartmentIds)->get();
+
+        // Get terms for this school
+        $terms = Term::where('school_id', $school->id)->get();
+
         return Inertia::render('Sections/Edit', [
             'section' => $section,
             'courses' => $courses,
             'terms' => $terms,
+            'school' => $school
         ]);
     }
 
-    // PUT /sections/{id}
-    public function update(Request $request, $id)
+    // PUT /schools/{school}/sections/{section}
+    public function update(Request $request, School $school, $section)
     {
-        $section = Section::findOrFail($id);
+        $section = Section::findOrFail($section);
         $this->authorize('update', $section);
+
+        // Verify section belongs to this school
+        $currentCourse = $section->course;
+        if (!$currentCourse) {
+            abort(404, 'Section not found');
+        }
+
+        $currentDepartment = $currentCourse->department;
+        if (!$currentDepartment || $currentDepartment->school_id !== $school->id) {
+            abort(403, 'This section does not belong to your school');
+        }
+
+        // Validate new course belongs to this school
+        if ($request->course_id != $section->course_id) {
+            $newCourse = Course::findOrFail($request->course_id);
+            $newDepartment = Department::findOrFail($newCourse->department_id);
+
+            if ($newDepartment->school_id !== $school->id) {
+                return back()->withErrors(['course_id' => 'Selected course does not belong to this school']);
+            }
+        }
+
+        // Validate new term belongs to this school
+        if ($request->term_id != $section->term_id) {
+            $newTerm = Term::findOrFail($request->term_id);
+            if ($newTerm->school_id !== $school->id) {
+                return back()->withErrors(['term_id' => 'Selected term does not belong to this school']);
+            }
+        }
+
         $data = $request->validate([
             'course_id'          => 'required|exists:courses,id',
             'term_id'            => 'required|exists:terms,id',
@@ -86,15 +205,27 @@ class SectionController extends Controller
             $section->requiredFeatures()->sync($request->required_features);
         }
 
-        return redirect()->route('sections.index')->with('success', 'Section updated successfully');
+        return redirect()->route('sections.index', ['school' => $school])->with('success', 'Section updated successfully');
     }
 
-    // DELETE /sections/{id}
-    public function destroy($id)
+    // DELETE /schools/{school}/sections/{section}
+    public function destroy(School $school, $section)
     {
-        $section = Section::findOrFail($id);
+        $section = Section::findOrFail($section);
         $this->authorize('delete', $section);
+
+        // Verify section belongs to this school
+        $course = $section->course;
+        if (!$course) {
+            abort(404, 'Section not found');
+        }
+
+        $department = $course->department;
+        if (!$department || $department->school_id !== $school->id) {
+            abort(403, 'This section does not belong to your school');
+        }
+
         $section->delete();
-        return redirect()->route('sections.index')->with('success', 'Section deleted successfully');
+        return redirect()->route('sections.index', ['school' => $school])->with('success', 'Section deleted successfully');
     }
 }

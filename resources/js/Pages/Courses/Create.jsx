@@ -13,6 +13,20 @@ export default function Create({ departments, majors }) {
         capacity: 0,
     });
 
+    // Filter majors based on selected department
+    const filteredMajors = majors.filter(
+        major => major.department_id === data.department_id
+    );
+
+    const handleDepartmentChange = (e) => {
+        const departmentId = parseInt(e.target.value);
+        setData(data => ({
+            ...data,
+            department_id: departmentId,
+            major_id: '' // Reset major when department changes
+        }));
+    };
+
     const submit = (e) => {
         e.preventDefault();
         console.log('Submitting data:', data);
@@ -33,10 +47,10 @@ export default function Create({ departments, majors }) {
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <Head title="Create School" />
+            <Head title="Create Course" />
 
             <div className="mx-auto max-w-2xl rounded bg-white p-6 shadow">
-                <h1 className="mb-4 text-xl font-bold">Create a New School</h1>
+                <h1 className="mb-4 text-xl font-bold">Create a New Course</h1>
 
                 <form onSubmit={submit}>
                     <div className="mb-4">
@@ -46,7 +60,7 @@ export default function Create({ departments, majors }) {
                         <select
                             className="mt-1 block w-full rounded border-gray-300"
                             value={data.department_id}
-                            onChange={(e) => setData('department_id', parseInt(e.target.value))}
+                            onChange={handleDepartmentChange}
                         >
                             <option value="">Select Department</option>
                             {departments.map((department) => (
@@ -72,7 +86,7 @@ export default function Create({ departments, majors }) {
                             onChange={(e) => setData('major_id', parseInt(e.target.value))}
                         >
                             <option value="">Select Major</option>
-                            {majors.map((major) => (
+                            {filteredMajors.map((major) => (
                                 <option key={major.id} value={major.id}>
                                     {major.code}
                                 </option>

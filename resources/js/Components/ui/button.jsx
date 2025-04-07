@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva } from "class-variance-authority";
+import { Link } from '@inertiajs/react';
 
 import { cn } from "@/lib/utils"
 
@@ -19,6 +20,10 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // Custom variants
+        primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+        danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+        success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -34,13 +39,45 @@ const buttonVariants = cva(
   }
 )
 
-const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "button"
+const Button = React.forwardRef(({
+  className,
+  variant = 'primary',
+  size = 'default',
+  asChild = false,
+  href = null,
+  disabled = false,
+  icon = null,
+  iconPosition = 'left',
+  type = 'button',
+  onClick = null,
+  ...props
+}, ref) => {
+  const Comp = asChild ? Slot : (href ? Link : "button")
+
+  // Content with optional icon
+  const content = (
+    <>
+      {icon && iconPosition === 'left' && (
+        <span className="mr-2">{icon}</span>
+      )}
+      {props.children}
+      {icon && iconPosition === 'right' && (
+        <span className="ml-2">{icon}</span>
+      )}
+    </>
+  );
+
   return (
-    (<Comp
+    <Comp
       className={cn(buttonVariants({ variant, size, className }))}
       ref={ref}
-      {...props} />)
+      disabled={disabled}
+      onClick={onClick}
+      type={type}
+      {...props}
+    >
+      {content}
+    </Comp>
   );
 })
 Button.displayName = "Button"

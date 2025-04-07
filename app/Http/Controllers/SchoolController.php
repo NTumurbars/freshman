@@ -13,8 +13,19 @@ class SchoolController extends Controller
     public function index()
     {
         $this->authorize('viewAny', School::class);
+
+        $user = Auth::user();
+
+        // If super admin, show all schools
+        if ($user->role->name === 'super_admin') {
+            $schools = School::all();
+        } else {
+            // For school admins, only show their own school
+            $schools = School::where('id', $user->school_id)->get();
+        }
+
         return Inertia::render('Schools/Index', [
-            'schools' => School::all(),
+            'schools' => $schools,
         ]);
     }
 
@@ -29,22 +40,38 @@ class SchoolController extends Controller
     public function store(Request $request)
     {
         $this->authorize('create', School::class);
-        $validated = $request->validate([
-            'name' => 'required|string|unique:schools,name',
-            'email' => 'required|email',
-        ]);
 
-        School::create($validated);
+        // Validate the request using the School model validation rules
+        $validated = $request->validate(School::validationRules());
 
-        return redirect()->route('schools.index')->with('success', 'School created successfully.');
+        // Prepare settings data
+        $this->prepareJsonFields($validated);
+
+        $school = School::create($validated);
+
+        return response()->json([
+            'message' => 'School created successfully',
+            'school' => $school
+        ], 201);
     }
 
     // GET /schools/{school}/edit
     public function edit(School $school)
     {
         $this->authorize('update', $school);
+
+        $school->loadCount(['users', 'departments', 'buildings', 'terms']);
+        $totalCourses = $school->departments()->withCount('courses')->get()->sum('courses_count');
+
         return Inertia::render('Schools/Edit', [
             'school' => $school,
+            'stats' => [
+                'total_users' => $school->users_count,
+                'total_departments' => $school->departments_count,
+                'total_buildings' => $school->buildings_count,
+                'total_courses' => $totalCourses,
+                'total_active_terms' => $school->terms_count
+            ]
         ]);
     }
 
@@ -52,19 +79,19 @@ class SchoolController extends Controller
     public function update(Request $request, School $school)
     {
         $this->authorize('update', $school);
-        $validated = $request->validate([
-            'name' => 'required|string|unique:schools,name,' . $school->id,
-            'email' => 'required|email',
-        ]);
+
+        // Validate the request using the School model validation rules
+        $validated = $request->validate(School::validationRules($school->id));
+
+        // Prepare settings data
+        $this->prepareJsonFields($validated);
+
         $school->update($validated);
-        $userRole = Auth::user()->role_id;
-        if ($userRole == 1) {
-            return redirect()->route('schools.index')->with('success', 'School updated successfully.');
-        } else {
-            return redirect()
-                ->route('dashboard')
-                ->with('success', 'School updated successfully.');
-        }
+
+        return response()->json([
+            'message' => 'School updated successfully',
+            'school' => $school
+        ]);
     }
 
     // DELETE /schools/{school}
@@ -77,18 +104,45 @@ class SchoolController extends Controller
     }
 
     // GET schools/{school}
-    public function show($id)
+    public function show(School $school)
     {
-        $school = School::withCount(['users', 'terms', 'buildings'])->findOrFail($id);
+        $this->authorize('view', $school);
+
+        $school->loadCount(['users', 'terms', 'buildings']);
+
         return Inertia::render('Schools/Show', [
             'school_info' => [
                 'id' => $school->id,
                 'name' => $school->name,
                 'email' => $school->email,
+                'code' => $school->code,
+                'website_url' => $school->website_url,
+                'logo_url' => $school->logo_url,
+                'description' => $school->description,
                 'users' => $school->users_count,
                 'terms' => $school->terms_count,
                 'buildings' => $school->buildings_count,
             ],
         ]);
+    }
+
+    /**
+     * Prepare JSON fields for storing in the database
+     *
+     * @param array $data The validated data
+     * @return void
+     */
+    private function prepareJsonFields(&$data)
+    {
+        if (isset($data['settings']) && is_array($data['settings'])) {
+            // Set default values for any missing fields
+            $data['settings'] = array_merge([
+                'default_language' => 'en',
+                'default_course_capacity' => '30',
+                'registration_window_days' => '30',
+                'email_notifications' => 'all',
+                'reminder_days' => '7'
+            ], $data['settings']);
+        }
     }
 }
