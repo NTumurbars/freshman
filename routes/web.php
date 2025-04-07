@@ -8,6 +8,7 @@ use App\Models\School;
 
 // Controllers
 use App\Http\Controllers\{
+    BuildingController,
     SchoolController,
     DepartmentController,
     MajorController,
@@ -16,6 +17,7 @@ use App\Http\Controllers\{
     CourseController,
     SectionController,
     CourseRegistrationController,
+    FloorController,
     RoomController,
     ScheduleController,
     RoomFeatureController,
@@ -76,6 +78,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'schedules' => ScheduleController::class,
             'professor-profiles' => ProfessorProfileController::class,
             'course-registrations' => CourseRegistrationController::class,
+            'buildings' => BuildingController::class,
+            'buildings.floors' => FloorController::class,
         ]);
     });
 });

@@ -42,8 +42,8 @@ export default function Show({ school_info, flash }) {
                     tagline="Terms so far."
                 />
                 <Block
-                    title="Total Rooms"
-                    children={school_info.rooms}
+                    title="Total Buildings"
+                    children={school_info.buildings}
                     tagline="Total number of rooms in the school."
                 />
             </div>

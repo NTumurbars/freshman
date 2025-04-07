@@ -3,31 +3,35 @@ import AppLayout from '@/Layouts/AppLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function Index({ buildings }) {
+export default function Index({ floors, building }) {
     const { auth, flash } = usePage().props;
     const userRole = auth.user.role.id;
     const school = auth.user.school;
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [editBuilding, setEditBuilding] = useState(null);
+    const [editFloor, setEditFloor] = useState(null);
     const [editMode, setEditMode] = useState(false);
 
-    // Create Form
     const { data, setData, post, processing, reset } = useForm({
         name: '',
-        school_id: school.id,
+        building_id: building.id,
     });
 
     const handleCreateSubmit = (e) => {
         e.preventDefault();
-        post(route('buildings.store'), {
-            onSuccess: () => {
-                setShowCreateModal(false);
-                reset();
+        post(
+            route('buildings.floors.store', {
+                school: school.id,
+                building: building.id,
+            }),
+            {
+                onSuccess: () => {
+                    setShowCreateModal(false);
+                    reset();
+                },
             },
-        });
+        );
     };
 
-    // Edit Form
     const {
         data: editData,
         setData: setEditData,
@@ -40,35 +44,37 @@ export default function Index({ buildings }) {
     const handleEditSubmit = (e) => {
         e.preventDefault();
         put(
-            route('buildings.update', {
+            route('buildings.floors.update', {
                 school: school.id,
-                building: editBuilding.id,
+                building: building.id,
+                floor: editFloor.id,
             }),
             {
-                onSuccess: () => setEditBuilding(null),
+                onSuccess: () => setEditFloor(null),
             },
         );
     };
 
-    // Delete Function
     const { delete: destroy, processing: deleting } = useForm();
-    const handleDelete = (buildingId) => {
-        if (confirm('Are you sure you want to delete this building?')) {
+    const handleDelete = (floorId) => {
+        if (confirm('Are you sure you want to delete this floor?')) {
             destroy(
-                route('buildings.destroy', {
+                route('buildings.floors.destroy', {
                     school: school.id,
-                    building: buildingId,
+                    building: building.id,
+                    floor: floorId,
                 }),
             );
         }
     };
 
-    const navigateToFloors = (buildingId) => {
+    const navigateToRooms = (floorId) => {
         if (!editMode) {
             router.get(
-                route('buildings.floors.index', {
+                route('floors.rooms.index', {
                     school: school.id,
-                    building: buildingId,
+                    building: building.id,
+                    floor: floorId,
                 }),
             );
         }
@@ -76,10 +82,11 @@ export default function Index({ buildings }) {
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <Head title="Building Management" />
-            <h1 className="mb-4 text-3xl font-bold">Buildings</h1>
+            <Head title="Floor Management" />
+            <h1 className="mb-4 text-3xl font-bold">
+                Floors of {building.name}
+            </h1>
 
-            {/* Flash Messages */}
             {flash?.success && (
                 <div className="mb-6 bg-green-100 p-4 text-green-800">
                     {flash.success}
@@ -91,7 +98,6 @@ export default function Index({ buildings }) {
                 </div>
             )}
 
-            {/* Edit Mode Checkbox */}
             <div className="mb-4">
                 <label className="flex items-center space-x-2">
                     <input
@@ -112,22 +118,22 @@ export default function Index({ buildings }) {
                     >
                         <Block
                             title=":)"
-                            children="Create New Building."
-                            tagline="Open form to add a building."
+                            children="Create New Floor."
+                            tagline="Open form to add a Floor."
                         />
                     </div>
                 )}
-                {buildings.length > 0 &&
-                    buildings.map((building, index) => (
+                {floors.length > 0 &&
+                    floors.map((floor, index) => (
                         <div
-                            key={building.id}
+                            key={floor.id}
                             className="relative cursor-pointer"
-                            onClick={() => navigateToFloors(building.id)}
+                            onClick={() => navigateToRooms(floor.id)}
                         >
                             <Block
-                                title={`Building ${index + 1}`}
-                                children={building.name}
-                                tagline={`Floors: ${building.floors_count}`}
+                                title={`Floor ${index + 1}`}
+                                children={floor.name}
+                                tagline={`Rooms: ${floor.rooms_count}`}
                                 className={
                                     editMode ? 'pointer-events-none' : ''
                                 }
@@ -138,9 +144,9 @@ export default function Index({ buildings }) {
                                         className="bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setEditBuilding(building);
+                                            setEditFloor(floor);
                                             setEditData({
-                                                name: building.name,
+                                                name: floor.name,
                                             });
                                         }}
                                     >
@@ -150,7 +156,7 @@ export default function Index({ buildings }) {
                                         className="bg-red-500 px-3 py-1 text-white hover:bg-red-600"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            handleDelete(building.id);
+                                            handleDelete(floor.id);
                                         }}
                                         disabled={deleting}
                                     >
@@ -162,16 +168,15 @@ export default function Index({ buildings }) {
                     ))}
             </div>
 
-            {/* Create Modal */}
             {showCreateModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="w-96 bg-white p-6 shadow-lg">
                         <h2 className="mb-4 text-xl font-semibold">
-                            Create Building
+                            Create Floor
                         </h2>
                         <form onSubmit={handleCreateSubmit}>
                             <div className="mb-4">
-                                <label className="block">Building Name</label>
+                                <label className="block">Floor Name</label>
                                 <input
                                     type="text"
                                     value={data.name}
@@ -203,16 +208,15 @@ export default function Index({ buildings }) {
                 </div>
             )}
 
-            {/* Edit Modal */}
-            {editBuilding && (
+            {editFloor && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="w-96 bg-white p-6 shadow-lg">
                         <h2 className="mb-4 text-xl font-semibold">
-                            Edit Building
+                            Edit Floor
                         </h2>
                         <form onSubmit={handleEditSubmit}>
                             <div className="mb-4">
-                                <label className="block">Building Name</label>
+                                <label className="block">Floor Name</label>
                                 <input
                                     type="text"
                                     value={editData.name}
@@ -226,7 +230,7 @@ export default function Index({ buildings }) {
                             <div className="flex justify-end space-x-2">
                                 <button
                                     type="button"
-                                    onClick={() => setEditBuilding(null)}
+                                    onClick={() => setEditFloor(null)}
                                     className="bg-gray-300 px-4 py-2"
                                 >
                                     Cancel
