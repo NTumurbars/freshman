@@ -74,9 +74,9 @@ export default function Dashboard() {
                             />
                         </Link>
                         <Block
-                            title="Total Rooms"
-                            children={stats.rooms}
-                            tagline="Number of rooms"
+                            title="Total Buildings"
+                            children={stats.buildings}
+                            tagline="Number of Buildings"
                         />
                     </div>
                 )}

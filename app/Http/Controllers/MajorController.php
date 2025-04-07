@@ -35,7 +35,7 @@ class MajorController extends Controller
         ]);
 
         Major::create($data);
-        return redirect()->route('majors.index')->with('success', 'Major created successfully');
+        return redirect()->route('departments.show', ['school' => $request->school, 'department' => $request->department])->with('success', 'Major created successfully');
     }
 
     // GET /majors/{id}/edit
