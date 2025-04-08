@@ -31,8 +31,6 @@ export default function ScheduleForm({
 
     const [isVirtual, setIsVirtual] = useState(data.location_type === 'virtual');
     const [selectedSection, setSelectedSection] = useState(null);
-    const [showPatternModal, setShowPatternModal] = useState(false);
-    const [selectedPattern, setSelectedPattern] = useState('');
     const [isEditingPattern, setIsEditingPattern] = useState(false);
 
     useEffect(() => {
@@ -94,19 +92,6 @@ export default function ScheduleForm({
             }
         }
         
-        if (field === 'meeting_pattern' && schedule) {
-            // For an existing schedule, store the new pattern and show confirmation modal
-            try {
-                setSelectedPattern(value);
-                setData('meeting_pattern', value);
-                setShowPatternModal(true);
-                return;
-            } catch (error) {
-                console.error('Error setting pattern:', error);
-                alert('There was an error changing the meeting pattern. Please try again.');
-            }
-        }
-        
         if (field === 'meeting_pattern') {
             console.log('Changing meeting pattern to:', value);
             setData('meeting_pattern', value);
@@ -123,30 +108,14 @@ export default function ScheduleForm({
                     setData('day_of_week', 'Monday');
                 }
             }
+            
+            if (schedule) {
+                setIsEditingPattern(true);
+            }
             return;
         }
         
         setData(field, value);
-    };
-
-    // Confirmation callback for changing pattern
-    const confirmPatternChange = () => {
-        if (!selectedPattern) {
-            alert('No pattern selected');
-            return;
-        }
-        // Explicitly update the form state to the new pattern
-        setData('meeting_pattern', selectedPattern);
-        setIsEditingPattern(true);
-        setShowPatternModal(false);
-    };
-
-    const cancelPatternChange = () => {
-        setSelectedPattern('');
-        if (schedule) {
-            setData('meeting_pattern', schedule.meeting_pattern || 'single');
-        }
-        setShowPatternModal(false);
     };
 
     // Preview function to send current schedule data to parent component
@@ -293,7 +262,6 @@ export default function ScheduleForm({
         // Reset editing state
         if (isEditingPattern) {
             setIsEditingPattern(false);
-            setSelectedPattern('');
         }
     };
 
@@ -362,7 +330,7 @@ export default function ScheduleForm({
                             value={data.section_id}
                             onChange={(e) => handleChange('section_id', e.target.value)}
                             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                            disabled={schedule || preselectedSectionId}
+                            disabled={preselectedSectionId}
                         >
                             <option value="">Select Section</option>
                             {sections.map((section) => (
@@ -394,7 +362,6 @@ export default function ScheduleForm({
                                 value={data.meeting_pattern}
                                 onChange={(e) => handleChange('meeting_pattern', e.target.value)}
                                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                disabled={schedule && !isEditingPattern}
                             >
                                 <option value="single">Single Meeting</option>
                                 <option value="monday-wednesday-friday">Monday/Wednesday/Friday</option>
@@ -580,52 +547,6 @@ export default function ScheduleForm({
                     </button>
                 </div>
             </form>
-
-            {/* Pattern Change Confirmation Modal */}
-            {showPatternModal && (
-                <Modal
-                    show={showPatternModal}
-                    onClose={() => setShowPatternModal(false)}
-                    title="Change Meeting Pattern"
-                    footer={
-                        <div className="flex justify-end space-x-2">
-                            <button
-                                type="button"
-                                onClick={cancelPatternChange}
-                                className="inline-flex items-center px-4 py-2 border border-gray-300 bg-white shadow-sm text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={confirmPatternChange}
-                                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                            >
-                                Confirm Change
-                            </button>
-                        </div>
-                    }
-                >
-                    <div className="p-6">
-                        <div className="flex items-start">
-                            <div className="flex-shrink-0">
-                                <Info className="h-6 w-6 text-yellow-500" />
-                            </div>
-                            <div className="ml-3">
-                                <h3 className="text-lg font-medium text-gray-900">Warning: This will modify your schedule</h3>
-                                <div className="mt-2">
-                                    <p className="text-sm text-gray-500">
-                                        Changing the meeting pattern will delete <strong>all existing schedules</strong> for this section and create new ones based on the selected pattern.
-                                    </p>
-                                    <p className="mt-2 text-sm text-gray-500">
-                                        Are you sure you want to continue?
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </Modal>
-            )}
         </div>
     );
 }
