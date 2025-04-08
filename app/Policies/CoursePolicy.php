@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Course;
+use App\Models\Department;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class CoursePolicy
@@ -23,6 +24,20 @@ class CoursePolicy
      */
     public function view(User $user, Course $course)
     {
+        // Super admin can view any course
+        if ($user->role->name === 'super_admin') {
+            return true;
+        }
+
+        // School admins can only view courses for their school
+        if ($user->role->name === 'school_admin') {
+            // Get department IDs that belong to the user's school
+            $schoolDepartmentIds = Department::where('school_id', $user->school_id)->pluck('id');
+
+            // Check if the course belongs to the user's school
+            return $schoolDepartmentIds->contains($course->department_id);
+        }
+
         return true;
     }
 
@@ -39,7 +54,21 @@ class CoursePolicy
      */
     public function update(User $user, Course $course)
     {
-        return in_array($user->role->name, ['super_admin', 'school_admin']);
+        // Super admin can update any course
+        if ($user->role->name === 'super_admin') {
+            return true;
+        }
+
+        // School admins can only update courses for their school
+        if ($user->role->name === 'school_admin') {
+            // Get department IDs that belong to the user's school
+            $schoolDepartmentIds = Department::where('school_id', $user->school_id)->pluck('id');
+
+            // Check if the course belongs to the user's school
+            return $schoolDepartmentIds->contains($course->department_id);
+        }
+
+        return false;
     }
 
     /**
@@ -47,6 +76,20 @@ class CoursePolicy
      */
     public function delete(User $user, Course $course)
     {
-        return in_array($user->role->name, ['super_admin', 'school_admin']);
+        // Super admin can delete any course
+        if ($user->role->name === 'super_admin') {
+            return true;
+        }
+
+        // School admins can only delete courses for their school
+        if ($user->role->name === 'school_admin') {
+            // Get department IDs that belong to the user's school
+            $schoolDepartmentIds = Department::where('school_id', $user->school_id)->pluck('id');
+
+            // Check if the course belongs to the user's school
+            return $schoolDepartmentIds->contains($course->department_id);
+        }
+
+        return false;
     }
 }

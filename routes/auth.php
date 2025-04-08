@@ -17,11 +17,11 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | Routes accessible to guests (not authenticated).
-| Includes registration, login, and password reset.
+| Includes login, and password reset.
 |
 */
 Route::middleware('guest')->group(function () {
-    // Registration (optional)
+    // Registration not needed
     // Route::get('register', [RegisteredUserController::class, 'create'])
     //     ->name('register');
     // Route::post('register', [RegisteredUserController::class, 'store']);

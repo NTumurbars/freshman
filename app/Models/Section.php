@@ -18,8 +18,26 @@ class Section extends Model
         'professor_id',
         'section_code',
         'number_of_students',
+        'status',
+        'delivery_method',
+        'notes',
     ];
 
+    protected $casts = [
+        'number_of_students' => 'integer',
+    ];
+
+    // Status constants
+    const STATUS_ACTIVE = 'active';
+    const STATUS_CANCELED = 'canceled';
+    const STATUS_FULL = 'full';
+    const STATUS_PENDING = 'pending';
+
+    // Delivery method constants
+    const DELIVERY_IN_PERSON = 'in-person';
+    const DELIVERY_ONLINE = 'online';
+    const DELIVERY_HYBRID = 'hybrid';
+    
     public function course()
     {
         return $this->belongsTo(Course::class);

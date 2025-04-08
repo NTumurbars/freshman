@@ -1,48 +1,122 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import {
+    Card,
+    Title,
+    Text,
+    Grid,
+    Col,
+    Metric,
+    Badge,
+    Button,
+    Icon,
+} from '@tremor/react';
+import {
+    BuildingOffice2Icon,
+    BuildingStorefrontIcon,
+    PlusIcon,
+    ChevronRightIcon,
+} from '@heroicons/react/24/outline';
 
-const Block = ({ title, children, tagline, action }) => (
-    <div className="rounded-lg bg-white p-6 shadow-md">
-        <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
-        <p className="mt-2 text-lg text-gray-600">{children}</p>
-        {tagline && <p className="mt-2 text-sm text-gray-500">{tagline}</p>}
-        {action && (
-            <div className="mt-4">
-                <button
-                    onClick={action}
-                    className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-                >
-                    Add Building
-                </button>
+const BuildingCard = ({ building }) => (
+    <Card>
+        <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+                <Icon
+                    icon={BuildingOffice2Icon}
+                    variant="solid"
+                    size="lg"
+                    color="blue"
+                />
+                <div>
+                    <Title>{building.name}</Title>
+                    <Text className="mt-1">Building ID: {building.id}</Text>
+                </div>
             </div>
-        )}
-    </div>
+        </div>
+
+        <Grid numItems={1} numItemsSm={2} className="mt-6 gap-6">
+            <Card decoration="top" decorationColor="indigo">
+                <div className="flex items-center justify-between">
+                    <Text>Floors</Text>
+                    <BuildingStorefrontIcon className="h-5 w-5 text-indigo-500" />
+                </div>
+                <Metric>{building.stats.floors}</Metric>
+            </Card>
+            <Card decoration="top" decorationColor="cyan">
+                <div className="flex items-center justify-between">
+                    <Text>Total Rooms</Text>
+                    <BuildingStorefrontIcon className="h-5 w-5 text-cyan-500" />
+                </div>
+                <Metric>{building.stats.rooms}</Metric>
+            </Card>
+        </Grid>
+
+        <div className="mt-6 flex items-center justify-end gap-2">
+            <Link href={route('buildings.show', { school: building.school_id, building: building.id })}>
+                <Button
+                    variant="light"
+                    color="gray"
+                    icon={ChevronRightIcon}
+                >
+                    View Details
+                </Button>
+            </Link>
+            <Link href={route('buildings.floors.index', { school: building.school_id, building: building.id })}>
+                <Button variant="secondary">
+                    Manage Floors
+                </Button>
+            </Link>
+        </div>
+    </Card>
 );
 
-export default function Index({ buildings }) {
+export default function Index({ buildings, school, can_create }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
-    const school = auth.user.school;
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {buildings.length > 0 ? (
-                    buildings.map((building, index) => (
-                        <Block
-                            key={building.id}
-                            title={`Building ${index + 1}`}
-                            children={building.name}
-                            tagline={`Floors: ${building.floors}`}
-                        />
-                    ))
-                ) : (
-                    <Block
-                        title="No Buildings Yet"
-                        children="It seems there are no buildings in your school. Start by adding a new building."
-                        tagline="Add your first building."
-                    />
-                )}
+            <Head title="Buildings" />
+
+            <div className="py-6 px-4 sm:px-6 lg:px-8">
+                <div className="sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <Title>Buildings</Title>
+                        <Text>Manage campus buildings for {school.name}</Text>
+                    </div>
+                    {can_create && (
+                        <Link href={route('buildings.create', school.id)}>
+                            <Button icon={PlusIcon}>Add Building</Button>
+                        </Link>
+                    )}
+                </div>
+
+                <div className="mt-6">
+                    {buildings.length === 0 ? (
+                        <Card>
+                            <div className="flex flex-col items-center justify-center py-12">
+                                <BuildingOffice2Icon className="h-12 w-12 text-gray-400" />
+                                <Text className="mt-2">No buildings found</Text>
+                                {can_create && (
+                                    <Link href={route('buildings.create', school.id)} className="mt-4">
+                                        <Button variant="light" icon={PlusIcon}>
+                                            Add your first building
+                                        </Button>
+                                    </Link>
+                                )}
+                            </div>
+                        </Card>
+                    ) : (
+                        <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
+                            {buildings.map((building) => (
+                                <Col key={building.id}>
+                                    <BuildingCard building={building} />
+                                </Col>
+                            ))}
+                        </Grid>
+                    )}
+                </div>
             </div>
         </AppLayout>
     );

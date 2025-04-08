@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-// We need to add the show method to this class 
+// We need to add the show method to this class
 // GET|HEAD show users/{user}
 class UserController extends Controller
 {
@@ -19,15 +19,48 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $user = User::find(Auth::id());
-        if($user->role_id == 1)
-        {
-            return Inertia::render('Users/Index', ['users' => User::all()]);
+        $query = User::with(['role', 'professorProfile', 'school'])
+            ->when($user->role_id != 1, function($q) use ($user) {
+                return $q->where('school_id', $user->school_id)
+                        ->whereNot('id', $user->id);
+            });
+
+        // Search and filters
+        if ($request->search) {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', "%{$request->search}%")
+                  ->orWhere('email', 'like', "%{$request->search}%");
+            });
         }
-        $users = User::with(['role', 'professorProfile'])->where('school_id', $user->school_id)->whereNot('id', $user->id)->get();
-        $roles = Role::where('id', '>', 1)->select('name', 'id')->get();
-        return Inertia::render('Users/Index', ['users' => $users, 'roles' => $roles]);
+
+        if ($request->role) {
+            $query->where('role_id', $request->role);
+        }
+
+        // Sorting
+        $sortField = $request->sort_by ?? 'created_at';
+        $sortDirection = $request->sort_direction ?? 'desc';
+        $query->orderBy($sortField, $sortDirection);
+
+        // Pagination
+        $users = $query->paginate(10)->withQueryString();
+
+        $roles = Role::when($user->role_id != 1, function($q) {
+            return $q->where('id', '>', 1);
+        })->get();
+
+        return Inertia::render('Users/Index', [
+            'users' => $users,
+            'roles' => $roles,
+            'filters' => [
+                'search' => $request->search,
+                'role' => $request->role,
+                'sort_by' => $sortField,
+                'sort_direction' => $sortDirection
+            ]
+        ]);
     }
-    
+
 
     // GET /users/create
     public function create()
@@ -36,7 +69,7 @@ class UserController extends Controller
         $roles = Role::where('id', '>', 1)->get();
         $schools = $user->school;
         $departments = $schools->departments;
-        
+
         return Inertia::render('Users/Create', [
             'roles' => $roles,
             'schools' => $schools,
@@ -48,13 +81,31 @@ class UserController extends Controller
     // POST /users
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $currentUser = Auth::user();
+        
+        // Base validation rules
+        $rules = [
             'name'      => 'required|string',
             'email'     => 'required|email|unique:users,email',
             'role_id'   => 'required|exists:roles,id',
-            'school_id' => 'required|exists:schools,id',
             'department_id' => 'nullable|exists:departments,id',
-        ]);
+            'office_location' => 'nullable|string',
+            'phone_number' => 'nullable|string',
+            'title' => 'nullable|string|max:255',
+            'website' => 'nullable|string|max:255',
+        ];
+        
+        // Super admin can specify school, others must use their own school
+        if ($currentUser->role_id === 1) {
+            $rules['school_id'] = 'required|exists:schools,id';
+        }
+        
+        $data = $request->validate($rules);
+        
+        // For non-super admins, force the school to be their own school
+        if ($currentUser->role_id !== 1) {
+            $data['school_id'] = $currentUser->school_id;
+        }
 
         $tempPassword = Str::random(12);
         $user = User::create([
@@ -65,10 +116,15 @@ class UserController extends Controller
             'school_id' => $data['school_id'],
         ]);
 
-        if ($request->department_id) 
-        {
+        // Check if this is a professor role (IDs 3 or 4) and create professor profile
+        $professorRoleIds = [3, 4]; // professor and major_coordinator
+        if (in_array((int)$data['role_id'], $professorRoleIds) && $request->department_id) {
             $user->professorProfile()->create([
-            'department_id' => $data['department_id'],
+                'department_id' => $data['department_id'],
+                'office' => $data['office_location'] ?? null,
+                'phone' => $data['phone_number'] ?? null,
+                'title' => $data['title'] ?? null,
+                'website' => $data['website'] ?? null,
             ]);
         }
 
@@ -82,8 +138,22 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        $roles = Role::all();
-        $schools = School::all();
+        $currentUser = Auth::user();
+        
+        // Check if the current user is authorized to edit this user
+        // School admins can only edit users from their own school
+        if ($currentUser->role_id !== 1 && $user->school_id !== $currentUser->school_id) {
+            abort(403, 'You are not authorized to edit users from other schools.');
+        }
+        
+        // Get roles - super admin can see all roles, others have restrictions
+        $roles = Role::when($currentUser->role_id != 1, function($q) {
+            return $q->where('id', '>', 1);
+        })->get();
+        
+        // Get schools - only super admin can see all schools, others only see their own
+        $schools = $currentUser->role_id === 1 ? School::all() : [$currentUser->school];
+        
         return Inertia::render('Users/Edit', [
             'user' => $user,
             'roles' => $roles,
@@ -95,12 +165,27 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        $data = $request->validate([
+        $currentUser = Auth::user();
+        
+        // Prepare validation rules
+        $rules = [
             'name'      => 'required|string',
             'email'     => 'required|email|unique:users,email,' . $user->id,
             'role_id'   => 'required|exists:roles,id',
-            'school_id' => 'required|exists:schools,id',
-        ]);
+        ];
+        
+        // Only allow super admins to change school
+        if ($currentUser->role_id === 1) {
+            $rules['school_id'] = 'required|exists:schools,id';
+        }
+        
+        $data = $request->validate($rules);
+        
+        // For school admins, keep the original school
+        if ($currentUser->role_id !== 1) {
+            // Remove school_id if present in the request
+            unset($data['school_id']);
+        }
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
@@ -114,17 +199,30 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
+        $currentUser = Auth::user();
+        
+        // Check if current user can delete this user
+        // Only super admin can delete any user, school admins can only delete from their school
+        if ($currentUser->role_id !== 1 && $user->school_id !== $currentUser->school_id) {
+            abort(403, 'You are not authorized to delete users from other schools.');
+        }
+        
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User deleted successfully');
     }
 
     public function show(User $user)
     {
-        $user->role;
-        $professors = $user->professorProfile;
-        $department = $professors->department;
+        $this->authorize('view', $user);
+
+        $user->load(['role', 'school', 'professorProfile.department']);
+        
+        // Get departments for the school
+        $departments = $user->school->departments ?? [];
+
         return Inertia::render('Users/Show', [
-            'user' => $user
+            'user' => $user,
+            'departments' => $departments
         ]);
     }
 }

@@ -28,7 +28,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem
+    --radius: 0.5rem;
   }
   .dark {
     --background: 222.2 84% 4.9%;
@@ -54,7 +54,7 @@
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -64,5 +64,85 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* Building Layout Styles */
+.building-layout {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 16px;
+    padding: 16px 0;
+}
+
+.floor-box {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.floor-box:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
+}
+
+.floor-header {
+    background-color: #1e40af;
+    color: white;
+    padding: 8px 16px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.floor-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.floor-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.rooms-container {
+    padding: 16px;
+    min-height: 100px;
+}
+
+.rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+}
+
+.room-box {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 8px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.no-rooms {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.floor-footer {
+    padding: 8px 16px;
+    border-top: 1px solid #e5e7eb;
+    background-color: #f3f4f6;
 }
