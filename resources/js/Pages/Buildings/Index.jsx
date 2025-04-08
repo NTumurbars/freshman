@@ -53,7 +53,7 @@ const BuildingCard = ({ building }) => (
         </Grid>
 
         <div className="mt-6 flex items-center justify-end gap-2">
-            <Link href={route('buildings.show', { school: building.school_id, building: building.id })}>
+            <Link href={route('buildings.show', { school: building.school_id, building: building.id })} className='flex items-center p-2'>
                 <Button
                     variant="light"
                     color="gray"
