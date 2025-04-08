@@ -12,6 +12,7 @@ import {
 } from '@tremor/react';
 import { ArrowLeftIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { Settings } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function Create({ school, categories }) {
     const { auth, flash } = usePage().props;
@@ -25,7 +26,15 @@ export default function Create({ school, categories }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('roomfeatures.store', school.id));
+        post(route('roomfeatures.store', school.id), {
+            onSuccess: () => {
+                toast.success('Room feature created successfully');
+            },
+            onError: (errors) => {
+                console.log('Errors:', errors); // Error logging
+                toast.error('Something went wrong');
+            },
+        });
     };
 
     return (
