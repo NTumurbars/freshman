@@ -112,7 +112,7 @@ const DepartmentCard = ({ department, school }) => {
                     )}
                 </div>
 
-                <div className="mt-auto pt-4 flex justify-end gap-2 border-t border-gray-100 mt-4">
+                <div className="items-center pt-4 flex justify-end gap-4 border-t border-gray-100 mt-4">
                     <Link href={route('departments.show', { school: department.school_id, department: department.id })}>
                         <Button variant="light" size="sm" className="text-blue-600">
                             View
@@ -131,7 +131,7 @@ const DepartmentCard = ({ department, school }) => {
                         method="delete"
                         as="button"
                         type="button"
-                        className="text-red-600 text-sm hover:text-red-800 hover:bg-red-50 p-2 rounded transition-colors"
+                        className="text-red-600 text-sm hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                     >
                         Delete
                     </Link>
