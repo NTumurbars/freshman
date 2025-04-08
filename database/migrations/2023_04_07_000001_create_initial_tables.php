@@ -27,7 +27,6 @@ return new class extends Migration
             $table->string('postal_code')->nullable();
             $table->string('phone')->nullable();
             $table->string('timezone')->nullable();
-            $table->json('settings')->nullable();
             $table->timestamps();
         });
 
@@ -91,7 +90,6 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date');
             $table->boolean('is_active')->default(false);
-            $table->json('settings')->nullable();
             $table->timestamps();
         });
 

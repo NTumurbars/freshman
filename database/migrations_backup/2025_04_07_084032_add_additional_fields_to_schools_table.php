@@ -28,10 +28,6 @@ return new class extends Migration
 
             // Add preference fields
             $table->string('timezone')->default('UTC')->after('phone');
-
-            // Add JSON fields for complex data structures
-            $table->json('academic_calendar')->nullable()->after('timezone');
-            $table->json('settings')->nullable()->after('academic_calendar');
         });
     }
 
@@ -53,8 +49,6 @@ return new class extends Migration
                 'postal_code',
                 'phone',
                 'timezone',
-                'academic_calendar',
-                'settings'
             ]);
         });
     }

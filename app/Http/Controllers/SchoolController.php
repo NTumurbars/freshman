@@ -44,9 +44,6 @@ class SchoolController extends Controller
         // Validate the request using the School model validation rules
         $validated = $request->validate(School::validationRules());
 
-        // Prepare settings data
-        $this->prepareJsonFields($validated);
-
         $school = School::create($validated);
 
         return response()->json([
@@ -83,9 +80,6 @@ class SchoolController extends Controller
         // Validate the request using the School model validation rules
         $validated = $request->validate(School::validationRules($school->id));
 
-        // Prepare settings data
-        $this->prepareJsonFields($validated);
-
         $school->update($validated);
 
         return redirect()->route('schools.edit', $school)->with('success', 'School updated successfully');
@@ -121,25 +115,5 @@ class SchoolController extends Controller
                 'buildings' => $school->buildings_count,
             ],
         ]);
-    }
-
-    /**
-     * Prepare JSON fields for storing in the database
-     *
-     * @param array $data The validated data
-     * @return void
-     */
-    private function prepareJsonFields(&$data)
-    {
-        if (isset($data['settings']) && is_array($data['settings'])) {
-            // Set default values for any missing fields
-            $data['settings'] = array_merge([
-                'default_language' => 'en',
-                'default_course_capacity' => '30',
-                'registration_window_days' => '30',
-                'email_notifications' => 'all',
-                'reminder_days' => '7'
-            ], $data['settings']);
-        }
     }
 }
