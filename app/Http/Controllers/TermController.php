@@ -21,10 +21,20 @@ class TermController extends Controller
         $user = Auth::user();
         $school = $user->school;
 
+        // Ensure we're only getting terms for the current user's school
+        if (!$school) {
+            return Inertia::render('Terms/Index', [
+                'terms' => []
+            ]);
+        }
+
         $terms = Term::with(['school', 'sections.course', 'sections.professor'])
+            ->where('school_id', $school->id)
             ->withCount('sections')
             ->get()
             ->map(function ($term) {
+                // Use today's date at start of day to ensure proper date comparisons
+                $today = now()->startOfDay();
                 return [
                     'id' => $term->id,
                     'school_id' => $term->school_id,
@@ -33,7 +43,7 @@ class TermController extends Controller
                     'start_date' => $term->start_date,
                     'end_date' => $term->end_date,
                     'sections_count' => $term->sections_count,
-                    'is_current' => now()->between($term->start_date, $term->end_date)
+                    'is_current' => $today->between($term->start_date, $term->end_date)
                 ];
             });
 

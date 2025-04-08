@@ -46,10 +46,7 @@ class SchoolController extends Controller
 
         $school = School::create($validated);
 
-        return response()->json([
-            'message' => 'School created successfully',
-            'school' => $school
-        ], 201);
+        return redirect()->route('schools.index')->with('success', 'School created successfully');
     }
 
     // GET /schools/{school}/edit

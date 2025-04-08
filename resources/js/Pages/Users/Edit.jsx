@@ -11,6 +11,7 @@ import {
     SelectItem, 
     Divider 
 } from '@tremor/react';
+import toast from 'react-hot-toast';
 
 export default function Edit({ user, roles, schools }) {
     const { data, setData, put, errors, processing } = useForm({
@@ -26,7 +27,15 @@ export default function Edit({ user, roles, schools }) {
 
     const submit = (e) => {
         e.preventDefault();
-        put(route('users.update', user.id));
+        put(route('users.update', user.id), {
+            onSuccess: () => {
+                toast.success('User updated successfully');
+            },
+            onError: (errors) => {
+                console.log('Errors:', errors); // Error logging
+                toast.error('Something went wrong');
+            },
+        });
     };
     
     const { auth } = usePage().props;

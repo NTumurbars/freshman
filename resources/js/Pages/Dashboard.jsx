@@ -200,11 +200,11 @@ export default function Dashboard() {
                         />
                         <DashboardCard
                             title="Active Courses"
-                            value={stats.activeCourses}
+                            value={stats.activeCourses || 0}
                             icon={BookOpen}
                             linkTo={schoolRoute('courses.index')}
                             color="green"
-                            subtitle="Courses this term"
+                            subtitle={stats.currentTerm ? `Courses for ${stats.currentTerm.name}` : "No current term"}
                         />
                         <DashboardCard
                             title="Current Term"
@@ -212,7 +212,7 @@ export default function Dashboard() {
                             icon={Calendar}
                             linkTo={schoolRoute('terms.index')}
                             color="blue"
-                            subtitle={stats.currentTerm ? `Ends ${new Date(stats.currentTerm.end_date).toLocaleDateString()}` : 'No active term'}
+                            subtitle={stats.currentTerm ? `${new Date(stats.currentTerm.start_date).toLocaleDateString()} - ${new Date(stats.currentTerm.end_date).toLocaleDateString()}` : 'No active term'}
                         />
                         <DashboardCard
                             title="Schedule Conflicts"

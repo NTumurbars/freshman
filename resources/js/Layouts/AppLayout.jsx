@@ -8,6 +8,7 @@ import SuperUserSideBar from '@/Components/SideBars/SuperUserSideBar';
 import { useState, useEffect } from 'react';
 import { PanelLeftClose, PanelLeftOpen, Menu } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
+import { Toaster } from 'react-hot-toast';
 
 export default function AppLayout({ children, navChildren, school, userRole }) {
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -83,6 +84,8 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
 
     return (
         <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-indigo-50">
+            <Toaster />
+            
             {/* Navbar */}
             <Navbar auth={mergedAuth}>
                 <button

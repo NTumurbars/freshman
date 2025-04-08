@@ -74,7 +74,15 @@ export default function Edit({ school, stats, formErrors }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        put(route('schools.update', school.id));
+        put(route('schools.update', school.id), {
+            onSuccess: () => {
+                toast.success('School updated successfully');
+            },
+            onError: (errors) => {
+                console.log('Errors:', errors); // Error logging
+                toast.error('Something went wrong');
+            },
+        });
     };
 
     return (

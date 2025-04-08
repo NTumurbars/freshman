@@ -14,12 +14,14 @@ export default function Index({ schools, flash }) {
                 <h1 className="text-3xl font-semibold text-gray-800">
                     All Schools
                 </h1>
-                <Link
-                    href={route('schools.create')}
-                    className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition duration-200 hover:bg-blue-700"
-                >
-                    Create School
-                </Link>
+                {userRole !== 2 && (
+                    <Link
+                        href={route('schools.create')}
+                        className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition duration-200 hover:bg-blue-700"
+                    >
+                        Create School
+                    </Link>
+                )}
             </div>
 
             {flash?.success && (
