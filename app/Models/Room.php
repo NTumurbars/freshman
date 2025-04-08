@@ -11,16 +11,16 @@ use App\Models\Floor;
 class Room extends Model
 {
     protected $fillable = [
-        'school_id',
         'room_number',
-        'building',
-        'capacity',
         'floor_id',
+        'capacity',
     ];
 
-    public function school()
+    protected $appends = ['name', 'school'];
+
+    public function floor()
     {
-        return $this->belongsTo(School::class);
+        return $this->belongsTo(Floor::class);
     }
 
     public function features()
@@ -32,9 +32,21 @@ class Room extends Model
     {
         return $this->hasMany(Schedule::class);
     }
-    
-    public function floor()
+
+    /**
+     * Get the school this room belongs to through floor->building->school
+     */
+    public function getSchoolAttribute()
     {
-        return $this->belongsTo(Floor::class);
+        return $this->floor->building->school ?? null;
+    }
+
+    /**
+     * Get the full name of the room (building name + room number)
+     */
+    public function getNameAttribute()
+    {
+        $buildingName = $this->floor->building->name ?? '';
+        return $buildingName ? "{$buildingName} {$this->room_number}" : $this->room_number;
     }
 }

@@ -4,73 +4,143 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\RoomFeature;
+use App\Models\School;
 use Illuminate\Http\Request;
 
 class RoomFeatureController extends Controller
 {
-    // GET /room-features
-    public function index()
+    // GET /schools/{school}/roomfeatures
+    public function index(School $school)
     {
         $this->authorize('viewAny', RoomFeature::class);
-        $features = RoomFeature::all();
-        return Inertia::render('RoomFeatures/Index', ['features' => $features]);
+        
+        $features = RoomFeature::withCount('rooms')->get();
+        
+        return Inertia::render('RoomFeatures/Index', [
+            'features' => $features,
+            'school' => $school,
+            'can_create' => request()->user()->can('create', RoomFeature::class)
+        ]);
     }
 
-    // GET /room-features/create
-    public function create()
+    // GET /schools/{school}/roomfeatures/create
+    public function create(School $school)
     {
         $this->authorize('create', RoomFeature::class);
-        return Inertia::render('RoomFeatures/Create');
+        
+        return Inertia::render('RoomFeatures/Create', [
+            'school' => $school,
+            'categories' => $this->getCategories()
+        ]);
     }
 
-    // POST /room-features
-    public function store(Request $request)
+    // POST /schools/{school}/roomfeatures
+    public function store(Request $request, School $school)
     {
         $this->authorize('create', RoomFeature::class);
+        
         $data = $request->validate([
             'name'        => 'required|string|unique:room_features,name',
             'description' => 'nullable|string',
+            'category'    => 'required|string',
         ]);
 
         RoomFeature::create($data);
-        return redirect()->route('room-features.index')->with('success', 'Room feature created successfully');
+        
+        return redirect()->route('roomfeatures.index', $school->id)
+            ->with('message', 'Room feature created successfully')
+            ->with('type', 'success');
     }
 
-    // GET /room-features/{id}/edit
-    public function edit($id)
+    // GET /schools/{school}/roomfeatures/{roomfeature}/edit
+    public function edit(School $school, RoomFeature $roomfeature)
     {
-        $feature = RoomFeature::findOrFail($id);
-        $this->authorize('update', $feature);
-        return Inertia::render('RoomFeatures/Edit', ['feature' => $feature]);
+        $this->authorize('update', $roomfeature);
+        
+        return Inertia::render('RoomFeatures/Edit', [
+            'roomfeature' => $roomfeature,
+            'school' => $school,
+            'categories' => $this->getCategories()
+        ]);
     }
 
-    // PUT /room-features/{id}
-    public function update(Request $request, $id)
+    // PUT /schools/{school}/roomfeatures/{roomfeature}
+    public function update(Request $request, School $school, RoomFeature $roomfeature)
     {
-        $feature = RoomFeature::findOrFail($id);
-        $this->authorize('update', $feature);
+        $this->authorize('update', $roomfeature);
+        
         $data = $request->validate([
-            'name'        => 'required|string|unique:room_features,name,' . $feature->id,
+            'name'        => 'required|string|unique:room_features,name,' . $roomfeature->id,
             'description' => 'nullable|string',
+            'category'    => 'required|string',
         ]);
 
-        $feature->update($data);
-        return redirect()->route('room-features.index')->with('success', 'Room feature updated successfully');
+        $roomfeature->update($data);
+        
+        return redirect()->route('roomfeatures.index', $school->id)
+            ->with('message', 'Room feature updated successfully')
+            ->with('type', 'success');
     }
 
-    // DELETE /room-features/{id}
-    public function destroy($id)
+    // DELETE /schools/{school}/roomfeatures/{roomfeature}
+    public function destroy(School $school, RoomFeature $roomfeature)
     {
-        $feature = RoomFeature::findOrFail($id);
-        $this->authorize('delete', $feature);
-        $feature->delete();
-        return redirect()->route('room-features.index')->with('success', 'Room feature deleted successfully');
+        $this->authorize('delete', $roomfeature);
+        
+        // Check if the feature is in use
+        if ($roomfeature->rooms()->count() > 0) {
+            return redirect()->route('roomfeatures.index', $school->id)
+                ->with('message', 'Cannot delete feature that is in use by rooms')
+                ->with('type', 'error');
+        }
+        
+        $roomfeature->delete();
+        
+        return redirect()->route('roomfeatures.index', $school->id)
+            ->with('message', 'Room feature deleted successfully')
+            ->with('type', 'success');
     }
 
-    // GET room-features/{room_feature}
-    public function show($id)
+    // GET /schools/{school}/roomfeatures/{roomfeature}
+    public function show(School $school, RoomFeature $roomfeature)
     {
-        $features = RoomFeature::findorFail($id);
-        return Inertia::render('RoomFeatures/Show', ['features' => $features]);
+        $this->authorize('view', $roomfeature);
+
+        $roomfeature->load(['rooms.floor.building']);
+        
+        return Inertia::render('RoomFeatures/Show', [
+            'roomfeature' => [
+                'id' => $roomfeature->id,
+                'name' => $roomfeature->name,
+                'description' => $roomfeature->description,
+                'category' => $roomfeature->category,
+                'rooms' => $roomfeature->rooms->map(function($room) {
+                    return [
+                        'id' => $room->id,
+                        'room_number' => $room->room_number,
+                        'building_name' => $room->floor->building->name,
+                        'capacity' => $room->capacity
+                    ];
+                }),
+            ],
+            'school' => $school
+        ]);
+    }
+
+    /**
+     * Get the predefined list of categories
+     * 
+     * @return array
+     */
+    private function getCategories()
+    {
+        return [
+            'Technology' => 'Technology',
+            'Furniture' => 'Furniture',
+            'Accessibility' => 'Accessibility',
+            'Safety' => 'Safety',
+            'Audio/Visual' => 'Audio/Visual',
+            'Other' => 'Other'
+        ];
     }
 }

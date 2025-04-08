@@ -13,11 +13,16 @@ class Course extends Model
      protected $fillable = [
         'department_id',
         'major_id',
-        'course_code',
+        'code',
         'title',
         'description',
         'capacity',
+        'credits',
+        'level',
+        'is_active',
     ];
+
+    protected $appends = ['school'];
 
     public function department()
     {
@@ -32,5 +37,21 @@ class Course extends Model
     public function sections()
     {
         return $this->hasMany(Section::class);
+    }
+
+    /**
+     * Get the school through the department relationship
+     */
+    public function school()
+    {
+        return $this->department ? $this->department->school() : null;
+    }
+
+    /**
+     * Get the school this course belongs to through department
+     */
+    public function getSchoolAttribute()
+    {
+        return $this->department ? $this->department->school : null;
     }
 }

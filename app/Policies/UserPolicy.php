@@ -51,10 +51,11 @@ class UserPolicy
 
     /**
      * Determine whether the user can delete a user.
-     * Typically only super admin can delete users.
+     * Super admin can delete any user; school admin can delete users in their school.
      */
     public function delete(User $user, User $model)
     {
-        return $user->role->name === 'super_admin';
+        return $user->role->name === 'super_admin' ||
+               ($user->role->name === 'school_admin' && $user->school_id === $model->school_id);
     }
 }

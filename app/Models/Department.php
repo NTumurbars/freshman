@@ -13,6 +13,12 @@ class Department extends Model
     protected $fillable = [
         'school_id',
         'name',
+        'code',
+        'contact'
+    ];
+
+    protected $casts = [
+        'contact' => 'array'
     ];
 
     public function school()

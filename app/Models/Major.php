@@ -8,7 +8,12 @@ use App\Models\Course;
 
 class Major extends Model
 {
-    protected $fillable = ['department_id', 'code'];
+    protected $fillable = [
+        'department_id', 
+        'code',
+        'name',
+        'description'
+    ];
 
     public function department()
     {

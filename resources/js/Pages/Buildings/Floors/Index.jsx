@@ -1,7 +1,76 @@
-import Block from '@/Components/ui/Block';
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage, Link } from '@inertiajs/react';
 import { useState } from 'react';
+import {
+    Card,
+    Title,
+    Text,
+    Grid,
+    Col,
+    Button,
+    Badge,
+    Metric,
+    Flex,
+    TextInput,
+    Divider,
+    NumberInput,
+} from '@tremor/react';
+import {
+    BuildingOffice2Icon,
+    PlusIcon,
+    PencilIcon,
+    TrashIcon,
+    ArrowLeftIcon,
+    XMarkIcon
+} from '@heroicons/react/24/outline';
+import { Layers } from 'lucide-react';
+
+const FloorCard = ({ floor, onEdit, onDelete, editMode }) => (
+    <Card className={`${!editMode ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}>
+        <div className="flex items-start justify-between">
+            <div>
+                <Title>Floor {floor.number}</Title>
+                <Text className="mt-1">Floor ID: {floor.id}</Text>
+            </div>
+            <Layers className="h-8 w-8 text-blue-500" />
+        </div>
+
+        <div className="mt-4">
+            <Badge color="indigo" size="lg">{floor.rooms_count} Rooms</Badge>
+        </div>
+
+        {editMode ? (
+            <div className="mt-4 flex justify-end space-x-2">
+                <Button
+                    variant="light"
+                    color="yellow"
+                    icon={PencilIcon}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(floor);
+                    }}
+                >
+                    Edit
+                </Button>
+                <Button
+                    variant="light"
+                    color="red"
+                    icon={TrashIcon}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(floor.id);
+                    }}
+                >
+                    Delete
+                </Button>
+            </div>
+        ) : (
+            <div className="mt-4">
+                <Text>Click to manage rooms</Text>
+            </div>
+        )}
+    </Card>
+);
 
 export default function Index({ floors, building }) {
     const { auth, flash } = usePage().props;
@@ -12,7 +81,7 @@ export default function Index({ floors, building }) {
     const [editMode, setEditMode] = useState(false);
 
     const { data, setData, post, processing, reset } = useForm({
-        name: '',
+        number: '',
         building_id: building.id,
     });
 
@@ -38,7 +107,7 @@ export default function Index({ floors, building }) {
         put,
         processing: updating,
     } = useForm({
-        name: '',
+        number: '',
     });
 
     const handleEditSubmit = (e) => {
@@ -71,7 +140,7 @@ export default function Index({ floors, building }) {
     const navigateToRooms = (floorId) => {
         if (!editMode) {
             router.get(
-                route('floors.rooms.index', {
+                route('buildings.floors.rooms.index', {
                     school: school.id,
                     building: building.id,
                     floor: floorId,
@@ -82,169 +151,235 @@ export default function Index({ floors, building }) {
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <Head title="Floor Management" />
-            <h1 className="mb-4 text-3xl font-bold">
-                Floors of {building.name}
-            </h1>
+            <Head title={`Floors - ${building.name}`} />
 
-            {flash?.success && (
-                <div className="mb-6 bg-green-100 p-4 text-green-800">
-                    {flash.success}
-                </div>
-            )}
-            {flash?.fail && (
-                <div className="mb-6 bg-red-100 p-4 text-red-800">
-                    {flash.fail}
-                </div>
-            )}
-
-            <div className="mb-4">
-                <label className="flex items-center space-x-2">
-                    <input
-                        type="checkbox"
-                        checked={editMode}
-                        onChange={() => setEditMode(!editMode)}
-                        className="form-checkbox h-5 w-5"
-                    />
-                    <span>Edit Mode</span>
-                </label>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {!editMode && (
-                    <div
-                        onClick={() => setShowCreateModal(true)}
-                        className="cursor-pointer"
-                    >
-                        <Block
-                            title=":)"
-                            children="Create New Floor."
-                            tagline="Open form to add a Floor."
-                        />
-                    </div>
-                )}
-                {floors.length > 0 &&
-                    floors.map((floor, index) => (
-                        <div
-                            key={floor.id}
-                            className="relative cursor-pointer"
-                            onClick={() => navigateToRooms(floor.id)}
-                        >
-                            <Block
-                                title={`Floor ${index + 1}`}
-                                children={floor.name}
-                                tagline={`Rooms: ${floor.rooms_count}`}
-                                className={
-                                    editMode ? 'pointer-events-none' : ''
-                                }
-                            />
-                            {editMode && (
-                                <div className="absolute right-2 top-2 flex space-x-2">
-                                    <button
-                                        className="bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setEditFloor(floor);
-                                            setEditData({
-                                                name: floor.name,
-                                            });
-                                        }}
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        className="bg-red-500 px-3 py-1 text-white hover:bg-red-600"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDelete(floor.id);
-                                        }}
-                                        disabled={deleting}
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            )}
+            <div className="py-6 px-4 sm:px-6 lg:px-8">
+                <div className="sm:flex sm:items-center sm:justify-between mb-6">
+                    <div className="flex items-center">
+                        <Link href={route('buildings.index', school.id)}>
+                            <Button
+                                variant="light"
+                                color="gray"
+                                icon={ArrowLeftIcon}
+                                className="mr-4"
+                            >
+                                Back to Buildings
+                            </Button>
+                        </Link>
+                        <div className="flex items-center">
+                            <Layers className="h-8 w-8 text-blue-600 mr-3" />
+                            <div>
+                                <Title>{building.name} Floors</Title>
+                                <Text>Manage floors and their rooms</Text>
+                            </div>
                         </div>
-                    ))}
+                    </div>
+                    <div className="mt-4 sm:mt-0 flex space-x-3">
+                        <Button
+                            variant={!editMode ? 'light' : 'primary'}
+                            color={!editMode ? 'gray' : 'blue'}
+                            icon={PencilIcon}
+                            onClick={() => setEditMode(!editMode)}
+                        >
+                            {editMode ? 'Done Editing' : 'Edit Floors'}
+                        </Button>
+                        <Button icon={PlusIcon} onClick={() => setShowCreateModal(true)}>
+                            Add Floor
+                        </Button>
+                    </div>
+                </div>
+
+                <Card className="mb-6">
+                    <Flex>
+                        <div>
+                            <Title>Floor Summary</Title>
+                            <Text>Overview of {building.name} floors</Text>
+                        </div>
+                    </Flex>
+
+                    <Divider className="my-4" />
+
+                    <Grid numItems={1} numItemsSm={2} className="gap-6">
+                        <Card decoration="top" decorationColor="blue">
+                            <Text>Total Floors</Text>
+                            <Metric>{floors.length}</Metric>
+                        </Card>
+                        <Card decoration="top" decorationColor="indigo">
+                            <Text>Total Rooms</Text>
+                            <Metric>{floors.reduce((sum, floor) => sum + floor.rooms_count, 0)}</Metric>
+                        </Card>
+                    </Grid>
+                </Card>
+
+                <div className="mt-8">
+                    <Title className="mb-4">Floors</Title>
+
+                    {floors.length === 0 ? (
+                        <Card>
+                            <div className="flex flex-col items-center justify-center py-12">
+                                <Layers className="h-12 w-12 text-gray-400" />
+                                <Text className="mt-2">No floors found</Text>
+                                <Button
+                                    variant="light"
+                                    icon={PlusIcon}
+                                    className="mt-4"
+                                    onClick={() => setShowCreateModal(true)}
+                                >
+                                    Add your first floor
+                                </Button>
+                            </div>
+                        </Card>
+                    ) : (
+                        <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
+                            {floors.sort((a, b) => b.number - a.number).map((floor) => (
+                                <Col key={floor.id}>
+                                    <Card 
+                                        className={`hover:shadow-lg transition-shadow ${!editMode ? 'cursor-default' : ''}`}
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <Title className="text-2xl font-bold">Floor {floor.number}</Title>
+                                                <div className="flex items-center mt-2">
+                                                    <BuildingOffice2Icon className="h-5 w-5 text-gray-500 mr-2" />
+                                                    <Text>{building.name}</Text>
+                                                </div>
+                                            </div>
+                                            <Layers className="h-12 w-12 text-blue-500" />
+                                        </div>
+
+                                        <Divider className="my-4" />
+
+                                        <div className="grid grid-cols-2 gap-4 mt-4">
+                                            <div className="bg-blue-50 p-3 rounded-lg text-center">
+                                                <Text>Rooms</Text>
+                                                <Metric className="text-blue-700">{floor.rooms_count}</Metric>
+                                            </div>
+                                            <div className="bg-indigo-50 p-3 rounded-lg text-center">
+                                                <Text>Floor #</Text>
+                                                <Metric className="text-indigo-700">{floor.number}</Metric>
+                                            </div>
+                                        </div>
+
+                                        {editMode && (
+                                            <Flex justifyContent="end" className="mt-4 space-x-2">
+                                                <Button
+                                                    variant="light"
+                                                    color="yellow"
+                                                    icon={PencilIcon}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditData({ number: floor.number });
+                                                        setEditFloor(floor);
+                                                    }}
+                                                >
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    variant="light"
+                                                    color="red" 
+                                                    icon={TrashIcon}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(floor.id);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </Flex>
+                                        )}
+
+                                        {!editMode && (
+                                            <div className="mt-4 text-center">
+                                                <Link href={route('buildings.floors.show', {
+                                                    school: school.id,
+                                                    building: building.id,
+                                                    floor: floor.id
+                                                })}>
+                                                    <Button variant="light" color="blue">
+                                                        View Floor Details
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        )}
+                                    </Card>
+                                </Col>
+                            ))}
+                        </Grid>
+                    )}
+                </div>
             </div>
 
+            {/* Create Modal */}
             {showCreateModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="w-96 bg-white p-6 shadow-lg">
-                        <h2 className="mb-4 text-xl font-semibold">
-                            Create Floor
-                        </h2>
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <Card className="w-full max-w-lg">
+                        <div className="flex justify-between items-center mb-4">
+                            <Title>Add New Floor</Title>
+                            <Button
+                                variant="light"
+                                color="gray"
+                                icon={XMarkIcon}
+                                onClick={() => setShowCreateModal(false)}
+                            />
+                        </div>
                         <form onSubmit={handleCreateSubmit}>
                             <div className="mb-4">
-                                <label className="block">Floor Name</label>
-                                <input
-                                    type="text"
-                                    value={data.name}
-                                    onChange={(e) =>
-                                        setData('name', e.target.value)
-                                    }
-                                    className="w-full rounded border p-2"
-                                    required
+                                <Text>Floor Number</Text>
+                                <NumberInput
+                                    value={data.number}
+                                    onValueChange={(value) => setData('number', value)}
+                                    placeholder="Enter floor number"
+                                    className="mt-1"
                                 />
                             </div>
-                            <div className="flex justify-end space-x-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCreateModal(false)}
-                                    className="bg-gray-300 px-4 py-2"
-                                >
-                                    Cancel
-                                </button>
-                                <button
+                            <Flex justifyContent="end">
+                                <Button
                                     type="submit"
-                                    className="bg-blue-500 px-4 py-2 text-white"
+                                    loading={processing}
                                     disabled={processing}
                                 >
-                                    {processing ? 'Saving...' : 'Save'}
-                                </button>
-                            </div>
+                                    Save Floor
+                                </Button>
+                            </Flex>
                         </form>
-                    </div>
+                    </Card>
                 </div>
             )}
 
+            {/* Edit Modal */}
             {editFloor && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="w-96 bg-white p-6 shadow-lg">
-                        <h2 className="mb-4 text-xl font-semibold">
-                            Edit Floor
-                        </h2>
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <Card className="w-full max-w-lg">
+                        <div className="flex justify-between items-center mb-4">
+                            <Title>Edit Floor</Title>
+                            <Button
+                                variant="light"
+                                color="gray"
+                                icon={XMarkIcon}
+                                onClick={() => setEditFloor(null)}
+                            />
+                        </div>
                         <form onSubmit={handleEditSubmit}>
                             <div className="mb-4">
-                                <label className="block">Floor Name</label>
-                                <input
-                                    type="text"
-                                    value={editData.name}
-                                    onChange={(e) =>
-                                        setEditData('name', e.target.value)
-                                    }
-                                    className="w-full rounded border p-2"
-                                    required
+                                <Text>Floor Number</Text>
+                                <NumberInput
+                                    value={editData.number || editFloor.number}
+                                    onValueChange={(value) => setEditData('number', value)}
+                                    placeholder="Enter floor number"
+                                    className="mt-1"
                                 />
                             </div>
-                            <div className="flex justify-end space-x-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setEditFloor(null)}
-                                    className="bg-gray-300 px-4 py-2"
-                                >
-                                    Cancel
-                                </button>
-                                <button
+                            <Flex justifyContent="end">
+                                <Button
                                     type="submit"
-                                    className="bg-blue-500 px-4 py-2 text-white"
+                                    loading={updating}
                                     disabled={updating}
                                 >
-                                    {updating ? 'Updating...' : 'Update'}
-                                </button>
-                            </div>
+                                    Update Floor
+                                </Button>
+                            </Flex>
                         </form>
-                    </div>
+                    </Card>
                 </div>
             )}
         </AppLayout>

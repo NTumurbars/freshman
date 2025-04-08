@@ -18,6 +18,16 @@ class RoomPolicy
 
     public function view(User $user, Room $room)
     {
+        // Super admin can view any room
+        if ($user->role->name === 'super_admin') {
+            return true;
+        }
+
+        // School admins can only view rooms in their school
+        if ($user->role->name === 'school_admin') {
+            return $user->school_id === $room->floor->building->school_id;
+        }
+
         return true;
     }
 
@@ -29,13 +39,31 @@ class RoomPolicy
 
     public function update(User $user, Room $room)
     {
-        // Only super_admin and school_admin can update rooms.
-        return in_array($user->role->name, ['super_admin', 'school_admin']);
+        // Super admin can update any room
+        if ($user->role->name === 'super_admin') {
+            return true;
+        }
+
+        // School admins can only update rooms in their school
+        if ($user->role->name === 'school_admin') {
+            return $user->school_id === $room->floor->building->school_id;
+        }
+
+        return false;
     }
 
     public function delete(User $user, Room $room)
     {
-        // Only super_admin and school_admin can delete rooms.
-        return in_array($user->role->name, ['super_admin', 'school_admin']);
+        // Super admin can delete any room
+        if ($user->role->name === 'super_admin') {
+            return true;
+        }
+
+        // School admins can only delete rooms in their school
+        if ($user->role->name === 'school_admin') {
+            return $user->school_id === $room->floor->building->school_id;
+        }
+
+        return false;
     }
 }

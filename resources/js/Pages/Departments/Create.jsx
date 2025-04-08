@@ -1,26 +1,27 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm, usePage, router } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import { Card, Title, Text, Button, TextInput, Grid, Col } from '@tremor/react';
 
 export default function Create() {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const school = auth.user.school;
 
-    const { data, setData, errors } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         name: '',
+        code: '',
+        contact: {
+            email: '',
+            phone: '',
+            office: ''
+        }
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        router.post(route('departments.store', { school: school.id }), data, {
+        post(route('departments.store', { school: school.id }), {
             onSuccess: () => {
                 console.log('Success: Department created successfully');
-            },
-            onError: (errors) => {
-                console.log('Error:', errors);
-            },
-            onFinish: () => {
-                console.log('Request finished');
             }
         });
     };
@@ -29,49 +30,115 @@ export default function Create() {
         <AppLayout userRole={userRole} school={school}>
             <Head title="Create Department" />
 
-            <div className="mx-auto max-w-2xl py-6 sm:px-6 lg:px-8">
-                <div className="bg-white shadow sm:rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                        <h1 className="text-xl font-bold text-gray-900 mb-4">
-                            Create New Department
-                        </h1>
-
-                        <form onSubmit={handleSubmit}>
-                            <div className="mb-4">
-                                <label className="block font-medium text-gray-700 mb-2">
-                                    Department Name
-                                </label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200"
-                                    value={data.name}
-                                    onChange={e => setData('name', e.target.value)}
-                                />
-                                {errors.name && (
-                                    <div className="mt-1 text-sm text-red-600">
-                                        {errors.name}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex justify-between">
-                                <button
-                                    type="submit"
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                                >
-                                    Create Department
-                                </button>
-
-                                <a
-                                    href={route('departments.index', { school: school.id })}
-                                    className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded"
-                                >
-                                    Cancel
-                                </a>
-                            </div>
-                        </form>
+            <div className="py-6 px-4 sm:px-6 lg:px-8">
+                <div className="sm:flex sm:items-center sm:justify-between mb-6">
+                    <div>
+                        <Title>Create Department</Title>
+                        <Text>Add a new department to {school.name}</Text>
                     </div>
                 </div>
+
+                <Card>
+                    <form onSubmit={handleSubmit}>
+                        <Grid numItemsMd={2} className="gap-6">
+                            <Col>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Department Name <span className="text-red-500">*</span>
+                                    </label>
+                                    <TextInput
+                                        placeholder="e.g. Computer Science"
+                                        value={data.name}
+                                        onChange={e => setData('name', e.target.value)}
+                                        error={errors.name}
+                                        errorMessage={errors.name}
+                                        required
+                                    />
+                                </div>
+                            </Col>
+                            
+                            <Col>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Department Code
+                                    </label>
+                                    <TextInput
+                                        placeholder="e.g. CS"
+                                        value={data.code}
+                                        onChange={e => setData('code', e.target.value)}
+                                        error={errors.code}
+                                        errorMessage={errors.code}
+                                    />
+                                </div>
+                            </Col>
+                        </Grid>
+
+                        <Title className="mt-6 mb-3">Contact Information</Title>
+                        
+                        <Grid numItemsMd={3} className="gap-6">
+                            <Col>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Email
+                                    </label>
+                                    <TextInput
+                                        placeholder="department@university.edu"
+                                        value={data.contact.email}
+                                        onChange={e => setData('contact', {...data.contact, email: e.target.value})}
+                                        error={errors['contact.email']}
+                                        errorMessage={errors['contact.email']}
+                                    />
+                                </div>
+                            </Col>
+                            
+                            <Col>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Phone
+                                    </label>
+                                    <TextInput
+                                        placeholder="(123) 456-7890"
+                                        value={data.contact.phone}
+                                        onChange={e => setData('contact', {...data.contact, phone: e.target.value})}
+                                        error={errors['contact.phone']}
+                                        errorMessage={errors['contact.phone']}
+                                    />
+                                </div>
+                            </Col>
+                            
+                            <Col>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Office Location
+                                    </label>
+                                    <TextInput
+                                        placeholder="Building name, Room number"
+                                        value={data.contact.office}
+                                        onChange={e => setData('contact', {...data.contact, office: e.target.value})}
+                                        error={errors['contact.office']}
+                                        errorMessage={errors['contact.office']}
+                                    />
+                                </div>
+                            </Col>
+                        </Grid>
+
+                        <div className="flex justify-end gap-3 mt-6">
+                            <Button 
+                                type="button"
+                                variant="secondary"
+                                onClick={() => window.history.back()}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                loading={processing}
+                            >
+                                Create Department
+                            </Button>
+                        </div>
+                    </form>
+                </Card>
             </div>
         </AppLayout>
     );

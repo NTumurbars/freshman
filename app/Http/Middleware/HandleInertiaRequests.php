@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Models\Term;
+use App\Models\School;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -38,6 +40,9 @@ class HandleInertiaRequests extends Middleware
                 'user' => fn () => $request->user()
                     ? $this->transformUser($request->user())
                     : null,
+                'can' => fn () => $request->user()
+                    ? $this->getPermissions($request->user())
+                    : null,
             ],
         ]);
     }
@@ -60,6 +65,7 @@ class HandleInertiaRequests extends Middleware
             'school'    => $user->school ? [
                 'id'    => $user->school->id,
                 'name'  => $user->school->name,
+                'logo_url' => $user->school->logo_url,
             ] : null,
 
             // Role
@@ -68,5 +74,27 @@ class HandleInertiaRequests extends Middleware
                 'name' => $user->role->name,
             ] : null,
         ];
+    }
+
+    /**
+     * Get user permissions based on their role
+     */
+    protected function getPermissions($user): array
+    {
+        $permissions = [];
+
+        // Term permissions
+        $permissions['create_term'] = $user->can('create', Term::class);
+        $permissions['update_term'] = $user->role->name === 'super_admin'
+            || $user->role->name === 'school_admin';
+        $permissions['delete_term'] = $user->role->name === 'super_admin'
+            || $user->role->name === 'school_admin';
+
+        // School permissions
+        $permissions['create_school'] = $user->role->name === 'super_admin';
+        $permissions['update_school'] = $user->role->name === 'super_admin'
+            || ($user->role->name === 'school_admin' && $user->school_id);
+
+        return $permissions;
     }
 }
