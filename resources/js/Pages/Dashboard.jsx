@@ -73,11 +73,13 @@ export default function Dashboard() {
                                 tagline="Number of departments"
                             />
                         </Link>
-                        <Block
-                            title="Total Buildings"
-                            children={stats.buildings}
-                            tagline="Number of Buildings"
-                        />
+                        <Link href={route('buildings.index', school.id)}>
+                            <Block
+                                title="Total Buildings"
+                                children={stats.buildings}
+                                tagline="Number of Buildings"
+                            />
+                        </Link>
                     </div>
                 )}
             </div>

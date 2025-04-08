@@ -73,7 +73,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'terms' => TermController::class,
             'courses' => CourseController::class,
             'sections' => SectionController::class,
-            'rooms' => RoomController::class,
             'room-features' => RoomFeatureController::class,
             'schedules' => ScheduleController::class,
             'professor-profiles' => ProfessorProfileController::class,
@@ -81,6 +80,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'buildings' => BuildingController::class,
             'buildings.floors' => FloorController::class,
         ]);
+    });
+    Route::prefix('schools.buildings')->group(function(){
+        Route::resource('floors.rooms', RoomController::class);
     });
 });
 

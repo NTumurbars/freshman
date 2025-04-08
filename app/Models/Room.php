@@ -11,9 +11,7 @@ use App\Models\Floor;
 class Room extends Model
 {
     protected $fillable = [
-        'school_id',
         'room_number',
-        'building',
         'capacity',
         'floor_id',
     ];
