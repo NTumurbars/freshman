@@ -117,9 +117,9 @@ class DatabaseSeeder extends Seeder
 
         // Create Terms for Temple
         $templeTerms = [
-            ['name' => 'Fall 2023', 'start_date' => '2023-08-28', 'end_date' => '2023-12-15', 'is_active' => false],
-            ['name' => 'Spring 2024', 'start_date' => '2024-01-16', 'end_date' => '2024-05-03', 'is_active' => true],
-            ['name' => 'Summer 2024', 'start_date' => '2024-05-20', 'end_date' => '2024-08-02', 'is_active' => false],
+            ['name' => 'Fall 2024', 'start_date' => '2024-08-28', 'end_date' => '2024-12-15', 'is_active' => false],
+            ['name' => 'Spring 2025', 'start_date' => '2025-01-16', 'end_date' => '2025-05-03', 'is_active' => true],
+            ['name' => 'Summer 2024', 'start_date' => '2024-05-20', 'end_date' => '2025-08-02', 'is_active' => false],
         ];
 
         $templeTermObjects = [];
@@ -168,6 +168,7 @@ class DatabaseSeeder extends Seeder
                         'title' => $profData['title'],
                         'office' => 'Office ' . rand(100, 500),
                         'phone' => '215-204-' . rand(1000, 9999),
+                        'website' => 'https://temple.edu/faculty/' . strtolower(str_replace(' ', '-', $profData['name'])),
                     ]
                 );
                 
@@ -354,6 +355,7 @@ class DatabaseSeeder extends Seeder
                         'title' => $profData['title'],
                         'office' => 'Office ' . rand(100, 500),
                         'phone' => '+81-3-5441-' . rand(1000, 9999),
+                        'website' => 'https://tuj.ac.jp/faculty/' . strtolower(str_replace(' ', '-', $profData['name'])),
                     ]
                 );
                 

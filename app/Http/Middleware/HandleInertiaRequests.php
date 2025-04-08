@@ -65,6 +65,7 @@ class HandleInertiaRequests extends Middleware
             'school'    => $user->school ? [
                 'id'    => $user->school->id,
                 'name'  => $user->school->name,
+                'logo_url' => $user->school->logo_url,
             ] : null,
 
             // Role

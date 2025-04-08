@@ -15,6 +15,7 @@ import {
     Col,
     Metric,
     Select,
+    SelectItem,
     Badge,
     Title
 } from '@tremor/react';
@@ -28,9 +29,15 @@ import HeaderTitle from '@/Components/HeaderTitle';
 
 export default function Edit({ school, stats, formErrors }) {
     const [activeTab, setActiveTab] = useState(0);
-    const [isSaving, setIsSaving] = useState(false);
-    const { auth } = usePage().props;
+    const { auth, flash } = usePage().props;
     const userRole = auth.user.role.id;
+
+    // Show success message if it exists in flash
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+    }, [flash?.success]);
 
     // Default values for form objects
     const defaultAcademicCalendar = {
@@ -72,37 +79,9 @@ export default function Edit({ school, stats, formErrors }) {
         }
     });
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        setIsSaving(true);
-
-        const validationErrors = validateForm();
-        if (Object.keys(validationErrors).length > 0) {
-            Object.keys(validationErrors).forEach(key => {
-                toast.error(validationErrors[key]);
-            });
-            setIsSaving(false);
-            return;
-        }
-
-        try {
-            await put(route('schools.update', school.id), {
-                onSuccess: () => {
-                    toast.success('School settings updated successfully');
-                    setIsSaving(false);
-                },
-                onError: (errors) => {
-                    Object.keys(errors).forEach(key => {
-                        toast.error(errors[key]);
-                    });
-                    setIsSaving(false);
-                }
-            });
-        } catch (error) {
-            console.error('Error updating school settings:', error);
-            toast.error('An unexpected error occurred. Please try again.');
-            setIsSaving(false);
-        }
+        put(route('schools.update', school.id));
     };
 
     const validateForm = () => {
@@ -176,8 +155,8 @@ export default function Edit({ school, stats, formErrors }) {
                     ]}
                     backUrl={route('schools.index')}
                     actions={
-                        <Badge color={isSaving ? "yellow" : "green"} icon={isSaving ? undefined : CheckCircleIcon}>
-                            {isSaving ? "Saving..." : "Up to date"}
+                        <Badge color={processing ? "yellow" : "green"} icon={processing ? undefined : CheckCircleIcon}>
+                            {processing ? "Saving..." : "Up to date"}
                         </Badge>
                     }
                 />
@@ -211,7 +190,6 @@ export default function Edit({ school, stats, formErrors }) {
                             <TabList className="border-b border-gray-200 -mx-4 px-4 -mt-2">
                                 <Tab className="!text-sm">General Information</Tab>
                                 <Tab className="!text-sm">Contact Details</Tab>
-                                <Tab className="!text-sm">System Settings</Tab>
                             </TabList>
 
                             <TabPanels>
@@ -229,7 +207,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                         onChange={e => setData('name', e.target.value)}
                                                         error={errors.name}
                                                         placeholder="Enter school name"
-                                                        disabled={isSaving}
+                                                        disabled={processing}
                                                     />
                                                     {errors.name && (
                                                         <Text color="red" className="mt-1">{errors.name}</Text>
@@ -242,7 +220,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                         onChange={e => setData('code', e.target.value)}
                                                         error={errors.code}
                                                         placeholder="Enter school code"
-                                                        disabled={isSaving}
+                                                        disabled={processing}
                                                     />
                                                     {errors.code && (
                                                         <Text color="red" className="mt-1">{errors.code}</Text>
@@ -256,7 +234,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                     onChange={e => setData('email', e.target.value)}
                                                     error={errors.email}
                                                     placeholder="Enter school email"
-                                                    disabled={isSaving}
+                                                    disabled={processing}
                                                 />
                                                 {errors.email && (
                                                     <Text color="red" className="mt-1">{errors.email}</Text>
@@ -269,7 +247,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                     onChange={e => setData('website_url', e.target.value)}
                                                     error={errors.website_url}
                                                     placeholder="Enter website URL"
-                                                    disabled={isSaving}
+                                                    disabled={processing}
                                                 />
                                             </div>
                                             <div className="mt-4">
@@ -279,7 +257,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                     onChange={e => setData('logo_url', e.target.value)}
                                                     error={errors.logo_url}
                                                     placeholder="Enter logo URL"
-                                                    disabled={isSaving}
+                                                    disabled={processing}
                                                 />
                                             </div>
                                             <div className="mt-4">
@@ -289,7 +267,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                     onChange={e => setData('description', e.target.value)}
                                                     error={errors.description}
                                                     placeholder="Enter school description"
-                                                    disabled={isSaving}
+                                                    disabled={processing}
                                                 />
                                             </div>
                                         </FormSection>
@@ -305,32 +283,35 @@ export default function Edit({ school, stats, formErrors }) {
                                                     onValueChange={value => setData('timezone', value)}
                                                     error={errors.timezone}
                                                     placeholder="Select timezone"
-                                                    disabled={isSaving}
+                                                    disabled={processing}
                                                 >
-                                                    <option value="UTC">UTC</option>
-                                                    <option value="America/New_York">Eastern Time</option>
-                                                    <option value="America/Chicago">Central Time</option>
-                                                    <option value="America/Denver">Mountain Time</option>
-                                                    <option value="America/Los_Angeles">Pacific Time</option>
-                                                    <option value="Asia/Tokyo">Japan Time</option>
-                                                    <option value="Europe/London">London Time</option>
-                                                    <option value="Europe/Paris">Central European Time</option>
-                                                    <option value="Australia/Sydney">Sydney Time</option>
+                                                    <SelectItem value="UTC">UTC</SelectItem>
+                                                    <SelectItem value="America/New_York">Eastern Time</SelectItem>
+                                                    <SelectItem value="America/Chicago">Central Time</SelectItem>
+                                                    <SelectItem value="America/Denver">Mountain Time</SelectItem>
+                                                    <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
+                                                    <SelectItem value="Asia/Tokyo">Japan Time</SelectItem>
+                                                    <SelectItem value="Europe/London">London Time</SelectItem>
+                                                    <SelectItem value="Europe/Paris">Central European Time</SelectItem>
+                                                    <SelectItem value="Australia/Sydney">Sydney Time</SelectItem>
                                                 </Select>
                                                 {errors.timezone && (
                                                     <Text color="red" className="mt-1">{errors.timezone}</Text>
                                                 )}
+                                                <Text className="text-gray-500 text-xs mt-1">
+                                                    System-wide timezone for scheduling
+                                                </Text>
                                             </div>
                                         </FormSection>
 
                                         <div className="flex justify-end">
                                             <Button
                                                 type="submit"
-                                                loading={isSaving}
-                                                disabled={isSaving}
+                                                loading={processing}
+                                                disabled={processing}
                                                 className="w-32"
                                             >
-                                                {isSaving ? 'Saving...' : 'Save Changes'}
+                                                {processing ? 'Saving...' : 'Save Changes'}
                                             </Button>
                                         </div>
                                     </form>
@@ -350,7 +331,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                         onChange={e => setData('address', e.target.value)}
                                                         error={errors.address}
                                                         placeholder="Street address"
-                                                        disabled={isSaving}
+                                                        disabled={processing}
                                                     />
                                                 </div>
                                                 <div>
@@ -360,7 +341,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                         onChange={e => setData('city', e.target.value)}
                                                         error={errors.city}
                                                         placeholder="City"
-                                                        disabled={isSaving}
+                                                        disabled={processing}
                                                     />
                                                 </div>
                                                 <div>
@@ -370,7 +351,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                         onChange={e => setData('state', e.target.value)}
                                                         error={errors.state}
                                                         placeholder="State or province"
-                                                        disabled={isSaving}
+                                                        disabled={processing}
                                                     />
                                                 </div>
                                                 <div>
@@ -380,7 +361,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                         onChange={e => setData('country', e.target.value)}
                                                         error={errors.country}
                                                         placeholder="Country"
-                                                        disabled={isSaving}
+                                                        disabled={processing}
                                                     />
                                                 </div>
                                                 <div>
@@ -390,7 +371,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                         onChange={e => setData('postal_code', e.target.value)}
                                                         error={errors.postal_code}
                                                         placeholder="Postal code"
-                                                        disabled={isSaving}
+                                                        disabled={processing}
                                                     />
                                                 </div>
                                                 <div>
@@ -400,7 +381,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                         onChange={e => setData('phone', e.target.value)}
                                                         error={errors.phone}
                                                         placeholder="Phone number"
-                                                        disabled={isSaving}
+                                                        disabled={processing}
                                                     />
                                                 </div>
                                             </div>
@@ -409,150 +390,11 @@ export default function Edit({ school, stats, formErrors }) {
                                         <div className="flex justify-end">
                                             <Button
                                                 type="submit"
-                                                loading={isSaving}
-                                                disabled={isSaving}
+                                                loading={processing}
+                                                disabled={processing}
                                                 className="w-32"
                                             >
-                                                {isSaving ? 'Saving...' : 'Save Changes'}
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </TabPanel>
-
-                                <TabPanel>
-                                    <form onSubmit={handleSubmit} className="space-y-6 mt-6">
-                                        <FormSection
-                                            title="System Settings"
-                                            description="Configure system-wide preferences and defaults."
-                                        >
-                                            <div className="grid grid-cols-1 gap-6">
-                                                <div>
-                                                    <Text>Default Language</Text>
-                                                    <Select
-                                                        value={data.settings.default_language}
-                                                        onValueChange={value => setData('settings', {
-                                                            ...data.settings,
-                                                            default_language: value
-                                                        })}
-                                                        error={errors.default_language}
-                                                        disabled={isSaving}
-                                                    >
-                                                        <option value="en">English</option>
-                                                        <option value="es">Spanish</option>
-                                                        <option value="fr">French</option>
-                                                        <option value="de">German</option>
-                                                        <option value="zh">Chinese</option>
-                                                        <option value="ja">Japanese</option>
-                                                        <option value="ar">Arabic</option>
-                                                        <option value="ru">Russian</option>
-                                                    </Select>
-                                                    {errors.default_language && (
-                                                        <Text color="red" className="mt-1">{errors.default_language}</Text>
-                                                    )}
-                                                </div>
-
-                                                <div>
-                                                    <Text className="font-medium mb-2">Course Registration Settings</Text>
-                                                    <div className="space-y-3 pl-3 border-l-2 border-gray-100">
-                                                        <div>
-                                                            <Text>Default Course Capacity</Text>
-                                                            <TextInput
-                                                                type="number"
-                                                                value={data.settings.default_course_capacity}
-                                                                onChange={e => setData('settings', {
-                                                                    ...data.settings,
-                                                                    default_course_capacity: e.target.value
-                                                                })}
-                                                                error={errors.default_course_capacity}
-                                                                min="1"
-                                                                disabled={isSaving}
-                                                            />
-                                                            {errors.default_course_capacity && (
-                                                                <Text color="red" className="mt-1">{errors.default_course_capacity}</Text>
-                                                            )}
-                                                            <Text className="text-gray-500 text-sm mt-1">
-                                                                Enter a positive number for default course capacity
-                                                            </Text>
-                                                        </div>
-                                                        <div>
-                                                            <Text>Registration Window (days before term)</Text>
-                                                            <TextInput
-                                                                type="number"
-                                                                value={data.settings.registration_window_days}
-                                                                onChange={e => setData('settings', {
-                                                                    ...data.settings,
-                                                                    registration_window_days: e.target.value
-                                                                })}
-                                                                error={errors.registration_window_days}
-                                                                min="1"
-                                                                disabled={isSaving}
-                                                            />
-                                                            {errors.registration_window_days && (
-                                                                <Text color="red" className="mt-1">{errors.registration_window_days}</Text>
-                                                            )}
-                                                            <Text className="text-gray-500 text-sm mt-1">
-                                                                Enter the number of days before term start when registration opens
-                                                            </Text>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <Text className="font-medium mb-2">Notification Settings</Text>
-                                                    <div className="space-y-3 pl-3 border-l-2 border-gray-100">
-                                                        <div>
-                                                            <Text>Email Notifications</Text>
-                                                            <Select
-                                                                value={data.settings.email_notifications || 'all'}
-                                                                onValueChange={value => setData('settings', {
-                                                                    ...data.settings,
-                                                                    email_notifications: value
-                                                                })}
-                                                                error={errors.email_notifications}
-                                                                disabled={isSaving}
-                                                            >
-                                                                <option value="all">All Notifications</option>
-                                                                <option value="important">Important Only</option>
-                                                                <option value="none">None</option>
-                                                            </Select>
-                                                            {errors.email_notifications && (
-                                                                <Text color="red" className="mt-1">{errors.email_notifications}</Text>
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            <Text>Reminder Days</Text>
-                                                            <TextInput
-                                                                type="number"
-                                                                value={data.settings.reminder_days || '7'}
-                                                                onChange={e => setData('settings', {
-                                                                    ...data.settings,
-                                                                    reminder_days: e.target.value
-                                                                })}
-                                                                error={errors.reminder_days}
-                                                                min="1"
-                                                                max="30"
-                                                                disabled={isSaving}
-                                                            />
-                                                            {errors.reminder_days && (
-                                                                <Text color="red" className="mt-1">{errors.reminder_days}</Text>
-                                                            )}
-                                                            <Text className="text-gray-500 text-sm mt-1">
-                                                                Enter the number of days before events to send reminders
-                                                            </Text>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </FormSection>
-
-                                        <div className="flex justify-end">
-                                            <Button
-                                                type="submit"
-                                                loading={isSaving}
-                                                disabled={isSaving}
-                                                className="w-32"
-                                            >
-                                                {isSaving ? 'Saving...' : 'Save Changes'}
+                                                {processing ? 'Saving...' : 'Save Changes'}
                                             </Button>
                                         </div>
                                     </form>

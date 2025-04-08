@@ -130,5 +130,26 @@ module.exports = {
     plugins: [
         require('@tailwindcss/forms'),
         require('tailwindcss-animate'),
+        function({ addUtilities }) {
+            const newUtilities = {
+                '.scrollbar-hide': {
+                    /* Firefox */
+                    'scrollbar-width': 'none',
+                    /* Safari and Chrome */
+                    '&::-webkit-scrollbar': {
+                        display: 'none'
+                    }
+                },
+                '.scrollbar-default': {
+                    /* Firefox */
+                    'scrollbar-width': 'auto',
+                    /* Safari and Chrome */
+                    '&::-webkit-scrollbar': {
+                        display: 'block'
+                    }
+                }
+            }
+            addUtilities(newUtilities, ['responsive'])
+        }
     ],
 };

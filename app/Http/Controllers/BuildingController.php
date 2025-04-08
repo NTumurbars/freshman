@@ -34,7 +34,8 @@ class BuildingController extends Controller
 
         return Inertia::render('Buildings/Index', [
             'buildings' => $buildings,
-            'school' => $school
+            'school' => $school,
+            'can_create' => request()->user()->can('create', Building::class)
         ]);
     }
 

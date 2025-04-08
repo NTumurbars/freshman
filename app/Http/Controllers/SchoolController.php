@@ -88,10 +88,7 @@ class SchoolController extends Controller
 
         $school->update($validated);
 
-        return response()->json([
-            'message' => 'School updated successfully',
-            'school' => $school
-        ]);
+        return redirect()->route('schools.edit', $school)->with('success', 'School updated successfully');
     }
 
     // DELETE /schools/{school}

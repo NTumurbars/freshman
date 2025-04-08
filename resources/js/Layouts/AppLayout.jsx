@@ -14,13 +14,37 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
     const [isMobile, setIsMobile] = useState(false);
     const { auth: globalAuth } = usePage().props;
 
-    // Debug to see what role we're getting
-    console.log('AppLayout userRole:', userRole);
-    console.log('Global auth user role:', globalAuth?.user?.role?.id);
+    // Store school in sessionStorage when available for persistence across pages
+    useEffect(() => {
+        // If school is provided directly, store it in sessionStorage
+        if (school?.id) {
+            try {
+                sessionStorage.setItem('cachedSchool', JSON.stringify(school));
+            } catch (error) {
+                console.error('Failed to cache school in session storage:', error);
+            }
+        }
+    }, [school]);
+
+    // Get school from various sources with fallbacks
+    const getCachedSchool = () => {
+        try {
+            const cachedData = sessionStorage.getItem('cachedSchool');
+            if (cachedData) {
+                return JSON.parse(cachedData);
+            }
+        } catch (error) {
+            console.error('Error retrieving cached school:', error);
+        }
+        return null;
+    };
 
     // Convert user role to number if needed
-    const roleId = parseInt(userRole || 0, 10);
+    const roleId = parseInt(userRole || globalAuth?.user?.role?.id || 0, 10);
 
+    // Get school info from props, global auth, or session cache
+    const schoolData = school || globalAuth?.school || getCachedSchool() || null;
+    
     // Handle responsive sidebar
     useEffect(() => {
         const checkScreenSize = () => {
@@ -49,11 +73,11 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
     // we need to merge it with the global auth data to ensure all required properties are available
     const mergedAuth = {
         ...globalAuth,
-        school: school || globalAuth?.school,
+        school: schoolData,
         user: {
             ...globalAuth?.user,
             // If userRole is provided, use it to ensure role_id is available
-            role_id: userRole || globalAuth?.user?.role_id
+            role_id: roleId
         }
     };
 
@@ -79,19 +103,14 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
                         w-64 z-40 bg-white shadow-lg
                         transition-transform duration-300 ease-in-out
                         ${sidebarOpen ? 'translate-x-0' : '-translate-x-64'}
+                        border-r border-gray-200 overflow-y-auto scrollbar-hide
                     `}
                 >
                     {roleId === 1 && <SuperUserSideBar />}
-                    {roleId === 2 && <AdminSideBar school={school} />}
-                    {roleId === 3 && <MajorCoordinatorSideBar school={school} />}
-                    {roleId === 4 && <ProfessorSideBar school={school} />}
-                    {roleId === 5 && <StudentSideBar school={school} />}
-
-                    {/* Debug info */}
-                    <div className="p-4 text-xs text-gray-500">
-                        <p>Role ID: {roleId}</p>
-                        <p>Has School: {school ? 'Yes' : 'No'}</p>
-                    </div>
+                    {roleId === 2 && <AdminSideBar school={schoolData} />}
+                    {roleId === 3 && <MajorCoordinatorSideBar school={schoolData} />}
+                    {roleId === 4 && <ProfessorSideBar school={schoolData} />}
+                    {roleId === 5 && <StudentSideBar school={schoolData} />}
                 </aside>
 
                 {/* Sidebar toggle button (positioned in a fixed container) */}
@@ -101,7 +120,7 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
                      }}>
                     <button
                         onClick={toggleSidebar}
-                        className="bg-white rounded-full shadow-lg p-2.5 border border-gray-200 hidden md:flex items-center justify-center"
+                        className="bg-white rounded-full shadow-lg p-2.5 border border-gray-200 hidden md:flex items-center justify-center hover:border-blue-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
                         style={{ width: '2.5rem', height: '2.5rem' }}
                         aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
                         title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}

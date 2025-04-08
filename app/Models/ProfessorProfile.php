@@ -12,8 +12,10 @@ class ProfessorProfile extends Model
     [
         'user_id',
         'department_id',
-        'office_location',
-        'phone_number',
+        'title',
+        'office',
+        'phone',
+        'website',
     ];
 
     // Make sure we have proper eager loading

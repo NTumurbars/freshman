@@ -34,8 +34,10 @@ class ProfessorProfileController extends Controller
         $data = $request->validate([
             'user_id'       => 'required|exists:users,id',
             'department_id' => 'required|exists:departments,id',
-            'office_location' => 'nullable|string|max:255',
-            'phone_number'  => 'nullable|string|max:50',
+            'title'         => 'nullable|string|max:255',
+            'office'        => 'nullable|string|max:255',
+            'phone'         => 'nullable|string|max:50',
+            'website'       => 'nullable|string|max:255',
         ]);
 
         ProfessorProfile::create($data);
@@ -70,8 +72,10 @@ class ProfessorProfileController extends Controller
         
         $validated = $request->validate([
             'department_id' => 'required|exists:departments,id',
-            'office_location' => 'nullable|string|max:255',
-            'phone_number' => 'nullable|string|max:30',
+            'title'         => 'nullable|string|max:255',
+            'office'        => 'nullable|string|max:255',
+            'phone'         => 'nullable|string|max:30',
+            'website'       => 'nullable|string|max:255',
         ]);
         
         // Get or create professor profile

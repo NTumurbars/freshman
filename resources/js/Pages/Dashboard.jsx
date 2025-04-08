@@ -19,7 +19,16 @@ import {
 export default function Dashboard() {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
-    const school = auth.user.school;
+    
+    // Try all possible places where school data might be
+    const school = auth.user.school || auth.school || null;
+    console.log('Dashboard - School data source:',
+        auth.user.school ? 'auth.user.school' :
+        auth.school ? 'auth.school' :
+        'none available'
+    );
+    console.log('Dashboard - School data:', school);
+    
     const [stats, setStats] = useState({});
     const [loading, setLoading] = useState(true);
 

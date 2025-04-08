@@ -11,6 +11,8 @@ import {
     UserCircleIcon,
     BookOpenIcon,
     PencilIcon,
+    GlobeAltIcon,
+    AcademicCapIcon as AcademicCapSolid,
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
@@ -22,8 +24,10 @@ export default function Show() {
 
     const { data, setData, post, processing, errors, reset } = useForm({
         department_id: user.professor_profile?.department_id || '',
-        office_location: user.professor_profile?.office_location || '',
-        phone_number: user.professor_profile?.phone_number || '',
+        title: user.professor_profile?.title || '',
+        office: user.professor_profile?.office || '',
+        phone: user.professor_profile?.phone || '',
+        website: user.professor_profile?.website || '',
     });
 
     const handleChange = (name, value) => {
@@ -109,32 +113,62 @@ export default function Show() {
                                         </div>
                                         
                                         <div>
-                                            <label htmlFor="office_location" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Office Location
+                                            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Title
                                             </label>
                                             <TextInput
-                                                id="office_location"
-                                                name="office_location"
-                                                placeholder="Office Location"
-                                                value={data.office_location}
-                                                onChange={(e) => handleChange('office_location', e.target.value)}
-                                                error={!!errors.office_location}
-                                                errorMessage={errors.office_location}
+                                                id="title"
+                                                name="title"
+                                                placeholder="Title (e.g. Professor, Assistant Professor)"
+                                                value={data.title}
+                                                onChange={(e) => handleChange('title', e.target.value)}
+                                                error={!!errors.title}
+                                                errorMessage={errors.title}
                                             />
                                         </div>
                                         
                                         <div>
-                                            <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700 mb-1">
+                                            <label htmlFor="office" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Office Location
+                                            </label>
+                                            <TextInput
+                                                id="office"
+                                                name="office"
+                                                placeholder="Office Location"
+                                                value={data.office}
+                                                onChange={(e) => handleChange('office', e.target.value)}
+                                                error={!!errors.office}
+                                                errorMessage={errors.office}
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                                                 Phone Number
                                             </label>
                                             <TextInput
-                                                id="phone_number"
-                                                name="phone_number"
+                                                id="phone"
+                                                name="phone"
                                                 placeholder="Phone Number"
-                                                value={data.phone_number}
-                                                onChange={(e) => handleChange('phone_number', e.target.value)}
-                                                error={!!errors.phone_number}
-                                                errorMessage={errors.phone_number}
+                                                value={data.phone}
+                                                onChange={(e) => handleChange('phone', e.target.value)}
+                                                error={!!errors.phone}
+                                                errorMessage={errors.phone}
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Website
+                                            </label>
+                                            <TextInput
+                                                id="website"
+                                                name="website"
+                                                placeholder="Website URL"
+                                                value={data.website}
+                                                onChange={(e) => handleChange('website', e.target.value)}
+                                                error={!!errors.website}
+                                                errorMessage={errors.website}
                                             />
                                         </div>
                                         
@@ -159,10 +193,18 @@ export default function Show() {
                                         </div>
                                         
                                         <div className="flex items-start">
+                                            <AcademicCapSolid className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
+                                            <div>
+                                                <Text className="font-medium">Title</Text>
+                                                <Text>{user.professor_profile?.title || 'Not specified'}</Text>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-start">
                                             <MapPinIcon className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
                                             <div>
                                                 <Text className="font-medium">Office Location</Text>
-                                                <Text>{user.professor_profile?.office_location || 'Not specified'}</Text>
+                                                <Text>{user.professor_profile?.office || 'Not specified'}</Text>
                                             </div>
                                         </div>
                                         
@@ -170,7 +212,19 @@ export default function Show() {
                                             <PhoneIcon className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
                                             <div>
                                                 <Text className="font-medium">Contact Number</Text>
-                                                <Text>{user.professor_profile?.phone_number || 'Not specified'}</Text>
+                                                <Text>{user.professor_profile?.phone || 'Not specified'}</Text>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-start">
+                                            <GlobeAltIcon className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
+                                            <div>
+                                                <Text className="font-medium">Website</Text>
+                                                <Text>{user.professor_profile?.website ? (
+                                                    <a href={user.professor_profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                                                        {user.professor_profile.website}
+                                                    </a>
+                                                ) : 'Not specified'}</Text>
                                             </div>
                                         </div>
                                     </div>

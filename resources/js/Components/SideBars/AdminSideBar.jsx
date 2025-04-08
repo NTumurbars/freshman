@@ -113,10 +113,17 @@ export default function AdminSideBar({ school }) {
     // If no school is assigned, show limited navigation
     if (!school?.id) {
         return (
-            <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4">
+            <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto scrollbar-hide">
                 <div className="mb-6 border-b border-gray-100 pb-4">
-                    <h2 className="text-lg font-semibold text-gray-800">School Admin</h2>
-                    <p className="text-sm text-gray-500">No School Assigned</p>
+                    <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 flex items-center justify-center bg-gray-100 text-gray-500 rounded-md flex-shrink-0 border border-gray-200">
+                            <span className="font-bold text-lg">S</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-sm font-semibold text-gray-800 truncate leading-tight" title="School Admin">School Admin</h2>
+                            <p className="text-xs text-gray-500 truncate" title="No School Assigned">No School Assigned</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="space-y-6">
@@ -143,10 +150,38 @@ export default function AdminSideBar({ school }) {
     };
 
     return (
-        <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto">
+        <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto scrollbar-hide">
             <div className="mb-6 border-b border-gray-100 pb-4">
-                <h2 className="text-lg font-semibold text-gray-800">{school.name}</h2>
-                <p className="text-sm text-gray-500">School Administrator</p>
+                <div className="flex items-center space-x-3">
+                    {school?.logo_url ? (
+                        <div className="h-10 w-10 flex-shrink-0 rounded-md overflow-hidden border border-gray-200 bg-white shadow-sm">
+                            <img 
+                                src={school.logo_url} 
+                                alt={school?.name || 'School Logo'}
+                                className="h-full w-full object-contain"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.style.display = 'none';
+                                    e.target.parentNode.classList.add('flex', 'items-center', 'justify-center', 'bg-blue-100', 'text-blue-700');
+                                    e.target.parentNode.innerHTML = `<span class="font-bold text-lg">${school?.name ? school.name.charAt(0).toUpperCase() : 'S'}</span>`;
+                                }}
+                                loading="lazy"
+                                referrerPolicy="no-referrer"
+                                crossOrigin="anonymous"
+                            />
+                        </div>
+                    ) : (
+                        <div className="h-10 w-10 flex items-center justify-center bg-blue-100 text-blue-700 rounded-md flex-shrink-0 border border-blue-200">
+                            <span className="font-bold text-lg">{school?.name ? school.name.charAt(0).toUpperCase() : 'S'}</span>
+                        </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-sm font-semibold text-gray-800 truncate leading-tight" title={school?.name || 'School Administration'}>
+                            {school?.name || 'School Administration'}
+                        </h2>
+                        <p className="text-xs text-gray-500 truncate" title="School Administrator">School Administrator</p>
+                    </div>
+                </div>
             </div>
 
             <div className="space-y-6">
