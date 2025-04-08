@@ -80,9 +80,9 @@ class DatabaseSeeder extends Seeder
 
         // Create Departments for Temple
         $templeDepartments = [
-            ['name' => 'Computer Science', 'code' => 'CS', 'contact' => json_encode(['email' => 'cs@temple.edu', 'phone' => '215-204-8450'])],
-            ['name' => 'Electrical Engineering', 'code' => 'EE', 'contact' => json_encode(['email' => 'ee@temple.edu', 'phone' => '215-204-8460'])],
-            ['name' => 'Business', 'code' => 'BUS', 'contact' => json_encode(['email' => 'business@temple.edu', 'phone' => '215-204-8470'])],
+            ['name' => 'Computer Science', 'code' => 'CS', 'contact' => ['email' => 'cs@temple.edu', 'phone' => '215-204-8450', 'office' => 'Science Building, Room 101']],
+            ['name' => 'Electrical Engineering', 'code' => 'EE', 'contact' => ['email' => 'ee@temple.edu', 'phone' => '215-204-8460', 'office' => 'Science Building, Room 203']],
+            ['name' => 'Business', 'code' => 'BUS', 'contact' => ['email' => 'business@temple.edu', 'phone' => '215-204-8470', 'office' => 'Main Building, Room 305']],
         ];
 
         $templeDepartmentObjects = [];
@@ -268,9 +268,9 @@ class DatabaseSeeder extends Seeder
 
         // Create Departments for TUJ
         $tujDepartments = [
-            ['name' => 'Asian Studies', 'code' => 'ASST', 'contact' => json_encode(['email' => 'asianstudies@tuj.ac.jp', 'phone' => '+81-3-5441-9801'])],
-            ['name' => 'International Business', 'code' => 'IB', 'contact' => json_encode(['email' => 'business@tuj.ac.jp', 'phone' => '+81-3-5441-9802'])],
-            ['name' => 'Communication Studies', 'code' => 'COMM', 'contact' => json_encode(['email' => 'comm@tuj.ac.jp', 'phone' => '+81-3-5441-9803'])],
+            ['name' => 'Asian Studies', 'code' => 'ASST', 'contact' => ['email' => 'asianstudies@tuj.ac.jp', 'phone' => '+81-3-5441-9801', 'office' => 'Main Building, Room 201']],
+            ['name' => 'International Business', 'code' => 'IB', 'contact' => ['email' => 'business@tuj.ac.jp', 'phone' => '+81-3-5441-9802', 'office' => 'Main Building, Room 302']],
+            ['name' => 'Communication Studies', 'code' => 'COMM', 'contact' => ['email' => 'comm@tuj.ac.jp', 'phone' => '+81-3-5441-9803', 'office' => 'Science Building, Room S101']],
         ];
 
         $tujDepartmentObjects = [];

@@ -45,8 +45,8 @@ export default function AdminSideBar({ school }) {
                 href={href}
                 className={`flex items-center rounded-md px-3 py-2 text-sm font-medium
                     ${isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                        ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700'
+                        : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all duration-200'
                     }`}
                 onClick={onClick}
                 style={{ paddingLeft: `${indent * 0.75 + 0.75}rem` }}
@@ -71,7 +71,7 @@ export default function AdminSideBar({ school }) {
         return (
             <div>
                 <div
-                    className="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                    className="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all duration-200"
                     onClick={onToggle}
                     style={{ paddingLeft: `${indent * 0.75 + 0.75}rem` }}
                 >
@@ -88,7 +88,7 @@ export default function AdminSideBar({ school }) {
                 {isExpanded && href && (
                     <Link
                         href={href}
-                        className="block rounded-md px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                        className="block rounded-md px-3 py-2 text-sm font-medium text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all duration-200"
                         style={{ paddingLeft: `${(indent + 1) * 0.75 + 0.75}rem` }}
                     >
                         View All {title}
@@ -101,7 +101,7 @@ export default function AdminSideBar({ school }) {
 
     const NavGroup = ({ title, children }) => (
         <div className="mb-4">
-            <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-blue-600">
                 {title}
             </h3>
             <div className="space-y-1">
@@ -113,10 +113,10 @@ export default function AdminSideBar({ school }) {
     // If no school is assigned, show limited navigation
     if (!school?.id) {
         return (
-            <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto scrollbar-hide">
-                <div className="mb-6 border-b border-gray-100 pb-4">
+            <aside className="h-full min-h-screen w-64 border-r border-blue-100 bg-white p-4 overflow-y-auto scrollbar-hide">
+                <div className="mb-6 border-b border-blue-100 pb-4">
                     <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 flex items-center justify-center bg-gray-100 text-gray-500 rounded-md flex-shrink-0 border border-gray-200">
+                        <div className="h-10 w-10 flex items-center justify-center bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-600 rounded-md flex-shrink-0 border border-blue-200">
                             <span className="font-bold text-lg">S</span>
                         </div>
                         <div className="flex-1 min-w-0">
@@ -150,11 +150,11 @@ export default function AdminSideBar({ school }) {
     };
 
     return (
-        <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto scrollbar-hide">
-            <div className="mb-6 border-b border-gray-100 pb-4">
+        <aside className="h-full min-h-screen w-64 border-r border-blue-100 bg-white p-4 overflow-y-auto scrollbar-hide">
+            <div className="mb-6 border-b border-blue-100 pb-4">
                 <div className="flex items-center space-x-3">
                     {school?.logo_url ? (
-                        <div className="h-10 w-10 flex-shrink-0 rounded-md overflow-hidden border border-gray-200 bg-white shadow-sm">
+                        <div className="h-10 w-10 flex-shrink-0 rounded-md overflow-hidden border border-blue-100 bg-white shadow-sm">
                             <img 
                                 src={school.logo_url} 
                                 alt={school?.name || 'School Logo'}
@@ -162,7 +162,7 @@ export default function AdminSideBar({ school }) {
                                 onError={(e) => {
                                     e.target.onerror = null;
                                     e.target.style.display = 'none';
-                                    e.target.parentNode.classList.add('flex', 'items-center', 'justify-center', 'bg-blue-100', 'text-blue-700');
+                                    e.target.parentNode.classList.add('flex', 'items-center', 'justify-center', 'bg-gradient-to-br', 'from-blue-100', 'to-indigo-100', 'text-blue-600');
                                     e.target.parentNode.innerHTML = `<span class="font-bold text-lg">${school?.name ? school.name.charAt(0).toUpperCase() : 'S'}</span>`;
                                 }}
                                 loading="lazy"
@@ -171,7 +171,7 @@ export default function AdminSideBar({ school }) {
                             />
                         </div>
                     ) : (
-                        <div className="h-10 w-10 flex items-center justify-center bg-blue-100 text-blue-700 rounded-md flex-shrink-0 border border-blue-200">
+                        <div className="h-10 w-10 flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 rounded-md flex-shrink-0 border border-blue-200">
                             <span className="font-bold text-lg">{school?.name ? school.name.charAt(0).toUpperCase() : 'S'}</span>
                         </div>
                     )}

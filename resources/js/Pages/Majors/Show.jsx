@@ -177,7 +177,7 @@ export default function Show({ major, school }) {
                                             <TableBody>
                                                 {major.courses.map((course) => (
                                                     <TableRow key={course.id}>
-                                                        <TableCell className="font-medium">{course.course_code}</TableCell>
+                                                        <TableCell className="font-medium">{course.code}</TableCell>
                                                         <TableCell>{course.title}</TableCell>
                                                         <TableCell>
                                                             <Link href={route('courses.show', { 

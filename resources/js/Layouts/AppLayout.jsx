@@ -82,12 +82,12 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
     };
 
     return (
-        <div className="flex min-h-screen flex-col bg-gray-100">
+        <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-indigo-50">
             {/* Navbar */}
             <Navbar auth={mergedAuth}>
                 <button
                     onClick={toggleSidebar}
-                    className="md:hidden p-2 rounded-md text-gray-600"
+                    className="md:hidden p-2 rounded-md text-blue-600 hover:bg-blue-100 transition-colors duration-200"
                     aria-label="Toggle sidebar"
                 >
                     <Menu className="h-5 w-5" />
@@ -103,7 +103,7 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
                         w-64 z-40 bg-white shadow-lg
                         transition-transform duration-300 ease-in-out
                         ${sidebarOpen ? 'translate-x-0' : '-translate-x-64'}
-                        border-r border-gray-200 overflow-y-auto scrollbar-hide
+                        border-r border-blue-100 overflow-y-auto scrollbar-hide
                     `}
                 >
                     {roleId === 1 && <SuperUserSideBar />}
@@ -120,15 +120,15 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
                      }}>
                     <button
                         onClick={toggleSidebar}
-                        className="bg-white rounded-full shadow-lg p-2.5 border border-gray-200 hidden md:flex items-center justify-center hover:border-blue-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
+                        className="bg-white rounded-full shadow-lg p-2.5 border border-blue-100 hidden md:flex items-center justify-center hover:border-blue-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
                         style={{ width: '2.5rem', height: '2.5rem' }}
                         aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
                         title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
                     >
                         {sidebarOpen ? (
-                            <PanelLeftClose className="h-5 w-5 text-gray-600" />
+                            <PanelLeftClose className="h-5 w-5 text-blue-600" />
                         ) : (
-                            <PanelLeftOpen className="h-5 w-5 text-gray-600" />
+                            <PanelLeftOpen className="h-5 w-5 text-blue-600" />
                         )}
                     </button>
                 </div>
@@ -136,7 +136,7 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
                 {/* Overlay for mobile */}
                 {sidebarOpen && isMobile && (
                     <div
-                        className="fixed inset-0 z-30 bg-black bg-opacity-50 transition-opacity md:hidden"
+                        className="fixed inset-0 z-30 bg-blue-900 bg-opacity-50 backdrop-blur-sm transition-opacity md:hidden"
                         onClick={toggleSidebar}
                     />
                 )}
@@ -154,8 +154,8 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
                 </main>
             </div>
 
-            <footer className="border-t border-gray-200 bg-white py-4 text-center text-sm text-gray-600">
-                &copy; {new Date().getFullYear()} Course Scheduling System. All
+            <footer className="border-t border-blue-100 bg-white py-4 text-center text-sm text-gray-600 shadow-inner">
+                &copy; {new Date().getFullYear()} UniMan. All
                 rights reserved.
             </footer>
         </div>

@@ -255,7 +255,11 @@ class SectionController extends Controller
         $roomFeatures = RoomFeature::all();
 
         // Get rooms
-        $rooms = Room::with('floor.building')->get();
+        $rooms = Room::with('floor.building')
+            ->whereHas('floor.building', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })
+            ->get();
 
         return Inertia::render('Sections/Edit', [
             'section' => $section,
@@ -472,14 +476,19 @@ class SectionController extends Controller
         }
 
         // Get rooms for resources
-        $rooms = Room::with('floor.building')->get()->map(function($room) {
-            return [
-                'id' => $room->id,
-                'title' => $room->room_number . ' (' . $room->floor->building->name . ')',
-                'building' => $room->floor->building->name,
-                'capacity' => $room->capacity,
-            ];
-        });
+        $rooms = Room::with('floor.building')
+            ->whereHas('floor.building', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })
+            ->get()
+            ->map(function($room) {
+                return [
+                    'id' => $room->id,
+                    'title' => $room->room_number . ' (' . $room->floor->building->name . ')',
+                    'building' => $room->floor->building->name,
+                    'capacity' => $room->capacity,
+                ];
+            });
 
         // Add "Unassigned" resource
         $resources = array_merge([

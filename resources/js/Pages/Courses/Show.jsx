@@ -46,11 +46,11 @@ export default function Show({ course, school }) {
 
     return (
         <AppLayout userRole={userRole} school={school}>
-            <Head title={`${course.course_code} - ${course.title}`} />
+            <Head title={`${course.code} - ${course.title}`} />
 
             <div className="p-6">
                 <div className="flex items-center justify-between pb-6">
-                    <h1 className="text-2xl font-bold">{course.course_code}: {course.title}</h1>
+                    <h1 className="text-2xl font-bold">{course.code}: {course.title}</h1>
                     <div className="flex space-x-2">
                         <Link
                             href={route('courses.edit', { school: school.id, course: course.id })}
@@ -80,7 +80,7 @@ export default function Show({ course, school }) {
                             </div>
                             <div>
                                 <h3 className="mb-1 text-sm font-medium text-gray-500">Course Code</h3>
-                                <p className="text-base">{course.course_code}</p>
+                                <p className="text-base">{course.code}</p>
                             </div>
                             <div>
                                 <h3 className="mb-1 text-sm font-medium text-gray-500">Credits</h3>

@@ -65,7 +65,7 @@ class CourseController extends Controller
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'major_id'      => 'nullable|exists:majors,id',
-            'course_code'   => 'required|string|unique:courses,course_code',
+            'code'          => 'required|string|unique:courses,code',
             'title'         => 'required|string|max:255',
             'description'   => 'nullable|string',
             'capacity'      => 'required|integer|min:0',
@@ -121,7 +121,7 @@ class CourseController extends Controller
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'major_id'      => 'nullable|exists:majors,id',
-            'course_code'   => 'required|string|unique:courses,course_code,' . $course->id,
+            'code'          => 'required|string|unique:courses,code,' . $course->id,
             'title'         => 'required|string|max:255',
             'description'   => 'nullable|string',
             'capacity'      => 'required|integer|min:0',

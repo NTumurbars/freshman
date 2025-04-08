@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import {
     Card,
     Title,
@@ -93,12 +93,34 @@ export default function Index({ majors, school, can_create }) {
                             </TableHead>
                             <TableBody>
                                 {majors.map((major) => (
-                                    <TableRow key={major.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                                    <TableRow 
+                                        key={major.id} 
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                                        onClick={() => router.visit(route('majors.show', { school: school.id, major: major.id }))}
+                                    >
                                         <TableCell>
-                                            <Badge color="blue" size="sm" className="mr-2">{major.code}</Badge>
+                                            <Link 
+                                                href={route('majors.show', { 
+                                                    school: school.id, 
+                                                    major: major.id 
+                                                })}
+                                                className="hover:text-blue-600 hover:underline"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <Badge color="blue" size="sm" className="mr-2">{major.code}</Badge>
+                                            </Link>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="font-medium text-gray-900 dark:text-white">{major.name || 'Unnamed Major'}</div>
+                                            <Link 
+                                                href={route('majors.show', { 
+                                                    school: school.id, 
+                                                    major: major.id 
+                                                })}
+                                                className="font-medium text-gray-900 dark:text-white hover:text-blue-600 hover:underline"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {major.name || 'Unnamed Major'}
+                                            </Link>
                                         </TableCell>
                                         <TableCell>
                                             <Link 
@@ -107,6 +129,7 @@ export default function Index({ majors, school, can_create }) {
                                                     department: major.department.id 
                                                 })}
                                                 className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                                                onClick={(e) => e.stopPropagation()}
                                             >
                                                 {major.department.name}
                                                 <ChevronRightIcon className="h-4 w-4" />
@@ -125,6 +148,7 @@ export default function Index({ majors, school, can_create }) {
                                                         school: school.id, 
                                                         major: major.id 
                                                     })}
+                                                    onClick={(e) => e.stopPropagation()}
                                                 >
                                                     <Button 
                                                         icon={PencilSquareIcon} 
@@ -146,6 +170,7 @@ export default function Index({ majors, school, can_create }) {
                                                     as="button"
                                                     type="button"
                                                     className="text-red-600 text-xs px-2 py-1 rounded hover:bg-red-50 hover:text-red-700 transition-colors inline-flex items-center gap-1"
+                                                    onClick={(e) => e.stopPropagation()}
                                                 >
                                                     <TrashIcon className="h-3 w-3" />
                                                     Delete

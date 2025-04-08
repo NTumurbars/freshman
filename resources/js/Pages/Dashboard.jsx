@@ -102,20 +102,20 @@ export default function Dashboard() {
     const QuickAction = ({ title, description, icon, href, color = "blue" }) => {
         const Icon = icon;
         const colors = {
-            blue: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300",
-            green: "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300",
-            purple: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:border-purple-300",
-            orange: "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 hover:border-orange-300",
-            indigo: "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300",
+            blue: "bg-white text-blue-700 border-blue-200 hover:bg-blue-50 hover:border-blue-300",
+            green: "bg-white text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300",
+            purple: "bg-white text-purple-700 border-purple-200 hover:bg-purple-100 hover:border-purple-300",
+            orange: "bg-white text-orange-700 border-orange-200 hover:bg-orange-100 hover:border-orange-300",
+            indigo: "bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300",
         };
 
         return (
             <Link
                 href={href}
-                className={`block rounded-lg p-5 transition-all border shadow-sm hover:shadow ${colors[color]}`}
+                className={`block rounded-lg p-5 transition-all border shadow-sm hover:shadow-md ${colors[color]}`}
             >
                 <div className="flex items-center">
-                    <div className={`rounded-full p-3 mr-4 bg-white bg-opacity-60`}>
+                    <div className={`rounded-full p-3 mr-4 bg-gradient-to-r from-blue-100 to-indigo-100`}>
                         <Icon className="h-6 w-6" />
                     </div>
                     <div>

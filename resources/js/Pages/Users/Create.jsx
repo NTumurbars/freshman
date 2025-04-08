@@ -22,6 +22,8 @@ export default function Create({ roles, schools, departments }) {
         department_id: '',
         office_location: '',
         phone_number: '',
+        title: '',
+        website: '',
     });
 
     const handleChange = (name, value) => setData(name, value);
@@ -38,7 +40,7 @@ export default function Create({ roles, schools, departments }) {
     const [isProfessorRole, setIsProfessorRole] = useState(false);
 
     useEffect(() => {
-        const professorRoleIds = ['3', '4'];
+        const professorRoleIds = ['3', '4']; // professor and major_coordinator
         setIsProfessorRole(professorRoleIds.includes(data.role_id));
     }, [data.role_id]);
 
@@ -178,6 +180,20 @@ export default function Create({ roles, schools, departments }) {
                                     </div>
 
                                     <div>
+                                        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Title
+                                        </label>
+                                        <TextInput
+                                            id="title"
+                                            placeholder="Professor Title (e.g. Assistant Professor)"
+                                            value={data.title}
+                                            onChange={(e) => handleChange('title', e.target.value)}
+                                            error={!!errors.title}
+                                            errorMessage={errors.title}
+                                        />
+                                    </div>
+
+                                    <div>
                                         <label htmlFor="office_location" className="block text-sm font-medium text-gray-700 mb-1">
                                             Office Location
                                         </label>
@@ -202,6 +218,20 @@ export default function Create({ roles, schools, departments }) {
                                             onChange={(e) => handleChange('phone_number', e.target.value)}
                                             error={!!errors.phone_number}
                                             errorMessage={errors.phone_number}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Website
+                                        </label>
+                                        <TextInput
+                                            id="website"
+                                            placeholder="Faculty Website URL"
+                                            value={data.website}
+                                            onChange={(e) => handleChange('website', e.target.value)}
+                                            error={!!errors.website}
+                                            errorMessage={errors.website}
                                         />
                                     </div>
                                 </div>

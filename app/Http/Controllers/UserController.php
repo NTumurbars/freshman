@@ -91,6 +91,8 @@ class UserController extends Controller
             'department_id' => 'nullable|exists:departments,id',
             'office_location' => 'nullable|string',
             'phone_number' => 'nullable|string',
+            'title' => 'nullable|string|max:255',
+            'website' => 'nullable|string|max:255',
         ];
         
         // Super admin can specify school, others must use their own school
@@ -114,12 +116,15 @@ class UserController extends Controller
             'school_id' => $data['school_id'],
         ]);
 
-        if ($request->department_id)
-        {
+        // Check if this is a professor role (IDs 3 or 4) and create professor profile
+        $professorRoleIds = [3, 4]; // professor and major_coordinator
+        if (in_array((int)$data['role_id'], $professorRoleIds) && $request->department_id) {
             $user->professorProfile()->create([
                 'department_id' => $data['department_id'],
-                'office_location' => $data['office_location'] ?? null,
-                'phone_number' => $data['phone_number'] ?? null,
+                'office' => $data['office_location'] ?? null,
+                'phone' => $data['phone_number'] ?? null,
+                'title' => $data['title'] ?? null,
+                'website' => $data['website'] ?? null,
             ]);
         }
 

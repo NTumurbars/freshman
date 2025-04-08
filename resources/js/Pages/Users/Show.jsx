@@ -1,6 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, usePage, Link, useForm } from '@inertiajs/react';
-import { Card, Title, Text, Badge, Divider, Button, Flex, TextInput, Select, SelectItem } from '@tremor/react';
+import { Card, Title, Text, Badge, Divider, Button, Flex, TextInput, Select, SelectItem, Grid, Col, Metric, Tab, TabGroup, TabList, TabPanel, TabPanels } from '@tremor/react';
 import {
     UserIcon,
     AcademicCapIcon,
@@ -13,6 +13,11 @@ import {
     PencilIcon,
     GlobeAltIcon,
     AcademicCapIcon as AcademicCapSolid,
+    CalendarIcon,
+    IdentificationIcon,
+    ChevronLeftIcon,
+    BookmarkIcon,
+    ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
@@ -57,6 +62,162 @@ export default function Show() {
     const getFormattedRoleName = (roleName) => {
         return roleName?.replace('_', ' ').toUpperCase() || 'N/A';
     };
+    
+    const getCreatedDate = (date) => {
+        if (!date) return 'Unknown';
+        return new Date(date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const ProfessorProfileForm = () => (
+        <form onSubmit={submitProfileEdit} className="mt-4 space-y-4">
+            <div>
+                <label htmlFor="department_id" className="block text-sm font-medium text-gray-700 mb-1">
+                    Department
+                </label>
+                <Select
+                    id="department_id"
+                    value={data.department_id.toString()}
+                    onValueChange={(value) => handleChange('department_id', value)}
+                    placeholder="Select Department"
+                    error={!!errors.department_id}
+                    errorMessage={errors.department_id}
+                >
+                    {departments && departments.length > 0 ? 
+                        departments.map((department) => (
+                            <SelectItem key={department.id} value={department.id.toString()}>
+                                {department.name}
+                            </SelectItem>
+                        )) : 
+                        <SelectItem value="" disabled>
+                            No departments available
+                        </SelectItem>
+                    }
+                </Select>
+            </div>
+            
+            <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                    Title
+                </label>
+                <TextInput
+                    id="title"
+                    name="title"
+                    placeholder="Title (e.g. Professor, Assistant Professor)"
+                    value={data.title}
+                    onChange={(e) => handleChange('title', e.target.value)}
+                    error={!!errors.title}
+                    errorMessage={errors.title}
+                />
+            </div>
+            
+            <div>
+                <label htmlFor="office" className="block text-sm font-medium text-gray-700 mb-1">
+                    Office Location
+                </label>
+                <TextInput
+                    id="office"
+                    name="office"
+                    placeholder="Office Location"
+                    value={data.office}
+                    onChange={(e) => handleChange('office', e.target.value)}
+                    error={!!errors.office}
+                    errorMessage={errors.office}
+                />
+            </div>
+            
+            <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number
+                </label>
+                <TextInput
+                    id="phone"
+                    name="phone"
+                    placeholder="Phone Number"
+                    value={data.phone}
+                    onChange={(e) => handleChange('phone', e.target.value)}
+                    error={!!errors.phone}
+                    errorMessage={errors.phone}
+                />
+            </div>
+            
+            <div>
+                <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+                    Website
+                </label>
+                <TextInput
+                    id="website"
+                    name="website"
+                    placeholder="Website URL"
+                    value={data.website}
+                    onChange={(e) => handleChange('website', e.target.value)}
+                    error={!!errors.website}
+                    errorMessage={errors.website}
+                />
+            </div>
+            
+            <div className="flex justify-end pt-2">
+                <Button
+                    type="submit"
+                    color="amber"
+                    disabled={processing}
+                >
+                    {processing ? 'Saving...' : 'Save Changes'}
+                </Button>
+            </div>
+        </form>
+    );
+
+    const ProfessorProfileView = () => (
+        <div className="space-y-5 mt-4">
+            <div className="flex items-start">
+                <BuildingOfficeIcon className="h-5 w-5 text-gray-500 mr-3 mt-0.5" />
+                <div>
+                    <Text className="font-medium">Department</Text>
+                    <Text>{user.professor_profile?.department?.name || 'Not assigned'}</Text>
+                </div>
+            </div>
+            
+            <div className="flex items-start">
+                <AcademicCapSolid className="h-5 w-5 text-gray-500 mr-3 mt-0.5" />
+                <div>
+                    <Text className="font-medium">Title</Text>
+                    <Text>{user.professor_profile?.title || 'Not specified'}</Text>
+                </div>
+            </div>
+            
+            <div className="flex items-start">
+                <MapPinIcon className="h-5 w-5 text-gray-500 mr-3 mt-0.5" />
+                <div>
+                    <Text className="font-medium">Office Location</Text>
+                    <Text>{user.professor_profile?.office || 'Not specified'}</Text>
+                </div>
+            </div>
+            
+            <div className="flex items-start">
+                <PhoneIcon className="h-5 w-5 text-gray-500 mr-3 mt-0.5" />
+                <div>
+                    <Text className="font-medium">Contact Number</Text>
+                    <Text>{user.professor_profile?.phone || 'Not specified'}</Text>
+                </div>
+            </div>
+            
+            <div className="flex items-start">
+                <GlobeAltIcon className="h-5 w-5 text-gray-500 mr-3 mt-0.5" />
+                <div>
+                    <Text className="font-medium">Website</Text>
+                    <Text>{user.professor_profile?.website ? (
+                        <a href={user.professor_profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                            {user.professor_profile.website}
+                        </a>
+                    ) : 'Not specified'}</Text>
+                </div>
+            </div>
+        </div>
+    );
 
     const RoleSpecificDetails = () => {
         // Based on role ID, render different components
@@ -64,7 +225,7 @@ export default function Show() {
             case 3: // Professor
             case 4: // Coordinator/Head of Department
                 return (
-                    <Card className="mt-4">
+                    <Card className="mt-6">
                         <Flex justifyContent="between" alignItems="center">
                             <div className="flex items-center">
                                 <AcademicCapIcon className="h-8 w-8 text-amber-500 mr-3" />
@@ -86,148 +247,9 @@ export default function Show() {
                         {user.professor_profile ? (
                             <>
                                 {editingProfile ? (
-                                    <form onSubmit={submitProfileEdit} className="mt-4 space-y-4">
-                                        <div>
-                                            <label htmlFor="department_id" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Department
-                                            </label>
-                                            <Select
-                                                id="department_id"
-                                                value={data.department_id.toString()}
-                                                onValueChange={(value) => handleChange('department_id', value)}
-                                                placeholder="Select Department"
-                                                error={!!errors.department_id}
-                                                errorMessage={errors.department_id}
-                                            >
-                                                {departments && departments.length > 0 ? 
-                                                    departments.map((department) => (
-                                                        <SelectItem key={department.id} value={department.id.toString()}>
-                                                            {department.name}
-                                                        </SelectItem>
-                                                    )) : 
-                                                    <SelectItem value="" disabled>
-                                                        No departments available
-                                                    </SelectItem>
-                                                }
-                                            </Select>
-                                        </div>
-                                        
-                                        <div>
-                                            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Title
-                                            </label>
-                                            <TextInput
-                                                id="title"
-                                                name="title"
-                                                placeholder="Title (e.g. Professor, Assistant Professor)"
-                                                value={data.title}
-                                                onChange={(e) => handleChange('title', e.target.value)}
-                                                error={!!errors.title}
-                                                errorMessage={errors.title}
-                                            />
-                                        </div>
-                                        
-                                        <div>
-                                            <label htmlFor="office" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Office Location
-                                            </label>
-                                            <TextInput
-                                                id="office"
-                                                name="office"
-                                                placeholder="Office Location"
-                                                value={data.office}
-                                                onChange={(e) => handleChange('office', e.target.value)}
-                                                error={!!errors.office}
-                                                errorMessage={errors.office}
-                                            />
-                                        </div>
-                                        
-                                        <div>
-                                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Phone Number
-                                            </label>
-                                            <TextInput
-                                                id="phone"
-                                                name="phone"
-                                                placeholder="Phone Number"
-                                                value={data.phone}
-                                                onChange={(e) => handleChange('phone', e.target.value)}
-                                                error={!!errors.phone}
-                                                errorMessage={errors.phone}
-                                            />
-                                        </div>
-                                        
-                                        <div>
-                                            <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Website
-                                            </label>
-                                            <TextInput
-                                                id="website"
-                                                name="website"
-                                                placeholder="Website URL"
-                                                value={data.website}
-                                                onChange={(e) => handleChange('website', e.target.value)}
-                                                error={!!errors.website}
-                                                errorMessage={errors.website}
-                                            />
-                                        </div>
-                                        
-                                        <div className="flex justify-end pt-2">
-                                            <Button
-                                                type="submit"
-                                                color="amber"
-                                                disabled={processing}
-                                            >
-                                                {processing ? 'Saving...' : 'Save Changes'}
-                                            </Button>
-                                        </div>
-                                    </form>
+                                    <ProfessorProfileForm />
                                 ) : (
-                                    <div className="space-y-3 mt-4">
-                                        <div className="flex items-start">
-                                            <BuildingOfficeIcon className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
-                                            <div>
-                                                <Text className="font-medium">Department</Text>
-                                                <Text>{user.professor_profile?.department?.name || 'Not assigned'}</Text>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex items-start">
-                                            <AcademicCapSolid className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
-                                            <div>
-                                                <Text className="font-medium">Title</Text>
-                                                <Text>{user.professor_profile?.title || 'Not specified'}</Text>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex items-start">
-                                            <MapPinIcon className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
-                                            <div>
-                                                <Text className="font-medium">Office Location</Text>
-                                                <Text>{user.professor_profile?.office || 'Not specified'}</Text>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex items-start">
-                                            <PhoneIcon className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
-                                            <div>
-                                                <Text className="font-medium">Contact Number</Text>
-                                                <Text>{user.professor_profile?.phone || 'Not specified'}</Text>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex items-start">
-                                            <GlobeAltIcon className="h-5 w-5 text-gray-500 mr-2 mt-0.5" />
-                                            <div>
-                                                <Text className="font-medium">Website</Text>
-                                                <Text>{user.professor_profile?.website ? (
-                                                    <a href={user.professor_profile.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                                                        {user.professor_profile.website}
-                                                    </a>
-                                                ) : 'Not specified'}</Text>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <ProfessorProfileView />
                                 )}
                             </> 
                         ) : (
@@ -240,8 +262,8 @@ export default function Show() {
                 
             case 5: // Student
                 return (
-                    <Card className="mt-4">
-                        <Flex>
+                    <Card className="mt-6">
+                        <Flex justifyContent="between" alignItems="center">
                             <div className="flex items-center">
                                 <UserCircleIcon className="h-8 w-8 text-indigo-500 mr-3" />
                                 <Title>Student Information</Title>
@@ -249,14 +271,26 @@ export default function Show() {
                         </Flex>
                         <Divider />
 
-                        <div className="space-y-3 mt-4">
+                        <div className="space-y-5 mt-4">
                             <div className="flex items-center">
-                                <BookOpenIcon className="h-5 w-5 text-gray-500 mr-2" />
-                                <Text>
-                                    <span className="font-medium">Enrolled Courses: </span>
-                                    {user.course_registrations?.length || 0}
-                                </Text>
+                                <BookOpenIcon className="h-5 w-5 text-indigo-500 mr-3" />
+                                <div>
+                                    <Text className="font-medium">Enrolled Courses</Text>
+                                    <Text>{user.course_registrations?.length || 0}</Text>
+                                </div>
                             </div>
+
+                            {user.course_registrations && user.course_registrations.length > 0 ? (
+                                <div className="mt-2 bg-indigo-50 p-4 rounded-md">
+                                    <Text>
+                                        View details in the Courses section to see enrollment history and current courses.
+                                    </Text>
+                                </div>
+                            ) : (
+                                <div className="mt-2 bg-indigo-50 p-4 rounded-md">
+                                    <Text>This student is not enrolled in any courses yet.</Text>
+                                </div>
+                            )}
                             
                             {/* Additional student-specific details can be added here */}
                         </div>
@@ -265,17 +299,25 @@ export default function Show() {
 
             default: // Admin users
                 return (
-                    <Card className="mt-4">
-                        <Flex>
+                    <Card className="mt-6">
+                        <Flex justifyContent="between" alignItems="center">
                             <div className="flex items-center">
-                                <UserIcon className="h-8 w-8 text-blue-500 mr-3" />
+                                <IdentificationIcon className="h-8 w-8 text-blue-500 mr-3" />
                                 <Title>Administrative User</Title>
                             </div>
                         </Flex>
                         <Divider />
                         
-                        <div className="bg-blue-50 p-4 rounded-md mt-4">
-                            <Text>{getFormattedRoleName(user.role?.name)} has system management capabilities.</Text>
+                        <div className="mt-4">
+                            <div className="flex items-center mb-4">
+                                <Badge color={getRoleBadgeColor(user.role?.id)} size="xl">
+                                    {getFormattedRoleName(user.role?.name)}
+                                </Badge>
+                            </div>
+                            
+                            <div className="bg-blue-50 p-4 rounded-md">
+                                <Text>This user has system management capabilities according to their role permissions.</Text>
+                            </div>
                         </div>
                     </Card>
                 );
@@ -286,51 +328,191 @@ export default function Show() {
         <AppLayout userRole={userRole} school={school}>
             <Head title={user.name} />
             
-            <div className="mx-auto max-w-4xl px-4 py-8">
-                <div className="mb-6 flex justify-between items-center">
-                    <h1 className="text-3xl font-bold text-gray-900">User Profile</h1>
-                    
-                    <Link href={route('users.edit', user.id)}>
-                        <Button color="blue" size="sm">Edit User</Button>
+            <div className="mx-auto max-w-6xl px-4 py-8">
+                {/* Back Button */}
+                <div className="mb-6">
+                    <Link 
+                        href={route('users.index')} 
+                        className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                    >
+                        <ArrowLeftIcon className="h-4 w-4 mr-1" />
+                        <span>Back to Users</span>
                     </Link>
                 </div>
-                
-                <Card>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <div className="bg-gray-100 p-3 rounded-full">
-                                <UserIcon className="h-8 w-8 text-gray-500" />
+            
+                <Grid numItemsMd={3} className="gap-6">
+                    <Col numColSpanMd={1}>
+                        <Card className="p-6">
+                            <div className="flex flex-col items-center">
+                                <div className="mb-4 h-32 w-32 overflow-hidden rounded-full bg-gray-100 flex items-center justify-center">
+                                    <UserCircleIcon className="h-24 w-24 text-gray-400" />
+                                </div>
+                                
+                                <Title className="text-center">{user.name}</Title>
+                                <Badge className="mt-2" color={getRoleBadgeColor(user.role?.id)} size="md">
+                                    {getFormattedRoleName(user.role?.name)}
+                                </Badge>
+                                
+                                <Link 
+                                    href={route('users.edit', user.id)}
+                                    className="mt-4 w-full"
+                                >
+                                    <Button 
+                                        icon={PencilIcon}
+                                        color="blue"
+                                        className="w-full"
+                                    >
+                                        Edit User
+                                    </Button>
+                                </Link>
                             </div>
-                            <div>
-                                <Title>{user.name}</Title>
-                                <div className="flex items-center space-x-2">
-                                    <EnvelopeIcon className="h-4 w-4 text-gray-500" />
+                            
+                            <Divider className="my-6" />
+                            
+                            {/* Contact Information */}
+                            <div className="space-y-3">
+                                <Text className="font-semibold">Contact Information</Text>
+                                
+                                <div className="flex items-center text-sm">
+                                    <EnvelopeIcon className="h-4 w-4 text-gray-500 mr-2" />
                                     <Text>{user.email}</Text>
                                 </div>
+                                
+                                <div className="flex items-center text-sm">
+                                    <CalendarIcon className="h-4 w-4 text-gray-500 mr-2" />
+                                    <Text>Joined {getCreatedDate(user.created_at)}</Text>
+                                </div>
+                                
+                                <div className="flex items-center text-sm">
+                                    <IdentificationIcon className="h-4 w-4 text-gray-500 mr-2" />
+                                    <Text>ID: #{user.id}</Text>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <Badge color={getRoleBadgeColor(user.role?.id)} size="md">
-                            {getFormattedRoleName(user.role?.name)}
-                        </Badge>
-                    </div>
+                        </Card>
+                    </Col>
                     
-                    <Divider />
-                    
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Text className="font-medium">School</Text>
-                            <Text>{school?.name || 'Not assigned'}</Text>
-                        </div>
+                    <Col numColSpanMd={2}>
+                        <Card>
+                            <TabGroup>
+                                <TabList className="mt-2">
+                                    <Tab icon={UserIcon}>Profile Details</Tab>
+                                    {(user.role?.id === 3 || user.role?.id === 4) && <Tab icon={AcademicCapIcon}>Professor Info</Tab>}
+                                    {user.role?.id === 5 && <Tab icon={BookmarkIcon}>Student Info</Tab>}
+                                </TabList>
+                                
+                                <TabPanels>
+                                    <TabPanel>
+                                        <div className="p-4">
+                                            <div className="mb-6">
+                                                <Title>User Information</Title>
+                                                <Text>Basic information about this user account.</Text>
+                                            </div>
+                                            
+                                            <Grid numItemsMd={2} className="gap-6">
+                                                <Col>
+                                                    <div className="bg-gray-50 p-4 rounded-md">
+                                                        <Text className="font-medium">School</Text>
+                                                        <Text className="text-lg">{school?.name || 'Not assigned'}</Text>
+                                                    </div>
+                                                </Col>
+                                                
+                                                <Col>
+                                                    <div className="bg-gray-50 p-4 rounded-md">
+                                                        <Text className="font-medium">Role</Text>
+                                                        <Text className="text-lg">{getFormattedRoleName(user.role?.name)}</Text>
+                                                    </div>
+                                                </Col>
+                                            </Grid>
+                                            
+                                            <div className="mt-6">
+                                                <Text className="font-medium mb-2">Additional Information</Text>
+                                                
+                                                <div className="bg-blue-50 p-4 rounded-md">
+                                                    <Text>
+                                                        This user was created on {getCreatedDate(user.created_at)}.
+                                                    </Text>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </TabPanel>
+                                    
+                                    {(user.role?.id === 3 || user.role?.id === 4) && (
+                                        <TabPanel>
+                                            <div className="p-4">
+                                                <div className="mb-6">
+                                                    <Title>Professor Details</Title>
+                                                    <Text>Academic information for this professor.</Text>
+                                                </div>
+                                                
+                                                {user.professor_profile ? (
+                                                    <>
+                                                        {editingProfile ? (
+                                                            <ProfessorProfileForm />
+                                                        ) : (
+                                                            <div className="space-y-4">
+                                                                <Flex justifyContent="end">
+                                                                    <Button 
+                                                                        size="xs" 
+                                                                        color="amber" 
+                                                                        icon={PencilIcon}
+                                                                        onClick={() => setEditingProfile(true)}
+                                                                    >
+                                                                        Edit Profile
+                                                                    </Button>
+                                                                </Flex>
+                                                                <ProfessorProfileView />
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <div className="bg-amber-50 p-4 rounded-md">
+                                                        <Text>This professor has not completed their profile yet.</Text>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </TabPanel>
+                                    )}
+                                    
+                                    {user.role?.id === 5 && (
+                                        <TabPanel>
+                                            <div className="p-4">
+                                                <div className="mb-6">
+                                                    <Title>Student Details</Title>
+                                                    <Text>Enrollment information for this student.</Text>
+                                                </div>
+                                                
+                                                <div className="space-y-5 mt-4">
+                                                    <div className="flex items-center">
+                                                        <BookOpenIcon className="h-5 w-5 text-indigo-500 mr-3" />
+                                                        <div>
+                                                            <Text className="font-medium">Enrolled Courses</Text>
+                                                            <Text>{user.course_registrations?.length || 0}</Text>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {user.course_registrations && user.course_registrations.length > 0 ? (
+                                                        <div className="mt-2 bg-indigo-50 p-4 rounded-md">
+                                                            <Text>
+                                                                View details in the Courses section to see enrollment history.
+                                                            </Text>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="mt-2 bg-indigo-50 p-4 rounded-md">
+                                                            <Text>This student is not enrolled in any courses yet.</Text>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </TabPanel>
+                                    )}
+                                </TabPanels>
+                            </TabGroup>
+                        </Card>
                         
-                        <div>
-                            <Text className="font-medium">User ID</Text>
-                            <Text>#{user.id}</Text>
-                        </div>
-                    </div>
-                </Card>
-                
-                <RoleSpecificDetails />
+                        {/* Keep the standalone role-specific card if preferred over the tabbed interface */}
+                        {/* <RoleSpecificDetails /> */}
+                    </Col>
+                </Grid>
             </div>
         </AppLayout>
     );

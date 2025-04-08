@@ -88,7 +88,13 @@ class ScheduleController extends Controller
         }
         
         $sections = $query->get();
-        $rooms = Room::with('floor.building')->get();
+        
+        // Filter rooms to only show those from the current school
+        $rooms = Room::with('floor.building')
+            ->whereHas('floor.building', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })
+            ->get();
         
         return Inertia::render('Schedules/Create', [
             'sections' => $sections,
@@ -253,7 +259,11 @@ class ScheduleController extends Controller
             // Make sure to load the section with its course
             $schedule->load(['section.course', 'room.floor.building']);
             
-            $rooms = Room::with('floor.building')->get();
+            $rooms = Room::with('floor.building')
+                ->whereHas('floor.building', function($query) use ($school) {
+                    $query->where('school_id', $school->id);
+                })
+                ->get();
             
             return Inertia::render('Schedules/Edit', [
                 'schedule' => $schedule,

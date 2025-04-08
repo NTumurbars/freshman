@@ -1,5 +1,4 @@
-import { Head, Link, usePage, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import {
     Card,
@@ -17,8 +16,6 @@ import {
     TableHeaderCell,
     TableBody,
     TableCell,
-    TextInput,
-    Dialog,
     Tab,
     TabGroup,
     TabList,
@@ -35,13 +32,11 @@ import {
     PhoneIcon,
     MapPinIcon,
     PlusIcon,
-    XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 export default function Show({ department, school }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
-    const [isModalOpen, setIsModalOpen] = useState(false);
     
     // Ensure professorProfiles is never undefined
     if (!department.professorProfiles) {
@@ -50,27 +45,7 @@ export default function Show({ department, school }) {
     
     // Debug - check if users are loaded correctly
     console.log("Professor Profiles with users:", JSON.stringify(department.professorProfiles, null, 2));
-
-    const { data, setData, post, errors, reset, processing } = useForm({
-        code: '',
-        name: '',
-        description: '',
-        department_id: department.id
-    });
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        post(route('majors.store', { 
-            school: school.id,
-            department: department.id 
-        }), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setIsModalOpen(false);
-                reset();
-            }
-        });
-    };
+    console.log("Department contact data:", JSON.stringify(department.contact, null, 2));
 
     // Check if we actually have professor profiles
     const hasProfessors = Array.isArray(department.professorProfiles) && department.professorProfiles.length > 0;
@@ -127,28 +102,31 @@ export default function Show({ department, school }) {
                                 <div className="pt-4">
                                     <Text className="text-gray-500 text-sm font-medium mb-3">Contact Information</Text>
                                     <div className="space-y-2">
-                                        {department.contact?.email && (
+                                        {department.contact && department.contact.email && (
                                             <div className="flex items-center gap-2">
                                                 <EnvelopeIcon className="h-5 w-5 text-gray-400" />
                                                 <Text>{department.contact.email}</Text>
                                             </div>
                                         )}
                                         
-                                        {department.contact?.phone && (
+                                        {department.contact && department.contact.phone && (
                                             <div className="flex items-center gap-2">
                                                 <PhoneIcon className="h-5 w-5 text-gray-400" />
                                                 <Text>{department.contact.phone}</Text>
                                             </div>
                                         )}
                                         
-                                        {department.contact?.office && (
+                                        {department.contact && department.contact.office && (
                                             <div className="flex items-center gap-2">
                                                 <MapPinIcon className="h-5 w-5 text-gray-400" />
                                                 <Text>{department.contact.office}</Text>
                                             </div>
                                         )}
                                         
-                                        {!department.contact?.email && !department.contact?.phone && !department.contact?.office && (
+                                        {(!department.contact || 
+                                          (!department.contact.email && 
+                                           !department.contact.phone && 
+                                           !department.contact.office)) && (
                                             <Text className="text-gray-500">No contact information available</Text>
                                         )}
                                     </div>
@@ -174,13 +152,9 @@ export default function Show({ department, school }) {
                                     </div>
                                     
                                     {hasMajors && (
-                                        <Button 
-                                            variant="light" 
-                                            icon={PlusIcon} 
-                                            onClick={() => setIsModalOpen(true)}
-                                        >
-                                            Add
-                                        </Button>
+                                        <Link href={route('majors.create', { school: school.id })}>
+                                            <Button variant="light" icon={PlusIcon}>Add</Button>
+                                        </Link>
                                     )}
                                 </div>
                                 
@@ -232,12 +206,11 @@ export default function Show({ department, school }) {
                                 <Card>
                                     <div className="flex items-center justify-between">
                                         <Title>Academic Majors</Title>
-                                        <Button 
-                                            icon={PlusIcon} 
-                                            onClick={() => setIsModalOpen(true)}
-                                        >
-                                            Add Major
-                                        </Button>
+                                        <Link href={route('majors.create', { school: school.id })}>
+                                            <Button icon={PlusIcon}>
+                                                Add Major
+                                            </Button>
+                                        </Link>
                                     </div>
                                     <Divider />
                                     
@@ -273,14 +246,11 @@ export default function Show({ department, school }) {
                                         <div className="py-12 text-center">
                                             <AcademicCapIcon className="h-12 w-12 mx-auto text-gray-300" />
                                             <Text className="mt-3 text-gray-500">No majors found in this department</Text>
-                                            <Button
-                                                className="mt-4" 
-                                                variant="light" 
-                                                icon={PlusIcon}
-                                                onClick={() => setIsModalOpen(true)}
-                                            >
-                                                Add your first major
-                                            </Button>
+                                            <Link href={route('majors.create', { school: school.id })} className="mt-4 inline-block">
+                                                <Button variant="light" icon={PlusIcon}>
+                                                    Add your first major
+                                                </Button>
+                                            </Link>
                                         </div>
                                     )}
                                 </Card>
@@ -300,33 +270,33 @@ export default function Show({ department, school }) {
                                     <Divider />
                                     
                                     {hasCourses ? (
-                                        <Table className="mt-4">
-                                            <TableHead>
-                                                <TableRow>
-                                                    <TableHeaderCell>Course Code</TableHeaderCell>
-                                                    <TableHeaderCell>Title</TableHeaderCell>
-                                                    <TableHeaderCell>Capacity</TableHeaderCell>
-                                                    <TableHeaderCell>Actions</TableHeaderCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {department.courses.map((course) => (
-                                                    <TableRow key={course.id}>
-                                                        <TableCell className="font-medium">{course.course_code}</TableCell>
-                                                        <TableCell>{course.title}</TableCell>
-                                                        <TableCell>{course.capacity || 'N/A'}</TableCell>
-                                                        <TableCell>
-                                                            <Link href={route('courses.show', { 
-                                                                school: school.id, 
-                                                                course: course.id 
-                                                            })}>
-                                                                <Button size="xs" variant="light">View</Button>
-                                                            </Link>
-                                                        </TableCell>
+                                        <div className="overflow-x-auto">
+                                            <Table className="mt-4 w-full">
+                                                <TableHead>
+                                                    <TableRow>
+                                                        <TableHeaderCell className="w-1/4">Course Code</TableHeaderCell>
+                                                        <TableHeaderCell className="w-2/4">Title</TableHeaderCell>
+                                                        <TableHeaderCell className="w-1/4">Actions</TableHeaderCell>
                                                     </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
+                                                </TableHead>
+                                                <TableBody>
+                                                    {department.courses.map((course) => (
+                                                        <TableRow key={course.id}>
+                                                            <TableCell className="font-medium">{course.code}</TableCell>
+                                                            <TableCell>{course.title}</TableCell>
+                                                            <TableCell>
+                                                                <Link href={route('courses.show', { 
+                                                                    school: school.id, 
+                                                                    course: course.id 
+                                                                })}>
+                                                                    <Button size="xs" variant="light">View</Button>
+                                                                </Link>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
                                     ) : (
                                         <div className="py-12 text-center">
                                             <BookOpenIcon className="h-12 w-12 mx-auto text-gray-300" />
@@ -367,8 +337,8 @@ export default function Show({ department, school }) {
                                                 <TableRow>
                                                     <TableHeaderCell>Name</TableHeaderCell>
                                                     <TableHeaderCell>Email</TableHeaderCell>
-                                                    <TableHeaderCell>Office Location</TableHeaderCell>
-                                                    <TableHeaderCell>Phone Number</TableHeaderCell>
+                                                    <TableHeaderCell>Office</TableHeaderCell>
+                                                    <TableHeaderCell>Phone</TableHeaderCell>
                                                     <TableHeaderCell>Actions</TableHeaderCell>
                                                 </TableRow>
                                             </TableHead>
@@ -382,10 +352,10 @@ export default function Show({ department, school }) {
                                                             {professor.user ? professor.user.email : "N/A"}
                                                         </TableCell>
                                                         <TableCell>
-                                                            {professor.office_location || "N/A"}
+                                                            {professor.office || "N/A"}
                                                         </TableCell>
                                                         <TableCell>
-                                                            {professor.phone_number || "N/A"}
+                                                            {professor.phone || "N/A"}
                                                         </TableCell>
                                                         <TableCell>
                                                             {professor.user_id && (
@@ -417,89 +387,6 @@ export default function Show({ department, school }) {
                         </TabPanels>
                     </TabGroup>
                 </div>
-                
-                {/* Add Major Modal */}
-                <Dialog
-                    open={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    static={true}
-                >
-                    <div className="p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <Title>Add New Major</Title>
-                            <button 
-                                type="button"
-                                onClick={() => setIsModalOpen(false)}
-                                className="text-gray-400 hover:text-gray-500"
-                            >
-                                <span className="sr-only">Close</span>
-                                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                            </button>
-                        </div>
-                        
-                        <form onSubmit={handleSubmit}>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Major Code <span className="text-red-500">*</span>
-                                    </label>
-                                    <TextInput
-                                        placeholder="e.g. CS-BA"
-                                        value={data.code}
-                                        onChange={(e) => setData('code', e.target.value)}
-                                        error={errors.code}
-                                        errorMessage={errors.code}
-                                    />
-                                </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Major Name
-                                    </label>
-                                    <TextInput
-                                        placeholder="e.g. Bachelor of Science in Computer Science"
-                                        value={data.name}
-                                        onChange={(e) => setData('name', e.target.value)}
-                                        error={errors.name}
-                                        errorMessage={errors.name}
-                                    />
-                                </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Description
-                                    </label>
-                                    <TextInput
-                                        placeholder="Brief description of the major"
-                                        value={data.description}
-                                        onChange={(e) => setData('description', e.target.value)}
-                                        error={errors.description}
-                                        errorMessage={errors.description}
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div className="flex justify-end gap-3 mt-6">
-                                <Button 
-                                    type="button"
-                                    variant="secondary"
-                                    onClick={() => {
-                                        setIsModalOpen(false);
-                                        reset();
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    loading={processing}
-                                >
-                                    Add Major
-                                </Button>
-                            </div>
-                        </form>
-                    </div>
-                </Dialog>
             </div>
         </AppLayout>
     );
