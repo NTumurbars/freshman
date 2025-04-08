@@ -113,7 +113,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'courses' => CourseController::class,
             'sections' => SectionController::class,
             'rooms' => RoomController::class,
-            'room-features' => RoomFeatureController::class,
+            'roomfeatures' => RoomFeatureController::class,
             'schedules' => ScheduleController::class,
             'professor-profiles' => ProfessorProfileController::class,
             'course-registrations' => CourseRegistrationController::class,

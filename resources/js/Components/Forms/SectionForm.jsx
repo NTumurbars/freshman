@@ -13,6 +13,12 @@ export default function SectionForm({
     onSubmit
 }) {
     const [selectedFeatures, setSelectedFeatures] = useState(data.required_features || []);
+    
+    // Log the professor data for debugging
+    useEffect(() => {
+        console.log("Professor data in SectionForm:", professors);
+        console.log("Form data:", data);
+    }, [professors, data]);
 
     // Group features by category
     const featuresByCategory = roomFeatures?.reduce((acc, feature) => {
@@ -108,9 +114,9 @@ export default function SectionForm({
                     onChange={handleChange}
                 >
                     <option value="">Select a professor</option>
-                    {professors?.map((professor) => (
+                    {professors && Array.isArray(professors) && professors.map((professor) => (
                         <option key={professor.id} value={professor.id}>
-                            {professor.user?.name || `Professor #${professor.id}`}
+                            {professor.name}
                         </option>
                     ))}
                 </select>
@@ -156,6 +162,70 @@ export default function SectionForm({
                 />
                 {errors.number_of_students && (
                     <p className="mt-1 text-sm text-red-600">{errors.number_of_students}</p>
+                )}
+            </div>
+
+            {/* Status */}
+            <div>
+                <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                    Status <span className="text-red-500">*</span>
+                </label>
+                <select
+                    id="status"
+                    name="status"
+                    className={`mt-1 block w-full rounded-md border ${errors.status ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
+                    value={data.status || 'active'}
+                    onChange={handleChange}
+                    required
+                >
+                    <option value="active">Active</option>
+                    <option value="canceled">Canceled</option>
+                    <option value="full">Full</option>
+                    <option value="pending">Pending</option>
+                </select>
+                {errors.status && (
+                    <p className="mt-1 text-sm text-red-600">{errors.status}</p>
+                )}
+            </div>
+
+            {/* Delivery Method */}
+            <div>
+                <label htmlFor="delivery_method" className="block text-sm font-medium text-gray-700">
+                    Delivery Method <span className="text-red-500">*</span>
+                </label>
+                <select
+                    id="delivery_method"
+                    name="delivery_method"
+                    className={`mt-1 block w-full rounded-md border ${errors.delivery_method ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
+                    value={data.delivery_method || 'in-person'}
+                    onChange={handleChange}
+                    required
+                >
+                    <option value="in-person">In-person</option>
+                    <option value="online">Online</option>
+                    <option value="hybrid">Hybrid</option>
+                </select>
+                {errors.delivery_method && (
+                    <p className="mt-1 text-sm text-red-600">{errors.delivery_method}</p>
+                )}
+            </div>
+
+            {/* Notes */}
+            <div>
+                <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+                    Notes
+                </label>
+                <textarea
+                    id="notes"
+                    name="notes"
+                    rows="3"
+                    className={`mt-1 block w-full rounded-md border ${errors.notes ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
+                    value={data.notes || ''}
+                    onChange={handleChange}
+                    placeholder="Additional notes about this section"
+                ></textarea>
+                {errors.notes && (
+                    <p className="mt-1 text-sm text-red-600">{errors.notes}</p>
                 )}
             </div>
 

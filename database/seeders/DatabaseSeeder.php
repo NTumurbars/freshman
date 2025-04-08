@@ -210,19 +210,22 @@ class DatabaseSeeder extends Seeder
                     if ($term->is_active) {
                         $profProfile = $templeProfessorProfiles[array_rand($templeProfessorProfiles)];
                         
-                        Section::updateOrCreate(
+                        $section = Section::updateOrCreate(
                             [
                                 'course_id' => $course->id,
                                 'term_id' => $term->id,
-                                'section_number' => '001'
+                                'section_code' => '001'
                             ],
                             [
-                                'professor_profile_id' => $profProfile->id,
-                                'capacity' => rand(20, 50),
-                                'status' => 'Open',
-                                'delivery_method' => 'In-Person',
+                                'professor_id' => $profProfile->user_id,
+                                'number_of_students' => rand(20, 50),
+                                'status' => 'active',
+                                'delivery_method' => 'in-person',
                             ]
                         );
+                        
+                        // Create schedules for each section
+                        $this->createSchedulesForSection($section, $temple->id);
                     }
                 }
             }
@@ -393,19 +396,22 @@ class DatabaseSeeder extends Seeder
                     if ($term->is_active) {
                         $profProfile = $tujProfessorProfiles[array_rand($tujProfessorProfiles)];
                         
-                        Section::updateOrCreate(
+                        $section = Section::updateOrCreate(
                             [
                                 'course_id' => $course->id,
                                 'term_id' => $term->id,
-                                'section_number' => '001'
+                                'section_code' => '001'
                             ],
                             [
-                                'professor_profile_id' => $profProfile->id,
-                                'capacity' => rand(15, 40),
-                                'status' => 'Open',
-                                'delivery_method' => 'In-Person',
+                                'professor_id' => $profProfile->user_id,
+                                'number_of_students' => rand(15, 40),
+                                'status' => 'active',
+                                'delivery_method' => 'in-person',
                             ]
                         );
+                        
+                        // Create schedules for each section
+                        $this->createSchedulesForSection($section, $templeJapan->id);
                     }
                 }
             }
@@ -465,20 +471,84 @@ class DatabaseSeeder extends Seeder
         // ======================== COMMON ROOM FEATURES ========================
         $this->command->info('Seeding room features...');
         
-        // Create common room features
+        // Create common room features with categories and descriptions
         $roomFeatures = [
-            'Projector',
-            'Smart Board',
-            'Computer Lab',
-            'Video Conferencing',
-            'Accessible',
-            'Whiteboard',
-            'Lab Equipment',
-            'Recording Equipment',
+            [
+                'name' => 'Projector',
+                'category' => 'Technology',
+                'description' => 'High-definition projector for presentations and video content'
+            ],
+            [
+                'name' => 'Smart Board',
+                'category' => 'Technology',
+                'description' => 'Interactive whiteboard with touch capabilities and digital content sharing'
+            ],
+            [
+                'name' => 'Computer Lab',
+                'category' => 'Technology',
+                'description' => 'Room equipped with multiple workstations for student use'
+            ],
+            [
+                'name' => 'Video Conferencing',
+                'category' => 'Technology',
+                'description' => 'Advanced audio/video equipment for remote meetings and lectures'
+            ],
+            [
+                'name' => 'Accessible Entrance',
+                'category' => 'Accessibility',
+                'description' => 'Wheelchair accessible entrance and pathways'
+            ],
+            [
+                'name' => 'Adjustable Desks',
+                'category' => 'Furniture',
+                'description' => 'Height-adjustable desks to accommodate various needs'
+            ],
+            [
+                'name' => 'Movable Seating',
+                'category' => 'Furniture',
+                'description' => 'Flexible seating arrangements that can be reconfigured for different activities'
+            ],
+            [
+                'name' => 'Lab Equipment',
+                'category' => 'Technology',
+                'description' => 'Specialized scientific or engineering equipment for hands-on learning'
+            ],
+            [
+                'name' => 'Recording Equipment',
+                'category' => 'Audio/Visual',
+                'description' => 'Audio and video recording capabilities for lecture capture'
+            ],
+            [
+                'name' => 'Emergency Exits',
+                'category' => 'Safety',
+                'description' => 'Multiple emergency exits with proper signage and lighting'
+            ],
+            [
+                'name' => 'First Aid Kit',
+                'category' => 'Safety',
+                'description' => 'Fully stocked first aid kit for emergencies'
+            ]
         ];
 
         foreach ($roomFeatures as $feature) {
-            RoomFeature::updateOrCreate(['name' => $feature]);
+            RoomFeature::updateOrCreate(
+                ['name' => $feature['name']],
+                [
+                    'category' => $feature['category'],
+                    'description' => $feature['description']
+                ]
+            );
+        }
+
+        // Assign features to random rooms
+        $rooms = Room::all();
+        $allFeatures = RoomFeature::all();
+        
+        foreach ($rooms as $room) {
+            // Assign 2-5 random features to each room
+            $featureCount = rand(2, 5);
+            $featureIds = $allFeatures->random($featureCount)->pluck('id')->toArray();
+            $room->features()->sync($featureIds);
         }
 
         // ======================== UPDATE COURSES ========================
@@ -488,10 +558,140 @@ class DatabaseSeeder extends Seeder
         Course::where('is_active', NULL)
             ->update(['is_active' => true]);
 
+        // ======================== ADDITIONAL SCHEDULES ========================
+        $this->command->info('Seeding additional schedules...');
+        $this->call(ScheduleSeeder::class);
+        
+        // ======================== WEEKLY SCHEDULES ========================
+        $this->command->info('Adding weekly schedules to sections...');
+        $this->call(WeeklyScheduleSeeder::class);
+
         // ======================== SUMMARY ========================
         $this->command->info('Database seeded successfully!');
         $this->command->info('Super Admin Login: super@admin.com / password');
         $this->command->info('Temple Admin Login: temple@admin.com / password');
         $this->command->info('TUJ Admin Login: tuj@admin.com / password');
+    }
+    
+    /**
+     * Create schedules for a given section
+     *
+     * @param Section $section The section to create schedules for
+     * @param int $schoolId The school ID to find rooms
+     * @return void
+     */
+    private function createSchedulesForSection($section, $schoolId)
+    {
+        // Get random rooms from the school
+        $rooms = Room::whereHas('floor.building', function($query) use ($schoolId) {
+            $query->where('school_id', $schoolId);
+        })->get();
+        
+        if ($rooms->isEmpty()) {
+            return;
+        }
+        
+        $room = $rooms->random();
+        
+        // Choose a random delivery method
+        $deliveryMethods = ['in-person', 'online', 'hybrid'];
+        $deliveryMethod = $deliveryMethods[array_rand($deliveryMethods)];
+        
+        // Section delivery method should match schedule's location type
+        $section->update(['delivery_method' => $deliveryMethod]);
+        $locationType = $deliveryMethod; // location type matches delivery method
+        
+        // Virtual meeting URL for online or hybrid sections
+        $virtualMeetingUrl = null;
+        if (in_array($locationType, ['online', 'hybrid'])) {
+            $platforms = ['zoom', 'teams', 'google-meet', 'webex'];
+            $platform = $platforms[array_rand($platforms)];
+            $meetingId = strtoupper(substr(md5(rand()), 0, 8));
+            $virtualMeetingUrl = "https://{$platform}.example.com/meet/{$meetingId}";
+        }
+        
+        // Choose a random meeting pattern
+        $patterns = [
+            'single', 
+            'monday-wednesday-friday', 
+            'tuesday-thursday', 
+            'monday-wednesday',
+            'tuesday-friday',
+            'weekly'
+        ];
+        $pattern = $patterns[array_rand($patterns)];
+        
+        // Set days of week based on pattern
+        $daysOfWeek = [];
+        switch ($pattern) {
+            case 'monday-wednesday-friday':
+                $daysOfWeek = ['Monday', 'Wednesday', 'Friday'];
+                break;
+            case 'tuesday-thursday':
+                $daysOfWeek = ['Tuesday', 'Thursday'];
+                break;
+            case 'monday-wednesday':
+                $daysOfWeek = ['Monday', 'Wednesday'];
+                break;
+            case 'tuesday-friday':
+                $daysOfWeek = ['Tuesday', 'Friday'];
+                break;
+            case 'weekly':
+                $daysOfWeek = [['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][array_rand(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])]];
+                break;
+            default:
+                $daysOfWeek = ['Monday'];
+                break;
+        }
+        
+        // Generate time slots with more variety
+        $timeSlots = [
+            // Morning classes
+            ['08:00:00', '09:15:00'],
+            ['09:30:00', '10:45:00'],
+            ['11:00:00', '12:15:00'],
+            // Afternoon classes
+            ['13:00:00', '14:15:00'],
+            ['14:30:00', '15:45:00'],
+            ['16:00:00', '17:15:00'],
+            // Evening classes
+            ['18:00:00', '19:15:00'],
+            ['19:30:00', '20:45:00']
+        ];
+        
+        $selectedTimeSlot = $timeSlots[array_rand($timeSlots)];
+        $startTime = $selectedTimeSlot[0];
+        $endTime = $selectedTimeSlot[1];
+        
+        // For in-person and hybrid classes, we need multiple rooms if the pattern has multiple days
+        if ($locationType !== 'online' && count($daysOfWeek) > 1 && rand(0, 10) > 7) {
+            // 30% chance of having different rooms for different days
+            $multipleRooms = true;
+        } else {
+            $multipleRooms = false;
+        }
+        
+        // Create a schedule for each day in the pattern
+        foreach ($daysOfWeek as $day) {
+            // If using multiple rooms, pick a different room for each day
+            if ($multipleRooms) {
+                $room = $rooms->random();
+            }
+            
+            \App\Models\Schedule::updateOrCreate(
+                [
+                    'section_id' => $section->id,
+                    'day_of_week' => $day,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime
+                ],
+                [
+                    'room_id' => $locationType === 'online' ? null : $room->id,
+                    'meeting_pattern' => $pattern,
+                    'location_type' => $locationType,
+                    'virtual_meeting_url' => $virtualMeetingUrl
+                ]
+            );
+        }
     }
 }

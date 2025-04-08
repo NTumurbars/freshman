@@ -1,12 +1,13 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Building, Users, GraduationCap, BookOpen, FileBarChart, School, BarChart3, Calendar, Clock, ChevronDown, ChevronRight, LayoutGrid, DoorOpen, Warehouse, Hotel, Layers, CalendarDays, LayoutList } from 'lucide-react';
+import { Building, Users, GraduationCap, BookOpen, FileBarChart, School, BarChart3, Calendar, Clock, ChevronDown, ChevronRight, LayoutGrid, DoorOpen, Warehouse, Hotel, Layers, CalendarDays, LayoutList, PlusCircle, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function AdminSideBar({ school }) {
     const [expandedSections, setExpandedSections] = useState({
         campus: false,
         buildings: false,
-        academics: false
+        academics: false,
+        roomFeatures: false
     });
 
     const [buildings, setBuildings] = useState([]);
@@ -272,6 +273,28 @@ export default function AdminSideBar({ school }) {
                                 ))}
                             </div>
                         )}
+                        
+                        {!loading && buildings.length === 0 && (
+                            <div className="px-3 py-2 text-sm text-gray-500 italic">
+                                No buildings found
+                            </div>
+                        )}
+                    </CollapsibleNavItem>
+                    
+                    <CollapsibleNavItem
+                        title="Room Features"
+                        icon={Settings}
+                        isExpanded={expandedSections.roomFeatures}
+                        onToggle={() => toggleSection('roomFeatures')}
+                        href={schoolRoute('roomfeatures.index')}
+                    >
+                        <NavItem
+                            href={schoolRoute('roomfeatures.create')}
+                            icon={PlusCircle}
+                            indent={1}
+                        >
+                            Add Feature
+                        </NavItem>
                     </CollapsibleNavItem>
                 </NavGroup>
 

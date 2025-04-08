@@ -151,7 +151,13 @@ class CourseController extends Controller
     public function show(School $school, Course $course)
     {
         // Load relationships
-        $course->load(['department', 'major', 'sections.schedules.room', 'sections.professor']);
+        $course->load([
+            'department', 
+            'major', 
+            'sections.term',
+            'sections.schedules.room.floor.building',
+            'sections.professor'
+        ]);
 
         // Check if the user can view this course
         $this->authorize('view', $course);

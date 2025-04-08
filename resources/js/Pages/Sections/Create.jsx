@@ -367,11 +367,13 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
                                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
                                 >
                                     <option value="">Not Assigned</option>
-                                    {professors && professors.map((professor) => (
-                                        <option key={professor.id} value={professor.id}>
-                                            {professor.name}
-                                        </option>
-                                    ))}
+                                    {professors && Array.isArray(professors) && professors.map((profile) => 
+                                        profile.user && (
+                                            <option key={profile.user.id} value={profile.user.id}>
+                                                {profile.user.name}
+                                            </option>
+                                        )
+                                    )}
                                 </select>
                                 {errors.professor_id && (
                                     <p className="mt-1 text-sm text-red-600">{errors.professor_id}</p>

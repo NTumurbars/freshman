@@ -196,7 +196,7 @@ export default function Show({ section, school }) {
                                         <User className="mr-1 h-4 w-4" /> Professor
                                     </dt>
                                     <dd className="mt-1 text-sm text-gray-900">
-                                        {section.professor_profile?.user?.name || 'Not assigned'}
+                                        {section.professor?.name || 'Not assigned'}
                                     </dd>
                                 </div>
 

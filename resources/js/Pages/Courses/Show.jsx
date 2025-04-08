@@ -10,11 +10,38 @@ export default function Show({ course, school }) {
     // Debug output
     console.log('Course data:', course);
     console.log('School data:', school);
+    
+    if (course.sections && course.sections.length > 0) {
+        console.log('First section:', course.sections[0]);
+        console.log('Section term data:', course.sections[0].term);
+        console.log('Professor data:', course.sections[0].professor);
+    }
 
     // Helper function to format time
     const formatTime = (timeString) => {
         if (!timeString) return '';
         return timeString;
+    };
+
+    // Helper function to get status badge color
+    const getStatusBadgeColor = (status) => {
+        switch (status) {
+            case 'active': return 'green';
+            case 'canceled': return 'red';
+            case 'full': return 'amber';
+            case 'pending': return 'gray';
+            default: return 'gray';
+        }
+    };
+
+    // Helper function to get delivery method badge color
+    const getDeliveryMethodBadgeColor = (method) => {
+        switch (method) {
+            case 'in-person': return 'blue';
+            case 'online': return 'indigo';
+            case 'hybrid': return 'violet';
+            default: return 'gray';
+        }
     };
 
     return (
@@ -49,15 +76,15 @@ export default function Show({ course, school }) {
                             </div>
                             <div>
                                 <h3 className="mb-1 text-sm font-medium text-gray-500">Major</h3>
-                                <p className="text-base">{course.major?.code || 'Not Specified'}</p>
+                                <p className="text-base">{course.major?.name || 'Not Specified'}</p>
                             </div>
                             <div>
                                 <h3 className="mb-1 text-sm font-medium text-gray-500">Course Code</h3>
                                 <p className="text-base">{course.course_code}</p>
                             </div>
                             <div>
-                                <h3 className="mb-1 text-sm font-medium text-gray-500">Capacity</h3>
-                                <p className="text-base">{course.capacity}</p>
+                                <h3 className="mb-1 text-sm font-medium text-gray-500">Credits</h3>
+                                <p className="text-base">{course.credits || 'N/A'}</p>
                             </div>
                         </div>
 
@@ -85,13 +112,19 @@ export default function Show({ course, school }) {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            Section Number
+                                            Section Code
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            Term
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                             Instructor
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                            Room
+                                            Status
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            Delivery
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                             Schedule
@@ -113,19 +146,36 @@ export default function Show({ course, school }) {
                                                 </Link>
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4">
-                                                {section.professor?.name || (
+                                                {section.term ? (
+                                                    <span>{section.term.name}</span>
+                                                ) : (
                                                     <Badge color="gray">Not Assigned</Badge>
                                                 )}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4">
-                                                {section.schedules && section.schedules.length > 0 
-                                                    ? section.schedules[0]?.room?.room_number || (
-                                                        <Badge color="gray">Not Assigned</Badge>
-                                                    )
-                                                    : (
-                                                        <Badge color="gray">Not Scheduled</Badge>
-                                                    )
-                                                }
+                                                {section.professor ? (
+                                                    <span>{section.professor.name}</span>
+                                                ) : (
+                                                    <Badge color="gray">Not Assigned</Badge>
+                                                )}
+                                            </td>
+                                            <td className="whitespace-nowrap px-6 py-4">
+                                                {section.status ? (
+                                                    <Badge color={getStatusBadgeColor(section.status)}>
+                                                        {section.status.charAt(0).toUpperCase() + section.status.slice(1)}
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge color="gray">Unknown</Badge>
+                                                )}
+                                            </td>
+                                            <td className="whitespace-nowrap px-6 py-4">
+                                                {section.delivery_method ? (
+                                                    <Badge color={getDeliveryMethodBadgeColor(section.delivery_method)}>
+                                                        {section.delivery_method.charAt(0).toUpperCase() + section.delivery_method.slice(1)}
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge color="gray">Unknown</Badge>
+                                                )}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4">
                                                 {section.schedules && section.schedules.length > 0

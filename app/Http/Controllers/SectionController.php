@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\User;
 use App\Models\Room;
 use App\Models\RoomFeature;
+use App\Models\ProfessorProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -75,10 +76,12 @@ class SectionController extends Controller
         // Get terms for this school
         $terms = Term::where('school_id', $school->id)->get();
 
-        // Get professors
-        $professors = User::whereHas('role', function($query) {
-            $query->where('name', 'professor');
-        })->get();
+        // Get professors who are in this school with role 'professor'
+        $professors = User::where('school_id', $school->id)
+            ->whereHas('role', function($q) {
+                $q->where('name', 'professor');
+            })
+            ->get();
 
         // Get room features
         $roomFeatures = RoomFeature::all();
@@ -241,10 +244,12 @@ class SectionController extends Controller
         // Get terms for this school
         $terms = Term::where('school_id', $school->id)->get();
 
-        // Get professors
-        $professors = User::whereHas('role', function($query) {
-            $query->where('name', 'professor');
-        })->get();
+        // Get professors who are in this school with role 'professor'
+        $professors = User::where('school_id', $school->id)
+            ->whereHas('role', function($q) {
+                $q->where('name', 'professor');
+            })
+            ->get();
 
         // Get room features
         $roomFeatures = RoomFeature::all();

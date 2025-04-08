@@ -5,12 +5,18 @@ import { Link } from '@inertiajs/react';
 import SectionForm from '@/Components/Forms/SectionForm';
 import { useState, useEffect } from 'react';
 
-export default function Edit({ section, courses, terms, professorProfiles, roomFeatures, school }) {
+export default function Edit({ section, courses, terms, professors, roomFeatures, school }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const userSchool = auth.user.school;
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Log professor data for debugging
+    useEffect(() => {
+        console.log("Professor data in Edit component:", professors);
+        console.log("Section object:", section);
+    }, [professors]);
 
     // Extract feature IDs from section.requiredFeatures array
     const getRequiredFeatureIds = () => {
@@ -26,7 +32,10 @@ export default function Edit({ section, courses, terms, professorProfiles, roomF
         professor_id: section.professor_id || '',
         section_code: section.section_code || '',
         number_of_students: section.number_of_students || 0,
-        required_features: getRequiredFeatureIds()
+        required_features: getRequiredFeatureIds(),
+        status: section.status || 'active',
+        delivery_method: section.delivery_method || 'in-person',
+        notes: section.notes || ''
     });
 
     const handleSubmit = (e) => {
@@ -69,7 +78,7 @@ export default function Edit({ section, courses, terms, professorProfiles, roomF
                         errors={errors}
                         courses={courses}
                         terms={terms}
-                        professors={professorProfiles}
+                        professors={professors}
                         roomFeatures={roomFeatures}
                         isSubmitting={isSubmitting || processing}
                         onSubmit={handleSubmit}

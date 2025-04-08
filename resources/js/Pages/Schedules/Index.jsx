@@ -47,7 +47,8 @@ export default function Index({ auth, schedules, rooms = [], isProfessor = false
                 (schedule.section?.course?.title && schedule.section.course.title.toLowerCase().includes(searchLower)) ||
                 (schedule.section?.professor?.name || '').toLowerCase().includes(searchLower) ||
                 (schedule.room?.room_number && schedule.room.room_number.toString().includes(searchLower)) ||
-                (schedule.day_of_week && schedule.day_of_week.toLowerCase().includes(searchLower))
+                (schedule.day_of_week && schedule.day_of_week.toLowerCase().includes(searchLower)) ||
+                (schedule.location_type && schedule.location_type.toLowerCase().includes(searchLower))
             );
         });
 
@@ -56,20 +57,20 @@ export default function Index({ auth, schedules, rooms = [], isProfessor = false
         let compareA, compareB;
         
         if (sortField === 'course') {
-            compareA = a.section.course.title;
-            compareB = b.section.course.title;
+            compareA = a.section?.course?.title || '';
+            compareB = b.section?.course?.title || '';
         } else if (sortField === 'professor') {
-            compareA = a.section.professor?.name || '';
-            compareB = b.section.professor?.name || '';
+            compareA = a.section?.professor?.name || '';
+            compareB = b.section?.professor?.name || '';
         } else if (sortField === 'room') {
-            compareA = a.room.room_number;
-            compareB = b.room.room_number;
+            compareA = a.room?.room_number || '';
+            compareB = b.room?.room_number || '';
         } else if (sortField === 'time') {
-            compareA = a.start_time;
-            compareB = b.start_time;
+            compareA = a.start_time || '';
+            compareB = b.start_time || '';
         } else {
-            compareA = a[sortField];
-            compareB = b[sortField];
+            compareA = a[sortField] || '';
+            compareB = b[sortField] || '';
         }
         
         if (sortDirection === 'asc') {
@@ -382,7 +383,7 @@ export default function Index({ auth, schedules, rooms = [], isProfessor = false
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center text-sm text-gray-900">
                                                 <MapPin className="h-5 w-5 mr-2 text-gray-400" />
-                                                Room {schedule.room.room_number}, {schedule.room.floor.building.name}
+                                                {schedule.room ? `Room ${schedule.room.room_number}, ${schedule.room.floor.building.name}` : 'Online Class (No Room)'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -440,7 +441,9 @@ export default function Index({ auth, schedules, rooms = [], isProfessor = false
                                     </div>
                                     <div className="flex items-center text-sm">
                                         <MapPin className="h-5 w-5 mr-2 text-gray-400" />
-                                        <span className="text-gray-700">Room {schedule.room.room_number}, {schedule.room.floor.building.name}</span>
+                                        <span className="text-gray-700">
+                                            {schedule.room ? `Room ${schedule.room.room_number}, ${schedule.room.floor.building.name}` : 'Online Class (No Room)'}
+                                        </span>
                                     </div>
                                 </div>
                                 {auth.can.update_schedule && (
