@@ -11,6 +11,7 @@ import {
     Select,
     SelectItem 
 } from '@tremor/react';
+import toast from 'react-hot-toast';
 
 export default function Edit({ major, departments, school }) {
     const { auth } = usePage().props;
@@ -26,10 +27,16 @@ export default function Edit({ major, departments, school }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         put(route('majors.update', { school: school.id, major: major.id }), {
-            preserveScroll: true
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Major updated successfully');
+            },
+            onError: (errors) => {
+                console.log('Errors:', errors); // Error logging
+                toast.error('Something went wrong');
+            },
         });
     };
-
     return (
         <AppLayout userRole={userRole} school={school}>
             <Head title="Edit Academic Major" />
