@@ -19,7 +19,7 @@ class DepartmentController extends Controller
 
         // Verify user has access to this school
         $user = Auth::user();
-        if ($user->role->name !== 'super_admin' && $user->school_id !== $school->id) {
+        if ($user->role->id !== 2 && $user->school_id !== $school->id) {
             abort(403, 'You do not have access to this school');
         }
 
@@ -33,6 +33,7 @@ class DepartmentController extends Controller
                     'id' => $department->id,
                     'name' => $department->name,
                     'school_id' => $department->school_id,
+                    'code' => $department->code,
                     'stats' => [
                         'majors' => $department->majors_count,
                         'courses' => $department->courses_count,
@@ -40,7 +41,6 @@ class DepartmentController extends Controller
                     ]
                 ];
             });
-
         return Inertia::render('Departments/Index', [
             'departments' => $departments,
             'school' => $school,
@@ -165,6 +165,7 @@ class DepartmentController extends Controller
             'contact.office' => 'nullable|string|max:255',
         ]);
 
+
         $department->update([
             'name' => $validated['name'],
             'code' => $validated['code'] ?? $department->code,
@@ -174,16 +175,13 @@ class DepartmentController extends Controller
                 'office' => $validated['contact']['office'] ?? null,
             ]
         ]);
-
-        return redirect()
-            ->back()
+        return redirect(route('departments.show', [$school->id, $department->id]))
             ->with('success', 'Department updated successfully');
     }
 
     // DELETE /departments/{id}
-    public function destroy(School $school, $id)
+    public function destroy(School $school, Department $department)
     {
-        $department = Department::findOrFail($id);
         $this->authorize('delete', $department);
 
         // Verify department belongs to the school
