@@ -2,6 +2,7 @@
 
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
+import toast from 'react-hot-toast';
 
 export default function Create() {
     const { data, setData, post, errors } = useForm({
@@ -12,13 +13,14 @@ export default function Create() {
     const submit = (e) => {
         e.preventDefault();
         console.log('Submitting data:', data);
-
+        
         post(route('schools.store'), {
             onSuccess: () => {
-                console.log('Success!');
+                toast.success('School created successfully');
             },
             onError: (errors) => {
-                console.log('Errors:', errors);
+                console.log('Errors:', errors); // Error logging
+                toast.error('Something went wrong');
             },
         });
     };
@@ -26,6 +28,7 @@ export default function Create() {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const school = auth.user.school;
+    
     return (
         <AppLayout userRole={userRole} school={school}>
             <Head title="Create School" />
