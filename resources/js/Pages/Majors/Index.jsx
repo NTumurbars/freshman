@@ -142,7 +142,7 @@ export default function Index({ majors, school, can_create }) {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex items-center justify-end gap-2">
+                                            <div className="flex items-center justify-end gap-6">
                                                 <Link 
                                                     href={route('majors.edit', { 
                                                         school: school.id, 
@@ -169,11 +169,17 @@ export default function Index({ majors, school, can_create }) {
                                                     method="delete"
                                                     as="button"
                                                     type="button"
-                                                    className="text-red-600 text-xs px-2 py-1 rounded hover:bg-red-50 hover:text-red-700 transition-colors inline-flex items-center gap-1"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    <TrashIcon className="h-3 w-3" />
-                                                    Delete
+                                                    <Button 
+                                                        icon={TrashIcon}
+                                                        variant="light"
+                                                        color="red"
+                                                        size="xs"
+                                                        tooltip="Delete major"
+                                                    >
+                                                        Delete
+                                                    </Button>
                                                 </Link>
                                             </div>
                                         </TableCell>
