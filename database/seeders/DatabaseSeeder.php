@@ -53,7 +53,7 @@ class DatabaseSeeder extends Seeder
             [
                 'email' => 'temple@admin.com',
                 'website_url' => 'https://www.temple.edu',
-                'logo_url' => 'https://www.temple.edu/sites/all/files/assets/svg/temple-logo-t-box.svg',
+                'logo_url' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Temple_T_logo.svg/330px-Temple_T_logo.svg.png',
                 'description' => 'Temple University is a public state-related research university in Philadelphia, Pennsylvania.',
                 'address' => '1801 N. Broad Street',
                 'city' => 'Philadelphia',
@@ -241,7 +241,7 @@ class DatabaseSeeder extends Seeder
             [
                 'email' => 'tuj@admin.com',
                 'website_url' => 'https://www.tuj.ac.jp',
-                'logo_url' => 'https://www.temple.edu/sites/all/files/assets/svg/temple-logo-t-box.svg',
+                'logo_url' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Temple_T_logo.svg/330px-Temple_T_logo.svg.png',
                 'description' => 'Temple University Japan (TUJ) is the oldest and largest foreign university in Japan - located in Tokyo.',
                 'address' => '1-14-29 Taishido',
                 'city' => 'Setagaya-ku',
