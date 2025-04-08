@@ -192,7 +192,7 @@ class UserController extends Controller
         }
 
         $user->update($data);
-        return redirect()->route('users.index')->with('success', 'User updated successfully');
+        return redirect()->route('users.show', $user->id)->with('success', 'User updated successfully');
     }
 
     // DELETE /users/{id}
