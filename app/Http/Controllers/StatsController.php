@@ -21,8 +21,10 @@ class StatsController extends Controller
         $users = User::all()->count();
         
         // Get all active terms (current date falls between start_date and end_date)
-        $activeTerms = Term::where('start_date', '<=', Carbon::now())
-            ->where('end_date', '>=', Carbon::now())
+        // Use today's date at start of day to ensure proper date comparisons
+        $today = Carbon::now()->startOfDay();
+        $activeTerms = Term::where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
             ->count();
 
         return response()->json([
@@ -40,9 +42,11 @@ class StatsController extends Controller
         $buildings = Building::where('school_id', $school_id)->count();
         
         // Get current term (where current date falls between start_date and end_date)
+        // Use today's date at start of day to ensure proper date comparisons
+        $today = Carbon::now()->startOfDay();
         $currentTerm = Term::where('school_id', $school_id)
-            ->where('start_date', '<=', Carbon::now())
-            ->where('end_date', '>=', Carbon::now())
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
             ->first();
             
         // Get active courses for current term
