@@ -11,6 +11,7 @@ import {
     Select,
     SelectItem 
 } from '@tremor/react';
+import toast from 'react-hot-toast';
 
 export default function Create({ departments, school }) {
     const { auth } = usePage().props;
@@ -27,8 +28,12 @@ export default function Create({ departments, school }) {
         e.preventDefault();
         post(route('majors.store', { school: school.id }), {
             onSuccess: () => {
-                console.log('Success: Major created successfully');
-            }
+                toast.success('Major created successfully');
+            },
+            onError: (errors) => {
+                console.log('Errors:', errors); // Error logging
+                toast.error('Something went wrong');
+            },
         });
     };
 
