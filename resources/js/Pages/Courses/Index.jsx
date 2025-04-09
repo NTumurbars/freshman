@@ -13,7 +13,7 @@ export default function Index({ courses, flash, school }) {
 
     // Filter courses based on search term
     const filteredCourses = courses.filter(course =>
-        (course.course_code && course.course_code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (course.code && course.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (course.title && course.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (course.department?.name && course.department.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
@@ -74,8 +74,8 @@ export default function Index({ courses, flash, school }) {
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Department</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Course Code</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Title</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Credits</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Major</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Capacity</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Sections</th>
                             <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
                         </tr>
@@ -84,7 +84,7 @@ export default function Index({ courses, flash, school }) {
                         {filteredCourses.map((course) => (
                             <tr key={course.id} className="hover:bg-gray-50">
                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{course.department?.name || "—"}</td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{course.course_code}</td>
+                                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{course.code}</td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm font-medium text-gray-900">{course.title}</div>
                                     {course.description && (
@@ -95,8 +95,8 @@ export default function Index({ courses, flash, school }) {
                                         </div>
                                     )}
                                 </td>
+                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{course.credits}</td>
                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{course.major?.code || "—"}</td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{course.capacity}</td>
                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{course.sections?.length || 0}</td>
                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                     <div className="flex justify-end space-x-2">

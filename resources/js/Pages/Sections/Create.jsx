@@ -1,30 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ChevronLeft, Plus, X, Info, Clock, GraduationCap, BookOpen, Users } from 'lucide-react';
 
-export default function Create({ courses, terms, professors, roomFeatures, rooms, school, statuses, deliveryMethods, meetingPatterns: meetingPatternOptions, locationTypes: locationTypeOptions }) {
+export default function Create({ courses, terms, professorProfiles, roomFeatures, rooms, school, statuses, deliveryMethods, meetingPatterns: meetingPatternOptions, locationTypes: locationTypeOptions, activeTerm }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const userSchool = auth.user.school;
-    
+
     // State for active tab
     const [activeTab, setActiveTab] = useState('basic-info');
-    
+
     // Form state
     const { data, setData, post, processing, errors } = useForm({
         course_id: '',
-        term_id: '',
-        professor_id: '',
+        term_id: activeTerm?.id || '',
+        professor_profile_id: '',
         section_code: '',
-        number_of_students: 0,
         status: 'active',
         delivery_method: 'in-person',
         notes: '',
         required_features: [],
-        schedules: []
+        schedules: [],
+        students_count: 0
     });
-    
+
+    // Set the active term when the component mounts
+    useEffect(() => {
+        if (activeTerm) {
+            setData('term_id', activeTerm.id);
+        }
+    }, [activeTerm]);
+
     // State for new schedule
     const [newSchedule, setNewSchedule] = useState({
         room_id: '',
@@ -35,14 +42,14 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
         location_type: 'in-person',
         virtual_meeting_url: ''
     });
-    
+
     // Helper constants for location types
     const locationTypes = {
         'in-person': 'In Person',
         'virtual': 'Virtual',
         'hybrid': 'Hybrid'
     };
-    
+
     // Helper constants for meeting patterns
     const meetingPatternMap = {
         'single': 'Single Meeting',
@@ -52,7 +59,7 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
         'tuesday-friday': 'Tuesday/Friday',
         'weekly': 'Weekly (Mon-Fri)'
     };
-    
+
     // Function to add a new schedule
     const addSchedule = () => {
         // Basic validation
@@ -60,34 +67,34 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
             alert('Please select a room for in-person or hybrid classes');
             return;
         }
-        
+
         if ((newSchedule.location_type === 'virtual' || newSchedule.location_type === 'hybrid') && !newSchedule.virtual_meeting_url) {
             alert('Please enter a virtual meeting URL for virtual or hybrid classes');
             return;
         }
-        
+
         // Time validation
         if (newSchedule.start_time >= newSchedule.end_time) {
             alert('End time must be after start time');
             return;
         }
-        
+
         // Normalize location_type (ensure it uses hyphens, not underscores)
         let normalizedSchedule = { ...newSchedule };
         if (normalizedSchedule.location_type === 'in_person') {
             normalizedSchedule.location_type = 'in-person';
             console.log('Normalized location_type from in_person to in-person');
         }
-        
+
         // Create schedules based on meeting pattern
         let schedulesToAdd = [];
-        
+
         if (normalizedSchedule.meeting_pattern === 'single') {
             schedulesToAdd = [{ ...normalizedSchedule }];
         } else {
             // Get days for the selected pattern
             const days = getDaysFromPattern(normalizedSchedule.meeting_pattern);
-            
+
             // Create a schedule for each day with the same details
             schedulesToAdd = days.map(day => ({
                 ...normalizedSchedule,
@@ -95,14 +102,14 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
                 meeting_pattern: 'single' // Each individual day is stored as single
             }));
         }
-        
+
         // Log for debugging
         console.log('Adding schedules:', schedulesToAdd);
         console.log('Location type:', schedulesToAdd[0]?.location_type);
-        
+
         // Add the new schedules to the existing ones
         setData('schedules', [...data.schedules, ...schedulesToAdd]);
-        
+
         // Reset the form
         setNewSchedule({
             room_id: '',
@@ -114,7 +121,7 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
             virtual_meeting_url: ''
         });
     };
-    
+
     // Helper function to get days of week from meeting pattern
     const getDaysFromPattern = (pattern) => {
         const patternMap = {
@@ -125,37 +132,37 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
             'weekly': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
             'single': [newSchedule.day_of_week]
         };
-        
+
         return patternMap[pattern] || [newSchedule.day_of_week];
     };
-    
+
     // Function to remove a schedule
     const removeSchedule = (index) => {
         const updatedSchedules = [...data.schedules];
         updatedSchedules.splice(index, 1);
         setData('schedules', updatedSchedules);
     };
-    
+
     // Function to handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
         post(route('sections.store', school.id));
     };
-    
+
     // Function to toggle a room feature
     const toggleFeature = (featureId) => {
         const features = [...data.required_features];
         const index = features.indexOf(featureId);
-        
+
         if (index === -1) {
             features.push(featureId);
         } else {
             features.splice(index, 1);
         }
-        
+
         setData('required_features', features);
     };
-    
+
     // Function to navigate to tabs
     const switchTab = (tab) => {
         setActiveTab(tab);
@@ -185,7 +192,7 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
                     <GraduationCap className="h-8 w-8 text-white mr-3" />
                     <h1 className="text-xl font-bold text-white">Create New Class Section</h1>
                 </div>
-                
+
                 {/* Tabs */}
                 <div className="border-b border-gray-200 bg-gray-50">
                     <nav className="flex -mb-px px-4">
@@ -267,7 +274,7 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
                                         <option value="">Select a course</option>
                                         {courses && courses.map((course) => (
                                             <option key={course.id} value={course.id}>
-                                                {course.course_code} - {course.title}
+                                                {course.code} - {course.title}
                                             </option>
                                         ))}
                                     </select>
@@ -289,12 +296,14 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
                                         <option value="">Select a term</option>
                                         {terms && terms.map((term) => (
                                             <option key={term.id} value={term.id}>
-                                                {term.name} ({new Date(term.start_date).toLocaleDateString()} - {new Date(term.end_date).toLocaleDateString()})
+                                                {term.name} {term.id === activeTerm?.id ? '(Current Term)' : ''}
                                             </option>
                                         ))}
                                     </select>
                                     {errors.term_id && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.term_id}</p>
+                                        <div className="mt-1 text-sm text-red-600">
+                                            {errors.term_id}
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -336,6 +345,29 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
                                 </div>
                             </div>
 
+                            <div>
+                                <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Section Capacity
+                                </label>
+                                <input
+                                    type="number"
+                                    id="capacity"
+                                    min="1"
+                                    value={data.capacity}
+                                    onChange={(e) => setData('capacity', e.target.value)}
+                                    placeholder="Maximum number of students allowed"
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                                />
+                                <p className="mt-1 text-xs text-gray-500">
+                                    {data.delivery_method === 'in-person' || data.delivery_method === 'hybrid'
+                                        ? 'For in-person or hybrid sections, capacity will be limited by room size.'
+                                        : 'For online sections, this sets the maximum enrollment limit.'}
+                                </p>
+                                {errors.capacity && (
+                                    <p className="mt-1 text-sm text-red-600">{errors.capacity}</p>
+                                )}
+                            </div>
+
                             <div className="flex justify-end space-x-2 pt-4">
                                 <button
                                     type="button"
@@ -357,26 +389,26 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
                             </div>
 
                             <div>
-                                <label htmlFor="professor_id" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="professor_profile_id" className="block text-sm font-medium text-gray-700 mb-1">
                                     Professor
                                 </label>
                                 <select
-                                    id="professor_id"
-                                    value={data.professor_id}
-                                    onChange={(e) => setData('professor_id', e.target.value)}
+                                    id="professor_profile_id"
+                                    value={data.professor_profile_id}
+                                    onChange={(e) => setData('professor_profile_id', e.target.value)}
                                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
                                 >
                                     <option value="">Not Assigned</option>
-                                    {professors && Array.isArray(professors) && professors.map((profile) => 
-                                        profile.user && (
-                                            <option key={profile.user.id} value={profile.user.id}>
-                                                {profile.user.name}
-                                            </option>
-                                        )
-                                    )}
+                                    {professorProfiles && Array.isArray(professorProfiles) && professorProfiles.map((profile) =>
+                                         profile.user && (
+                                             <option key={profile.id} value={profile.id}>
+                                                 {profile.user.name} {profile.title ? `(${profile.title})` : ''}
+                                             </option>
+                                         )
+                                     )}
                                 </select>
-                                {errors.professor_id && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.professor_id}</p>
+                                {errors.professor_profile_id && (
+                                    <p className="mt-1 text-sm text-red-600">{errors.professor_profile_id}</p>
                                 )}
                             </div>
 
@@ -472,13 +504,13 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
                                                         {schedule.start_time.slice(0, 5)} - {schedule.end_time.slice(0, 5)}
                                                     </span>
                                                     <span className="ml-3 text-gray-500">
-                                                        {schedule.room_id 
-                                                            ? rooms && rooms.find(r => r.id.toString() === schedule.room_id.toString())?.room_number 
+                                                        {schedule.room_id
+                                                            ? rooms && rooms.find(r => r.id.toString() === schedule.room_id.toString())?.room_number
                                                             : 'No Room'
                                                         }
                                                     </span>
                                                 </div>
-                                                <button 
+                                                <button
                                                     type="button"
                                                     onClick={() => removeSchedule(index)}
                                                     className="text-gray-400 hover:text-red-500 focus:outline-none"
@@ -667,7 +699,7 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
                             </div>
                         </div>
                     </div>
-                    
+
                     {/* Persistent Bottom Action Bar */}
                     <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
                         <button
@@ -683,7 +715,7 @@ export default function Create({ courses, terms, professors, roomFeatures, rooms
                         >
                             Previous
                         </button>
-                        
+
                         <button
                             type="submit"
                             disabled={processing}

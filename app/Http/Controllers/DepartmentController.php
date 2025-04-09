@@ -24,8 +24,8 @@ class DepartmentController extends Controller
         }
 
         $departments = Department::where('school_id', $school->id)
-            ->with(['school', 'majors', 'courses', 'professorProfiles'])
-            ->withCount(['majors', 'courses', 'professorProfiles'])
+            ->with(['school', 'majors', 'courses', 'professor_profiles'])
+            ->withCount(['majors', 'courses', 'professor_profiles'])
             ->orderBy('name')
             ->get()
             ->map(function ($department) {
@@ -52,24 +52,24 @@ class DepartmentController extends Controller
     public function show(School $school, $id)
     {
         $department = Department::findOrFail($id);
-        
+
         $this->authorize('view', $department);
 
         // Verify department belongs to the school
         if ($department->school_id !== $school->id) {
             abort(404, 'Department not found in this school');
         }
-        
+
         // Load relationships manually to ensure they work correctly
         $department->load(['majors', 'courses']);
-        
+
         // Explicitly load the professor profiles with their users
-        $professorProfiles = ProfessorProfile::where('department_id', $department->id)
+        $professor_profiles = ProfessorProfile::where('department_id', $department->id)
             ->with('user')
             ->get();
-        
+
         // Assign the profiles to the department
-        $department->professorProfiles = $professorProfiles;
+        $department->professor_profiles = $professor_profiles;
 
         return Inertia::render('Departments/Show', [
             'department' => $department,

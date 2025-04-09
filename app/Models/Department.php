@@ -32,7 +32,7 @@ class Department extends Model
         return $this->hasMany(Major::class);
     }
 
-    public function professorProfiles()
+    public function professor_profiles()
     {
         return $this->hasMany(ProfessorProfile::class);
     }

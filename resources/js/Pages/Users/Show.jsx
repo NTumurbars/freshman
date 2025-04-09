@@ -57,7 +57,7 @@ export default function Show() {
 
     const submitProfileEdit = (e) => {
         e.preventDefault();
-        post(route('professorProfile.update', user.id), {
+        post(route('professor_profile.update', user.id), {
             onSuccess: () => {
                 setEditingProfile(false);
             },

@@ -34,15 +34,16 @@ import {
 } from '@tremor/react';
 
 export default function Show({ department, school }) {
-    // Ensure professorProfiles is never undefined
-    if (!department.professorProfiles) {
-        department.professorProfiles = [];
+    // Ensure professor_profiles is never undefined
+    if (!department.professor_profiles) {
+        department.professor_profiles = [];
     }
 
     // Debug - check if users are loaded correctly
     console.log(
         'Professor Profiles with users:',
-        JSON.stringify(department.professorProfiles, null, 2),
+        JSON.stringify(department.professor_profiles, null, 2),
+        Array.isArray(department.courses)
     );
     console.log(
         'Department contact data:',
@@ -51,8 +52,8 @@ export default function Show({ department, school }) {
 
     // Check if we actually have professor profiles
     const hasProfessors =
-        Array.isArray(department.professorProfiles) &&
-        department.professorProfiles.length > 0;
+        Array.isArray(department.professor_profiles) &&
+        department.professor_profiles.length > 0;
     const hasMajors =
         Array.isArray(department.majors) && department.majors.length > 0;
     const hasCourses =
@@ -232,7 +233,7 @@ export default function Show({ department, school }) {
                                         <div>
                                             <Text>Professors</Text>
                                             <Title>
-                                                {department.professorProfiles
+                                                {department.professor_profiles
                                                     ?.length || 0}
                                             </Title>
                                         </div>
@@ -267,7 +268,7 @@ export default function Show({ department, school }) {
                                 Professors
                                 {hasProfessors && (
                                     <Badge className="ml-2">
-                                        {department.professorProfiles.length}
+                                        {department.professor_profiles.length}
                                     </Badge>
                                 )}
                             </Tab>
@@ -505,7 +506,7 @@ export default function Show({ department, school }) {
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
-                                                {department.professorProfiles.map(
+                                                {department.professor_profiles.map(
                                                     (professor) => (
                                                         <TableRow
                                                             key={professor.id}
