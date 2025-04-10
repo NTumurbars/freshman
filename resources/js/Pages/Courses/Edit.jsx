@@ -11,23 +11,25 @@ export default function Edit({ departments, majors, course }) {
     });
 
     const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
     const school = auth.user.school;
 
     const submit = (e) => {
         e.preventDefault();
-        patch(route('courses.update', { school: school.id, course: course.id }), {
-            onSuccess: () => {
-                console.log('Success!');
+        patch(
+            route('courses.update', { school: school.id, course: course.id }),
+            {
+                onSuccess: () => {
+                    console.log('Success!');
+                },
+                onError: (errors) => {
+                    console.log('Errors:', errors);
+                },
             },
-            onError: (errors) => {
-                console.log('Errors:', errors);
-            },
-        });
+        );
     };
 
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title="Edit Course" />
 
             <div className="mx-auto max-w-2xl rounded bg-white p-6 shadow">
@@ -41,11 +43,19 @@ export default function Edit({ departments, majors, course }) {
                         <select
                             className="mt-1 block w-full rounded border-gray-300"
                             value={data.department_id}
-                            onChange={(e) => setData('department_id', parseInt(e.target.value))}
+                            onChange={(e) =>
+                                setData(
+                                    'department_id',
+                                    parseInt(e.target.value),
+                                )
+                            }
                         >
                             <option value="">Select Department</option>
                             {departments.map((department) => (
-                                <option key={department.id} value={department.id}>
+                                <option
+                                    key={department.id}
+                                    value={department.id}
+                                >
                                     {department.name}
                                 </option>
                             ))}
@@ -64,7 +74,9 @@ export default function Edit({ departments, majors, course }) {
                         <select
                             className="mt-1 block w-full rounded border-gray-300"
                             value={data.major_id}
-                            onChange={(e) => setData('major_id', parseInt(e.target.value))}
+                            onChange={(e) =>
+                                setData('major_id', parseInt(e.target.value))
+                            }
                         >
                             <option value="">Select Major</option>
                             {majors.map((major) => (
@@ -121,7 +133,9 @@ export default function Edit({ departments, majors, course }) {
                         <textarea
                             className="mt-1 block w-full rounded border-gray-300"
                             value={data.description}
-                            onChange={(e) => setData('description', e.target.value)}
+                            onChange={(e) =>
+                                setData('description', e.target.value)
+                            }
                             rows="4"
                         />
                         {errors.description && (

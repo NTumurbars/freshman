@@ -3,10 +3,9 @@ import { Head, Link, usePage } from '@inertiajs/react';
 
 export default function Reports({ reports, flash }) {
     const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
     const school = auth.user.school;
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title="Reports" />
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-800">

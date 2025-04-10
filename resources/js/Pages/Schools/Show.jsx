@@ -1,14 +1,10 @@
 import Block from '@/Components/ui/block';
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 
 export default function Show({ school_info, flash }) {
-    const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
-    const school = auth.user.school;
-
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title={school_info.name} />
 
             <div className="mb-6 flex items-center justify-between">
