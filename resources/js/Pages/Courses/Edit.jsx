@@ -2,33 +2,34 @@ import AppLayout from '@/Layouts/AppLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
 
 export default function Edit({ departments, majors, course }) {
-    const { data, setData, put, errors } = useForm({
+    const { data, setData, patch, errors, processing } = useForm({
         department_id: course.department_id,
-        major_id: course.major_id || '',
-        course_code: course.course_code,
+        major_id: course.major_id,
+        code: course.code,
         title: course.title,
         description: course.description || '',
-        capacity: course.capacity,
     });
 
     const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
     const school = auth.user.school;
 
     const submit = (e) => {
         e.preventDefault();
-        put(route('courses.update', { school: school.id, course: course.id }), {
-            onSuccess: () => {
-                console.log('Success!');
+        patch(
+            route('courses.update', { school: school.id, course: course.id }),
+            {
+                onSuccess: () => {
+                    console.log('Success!');
+                },
+                onError: (errors) => {
+                    console.log('Errors:', errors);
+                },
             },
-            onError: (errors) => {
-                console.log('Errors:', errors);
-            },
-        });
+        );
     };
-    
+
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title="Edit Course" />
 
             <div className="mx-auto max-w-2xl rounded bg-white p-6 shadow">
@@ -42,11 +43,19 @@ export default function Edit({ departments, majors, course }) {
                         <select
                             className="mt-1 block w-full rounded border-gray-300"
                             value={data.department_id}
-                            onChange={(e) => setData('department_id', parseInt(e.target.value))}
+                            onChange={(e) =>
+                                setData(
+                                    'department_id',
+                                    parseInt(e.target.value),
+                                )
+                            }
                         >
                             <option value="">Select Department</option>
                             {departments.map((department) => (
-                                <option key={department.id} value={department.id}>
+                                <option
+                                    key={department.id}
+                                    value={department.id}
+                                >
                                     {department.name}
                                 </option>
                             ))}
@@ -65,7 +74,9 @@ export default function Edit({ departments, majors, course }) {
                         <select
                             className="mt-1 block w-full rounded border-gray-300"
                             value={data.major_id}
-                            onChange={(e) => setData('major_id', parseInt(e.target.value))}
+                            onChange={(e) =>
+                                setData('major_id', parseInt(e.target.value))
+                            }
                         >
                             <option value="">Select Major</option>
                             {majors.map((major) => (
@@ -88,12 +99,12 @@ export default function Edit({ departments, majors, course }) {
                         <input
                             type="text"
                             className="mt-1 block w-full rounded border-gray-300"
-                            value={data.course_code}
-                            onChange={(e) => setData('course_code', e.target.value)}
+                            value={data.code}
+                            onChange={(e) => setData('code', e.target.value)}
                         />
-                        {errors.course_code && (
+                        {errors.code && (
                             <div className="mt-1 text-sm text-red-600">
-                                {errors.course_code}
+                                {errors.code}
                             </div>
                         )}
                     </div>
@@ -122,30 +133,14 @@ export default function Edit({ departments, majors, course }) {
                         <textarea
                             className="mt-1 block w-full rounded border-gray-300"
                             value={data.description}
-                            onChange={(e) => setData('description', e.target.value)}
+                            onChange={(e) =>
+                                setData('description', e.target.value)
+                            }
                             rows="4"
                         />
                         {errors.description && (
                             <div className="mt-1 text-sm text-red-600">
                                 {errors.description}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block font-medium text-gray-700">
-                            Capacity
-                        </label>
-                        <input
-                            type="number"
-                            min="0"
-                            className="mt-1 block w-full rounded border-gray-300"
-                            value={data.capacity}
-                            onChange={(e) => setData('capacity', parseInt(e.target.value) || 0)}
-                        />
-                        {errors.capacity && (
-                            <div className="mt-1 text-sm text-red-600">
-                                {errors.capacity}
                             </div>
                         )}
                     </div>
@@ -157,7 +152,7 @@ export default function Edit({ departments, majors, course }) {
                         >
                             Update Course
                         </button>
-                        
+
                         <a
                             href={route('courses.index', { school: school.id })}
                             className="rounded bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"

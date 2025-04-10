@@ -4,17 +4,16 @@ import { Head, Link, usePage } from '@inertiajs/react';
 export default function Index({ schools, flash }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
-    const school = auth.user.school;
 
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title="School Management" />
 
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-3xl font-semibold text-gray-800">
                     All Schools
                 </h1>
-                {userRole !== 2 && (
+                {userRole == 1 && (
                     <Link
                         href={route('schools.create')}
                         className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition duration-200 hover:bg-blue-700"

@@ -29,8 +29,7 @@ import { toast } from 'react-hot-toast';
 
 export default function Edit({ school, stats, formErrors }) {
     const [activeTab, setActiveTab] = useState(0);
-    const { auth, flash } = usePage().props;
-    const userRole = auth.user.role.id;
+    const { flash } = usePage().props;
 
     // Show success message if it exists in flash
     useEffect(() => {
@@ -38,22 +37,6 @@ export default function Edit({ school, stats, formErrors }) {
             toast.success(flash.success);
         }
     }, [flash?.success]);
-
-    // Default values for form objects
-    const defaultAcademicCalendar = {
-        term_structure: 'semester',
-        start_month: '8',
-        term_duration: '16',
-        break_duration: '2',
-    };
-
-    const defaultSettings = {
-        default_language: 'en',
-        default_course_capacity: '30',
-        registration_window_days: '30',
-        email_notifications: 'all',
-        reminder_days: '7',
-    };
 
     // Initialize form with proper handling for potentially missing fields
     const { data, setData, errors, put, processing } = useForm({
@@ -86,7 +69,7 @@ export default function Edit({ school, stats, formErrors }) {
     };
 
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title={`Edit ${school.name}`} />
 
             <div className="px-4 py-6 sm:px-6 lg:px-8">
