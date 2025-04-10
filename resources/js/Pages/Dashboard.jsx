@@ -194,7 +194,7 @@ export default function Dashboard() {
         <AppLayout>
             <Head title="Dashboard" />
 
-            <div className="space-y-8">
+            <div className="space-y-8 p-8">
                 {/* Header */}
                 <div className="border-b border-gray-200 pb-5">
                     <h1 className="text-2xl font-bold text-gray-900">
