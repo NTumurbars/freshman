@@ -108,21 +108,66 @@ export default function Index({ features, school, can_create }) {
                         <Text className="mb-2">Filter by Category</Text>
                         <div className="flex flex-wrap gap-2">
                             {categories.map((category) => (
-                                <Badge
+                                <button
                                     key={category}
-                                    color={
-                                        categoryFilter === category
-                                            ? category === 'All'
-                                                ? 'blue'
-                                                : categoryColors[category]
-                                            : 'gray'
-                                    }
-                                    size="lg"
-                                    className={`cursor-pointer ${categoryFilter === category ? 'ring-2 ring-offset-1' : ''}`}
                                     onClick={() => setCategoryFilter(category)}
+                                    className={`
+                                        relative flex items-center gap-2 rounded-full border px-4 py-1.5 
+                                        text-sm font-medium transition-all duration-200
+                                        ${categoryFilter === category
+                                            ? category === 'All'
+                                                ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm'
+                                                : `border-${categoryColors[category]}-200 bg-${categoryColors[category]}-50 text-${categoryColors[category]}-700 shadow-sm`
+                                            : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'
+                                        }
+                                    `}
                                 >
-                                    {category}
-                                </Badge>
+                                    {/* カテゴリーインジケーター */}
+                                    <span 
+                                        className={`
+                                            h-1.5 w-1.5 rounded-full
+                                            ${categoryFilter === category
+                                                ? category === 'All'
+                                                    ? 'bg-blue-500'
+                                                    : `bg-${categoryColors[category]}-500`
+                                                : category === 'All'
+                                                    ? 'bg-gray-300 group-hover:bg-blue-400'
+                                                    : `bg-gray-300 group-hover:bg-${categoryColors[category]}-400`
+                                            }
+                                        `}
+                                    />
+
+                                    {/* カテゴリー名 */}
+                                    <span className="relative">
+                                        {category}
+                                        
+                                        {/* 選択時のアンダーライン */}
+                                        {categoryFilter === category && (
+                                            <span 
+                                                className={`
+                                                    absolute -bottom-0.5 left-0 h-0.5 w-full rounded-full
+                                                    ${category === 'All'
+                                                        ? 'bg-blue-500/30'
+                                                        : `bg-${categoryColors[category]}-500/30`
+                                                    }
+                                                `}
+                                            />
+                                        )}
+                                    </span>
+
+                                    {/* 選択時のグロー効果 */}
+                                    {categoryFilter === category && (
+                                        <span 
+                                            className={`
+                                                absolute inset-0 -z-10 rounded-full
+                                                ${category === 'All'
+                                                    ? 'shadow-[0_0_8px_-1px] shadow-blue-500/20'
+                                                    : `shadow-[0_0_8px_-1px] shadow-${categoryColors[category]}-500/20`
+                                                }
+                                            `}
+                                        />
+                                    )}
+                                </button>
                             ))}
                         </div>
                     </div>
