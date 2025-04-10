@@ -197,7 +197,7 @@ export default function AdminSideBar({ school }) {
 
                 <NavGroup title="School">
                     <NavItem href={schoolRoute('schools.edit')} icon={School}>
-                        School Settings
+                        Your School
                     </NavItem>
                     
                     <NavItem

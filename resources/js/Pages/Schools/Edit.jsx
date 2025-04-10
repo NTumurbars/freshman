@@ -76,11 +76,6 @@ export default function Edit({ school, stats, formErrors }) {
                 <PageHeader
                     title={school.name}
                     subtitle="Manage school settings and configuration"
-                    breadcrumbs={[
-                        { title: 'Schools', url: route('schools.index') },
-                        { title: school.name },
-                    ]}
-                    backUrl={route('schools.index')}
                     actions={
                         <Badge
                             color={processing ? 'yellow' : 'green'}
