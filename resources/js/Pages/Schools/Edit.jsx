@@ -158,38 +158,41 @@ export default function Edit({ school, stats, formErrors }) {
                             <TabPanel>
                                 <form onSubmit={handleSubmit} className="space-y-8">
                                     <div className="space-y-6">
-                                        <div>
-                                            <Text className="mb-2 font-medium text-gray-700">School Name</Text>
-                                            <TextInput
-                                                value={data.name}
-                                                onChange={(e) => setData('name', e.target.value)}
-                                                placeholder="Enter school name"
-                                                disabled={processing}
-                                                className="rounded-lg shadow-sm"
-                                                error={errors.name}
-                                            />
-                                            {errors.name && (
-                                                <Text color="red" className="mt-1 text-sm">
-                                                    {errors.name}
-                                                </Text>
-                                            )}
+                                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                            <div>
+                                                <Text className="mb-2 font-medium text-gray-700">School Name</Text>
+                                                <TextInput
+                                                    value={data.name}
+                                                    onChange={(e) => setData('name', e.target.value)}
+                                                    placeholder="Enter school name"
+                                                    disabled={processing}
+                                                    className="rounded-lg shadow-sm"
+                                                    error={errors.name}
+                                                />
+                                                {errors.name && (
+                                                    <Text color="red" className="mt-1 text-sm">
+                                                        {errors.name}
+                                                    </Text>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <Text className="mb-2 font-medium text-gray-700">School Code</Text>
+                                                <TextInput
+                                                    value={data.code}
+                                                    onChange={(e) => setData('code', e.target.value)}
+                                                    placeholder="Enter school code"
+                                                    disabled={processing}
+                                                    className="rounded-lg shadow-sm"
+                                                    error={errors.code}
+                                                />
+                                                {errors.code && (
+                                                    <Text color="red" className="mt-1 text-sm">
+                                                        {errors.code}
+                                                    </Text>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div>
-                                            <Text className="mb-2 font-medium text-gray-700">School Code</Text>
-                                            <TextInput
-                                                value={data.code}
-                                                onChange={(e) => setData('code', e.target.value)}
-                                                placeholder="Enter school code"
-                                                disabled={processing}
-                                                className="rounded-lg shadow-sm"
-                                                error={errors.code}
-                                            />
-                                            {errors.code && (
-                                                <Text color="red" className="mt-1 text-sm">
-                                                    {errors.code}
-                                                </Text>
-                                            )}
-                                        </div>
+
                                         <div>
                                             <Text className="mb-2 font-medium text-gray-700">Email</Text>
                                             <TextInput
@@ -206,6 +209,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                 </Text>
                                             )}
                                         </div>
+
                                         <div>
                                             <Text className="mb-2 font-medium text-gray-700">Website URL</Text>
                                             <TextInput
@@ -217,6 +221,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                 error={errors.website_url}
                                             />
                                         </div>
+
                                         <div>
                                             <Text className="mb-2 font-medium text-gray-700">Logo URL</Text>
                                             <TextInput
@@ -228,6 +233,7 @@ export default function Edit({ school, stats, formErrors }) {
                                                 error={errors.logo_url}
                                             />
                                         </div>
+
                                         <div>
                                             <Text className="mb-2 font-medium text-gray-700">Description</Text>
                                             <TextInput
@@ -238,6 +244,43 @@ export default function Edit({ school, stats, formErrors }) {
                                                 className="rounded-lg shadow-sm"
                                                 error={errors.description}
                                             />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 rounded-lg bg-gray-50 p-6">
+                                        <div className="mb-4">
+                                            <h3 className="text-lg font-medium text-gray-900">Regional Settings</h3>
+                                            <p className="text-sm text-gray-600">Configure timezone and regional preferences.</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">Timezone</Text>
+                                            <Select
+                                                value={data.timezone}
+                                                onValueChange={(value) => setData('timezone', value)}
+                                                placeholder="Select timezone"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.timezone}
+                                            >
+                                                <SelectItem value="UTC">UTC</SelectItem>
+                                                <SelectItem value="America/New_York">Eastern Time</SelectItem>
+                                                <SelectItem value="America/Chicago">Central Time</SelectItem>
+                                                <SelectItem value="America/Denver">Mountain Time</SelectItem>
+                                                <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
+                                                <SelectItem value="Asia/Tokyo">Japan Time</SelectItem>
+                                                <SelectItem value="Europe/London">London Time</SelectItem>
+                                                <SelectItem value="Europe/Paris">Central European Time</SelectItem>
+                                                <SelectItem value="Australia/Sydney">Sydney Time</SelectItem>
+                                            </Select>
+                                            {errors.timezone && (
+                                                <Text color="red" className="mt-1 text-sm">
+                                                    {errors.timezone}
+                                                </Text>
+                                            )}
+                                            <Text className="mt-2 text-xs text-gray-500">
+                                                System-wide timezone for scheduling
+                                            </Text>
                                         </div>
                                     </div>
 
