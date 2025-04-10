@@ -73,377 +73,271 @@ export default function Edit({ school, stats, formErrors }) {
             <Head title={`Edit ${school.name}`} />
 
             <div className="px-4 py-6 sm:px-6 lg:px-8">
-                <PageHeader
-                    title={school.name}
-                    subtitle="Manage school settings and configuration"
-                    actions={
-                        <Badge
-                            color={processing ? 'yellow' : 'green'}
-                            icon={processing ? undefined : CheckCircleIcon}
-                        >
-                            {processing ? 'Saving...' : 'Up to date'}
-                        </Badge>
-                    }
-                />
-
-                <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
-                    <StatisticsCard
-                        title="Total Users"
-                        value={stats.total_users}
-                        icon={<UserIcon className="h-5 w-5" />}
-                    />
-                    <StatisticsCard
-                        title="Departments"
-                        value={stats.total_departments}
-                        icon={<BuildingOfficeIcon className="h-5 w-5" />}
-                    />
-                    <StatisticsCard
-                        title="Buildings"
-                        value={stats.total_buildings}
-                        icon={<HomeModernIcon className="h-5 w-5" />}
-                    />
-                    <StatisticsCard
-                        title="Active Terms"
-                        value={stats.total_active_terms}
-                        icon={<CalendarIcon className="h-5 w-5" />}
+                <div className="mb-8">
+                    <PageHeader
+                        title={school.name}
+                        subtitle="Manage school settings and configuration"
+                        actions={
+                            <Badge
+                                color={processing ? 'yellow' : 'green'}
+                                icon={processing ? undefined : CheckCircleIcon}
+                                className="shadow-sm"
+                            >
+                                {processing ? 'Saving...' : 'Up to date'}
+                            </Badge>
+                        }
                     />
                 </div>
 
+                <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
+                        <div className="flex items-center gap-4">
+                            <div className="rounded-xl bg-blue-50 p-3">
+                                <UserIcon className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <Text className="text-sm text-gray-500">Total Users</Text>
+                                <Text className="text-2xl font-bold text-gray-900">{stats.total_users}</Text>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
+                        <div className="flex items-center gap-4">
+                            <div className="rounded-xl bg-purple-50 p-3">
+                                <BuildingOfficeIcon className="h-6 w-6 text-purple-600" />
+                            </div>
+                            <div>
+                                <Text className="text-sm text-gray-500">Departments</Text>
+                                <Text className="text-2xl font-bold text-gray-900">{stats.total_departments}</Text>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
+                        <div className="flex items-center gap-4">
+                            <div className="rounded-xl bg-emerald-50 p-3">
+                                <HomeModernIcon className="h-6 w-6 text-emerald-600" />
+                            </div>
+                            <div>
+                                <Text className="text-sm text-gray-500">Buildings</Text>
+                                <Text className="text-2xl font-bold text-gray-900">{stats.total_buildings}</Text>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
+                        <div className="flex items-center gap-4">
+                            <div className="rounded-xl bg-amber-50 p-3">
+                                <CalendarIcon className="h-6 w-6 text-amber-600" />
+                            </div>
+                            <div>
+                                <Text className="text-sm text-gray-500">Active Terms</Text>
+                                <Text className="text-2xl font-bold text-gray-900">{stats.total_active_terms}</Text>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+
                 <div className="space-y-6">
-                    <TabGroup index={activeTab} onIndexChange={setActiveTab}>
-                        <Card>
-                            <TabList className="-mx-4 -mt-2 border-b border-gray-200 px-4">
-                                <Tab className="!text-sm">
-                                    General Information
-                                </Tab>
-                                <Tab className="!text-sm">Contact Details</Tab>
-                            </TabList>
+                    <TabGroup 
+                        index={activeTab} 
+                        onIndexChange={setActiveTab}
+                        className="rounded-xl bg-white shadow-sm ring-1 ring-gray-200"
+                    >
+                        <TabList className="border-b border-gray-200 px-6 py-2">
+                            <Tab className="relative px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 ui-selected:text-blue-600 ui-selected:after:absolute ui-selected:after:bottom-[-9px] ui-selected:after:left-0 ui-selected:after:h-0.5 ui-selected:after:w-full ui-selected:after:bg-blue-600">
+                                General Information
+                            </Tab>
+                            <Tab className="relative px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 ui-selected:text-blue-600 ui-selected:after:absolute ui-selected:after:bottom-[-9px] ui-selected:after:left-0 ui-selected:after:h-0.5 ui-selected:after:w-full ui-selected:after:bg-blue-600">
+                                Contact Details
+                            </Tab>
+                        </TabList>
 
-                            <TabPanels>
-                                <TabPanel>
-                                    <form
-                                        onSubmit={handleSubmit}
-                                        className="mt-6 space-y-6"
-                                    >
-                                        <FormSection
-                                            title="Basic Information"
-                                            description="Update the school's basic information and identity."
-                                        >
-                                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                                <div>
-                                                    <Text>School Name</Text>
-                                                    <TextInput
-                                                        value={data.name}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'name',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        error={errors.name}
-                                                        placeholder="Enter school name"
-                                                        disabled={processing}
-                                                    />
-                                                    {errors.name && (
-                                                        <Text
-                                                            color="red"
-                                                            className="mt-1"
-                                                        >
-                                                            {errors.name}
-                                                        </Text>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <Text>School Code</Text>
-                                                    <TextInput
-                                                        value={data.code}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'code',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        error={errors.code}
-                                                        placeholder="Enter school code"
-                                                        disabled={processing}
-                                                    />
-                                                    {errors.code && (
-                                                        <Text
-                                                            color="red"
-                                                            className="mt-1"
-                                                        >
-                                                            {errors.code}
-                                                        </Text>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="mt-4">
-                                                <Text>Email</Text>
-                                                <TextInput
-                                                    value={data.email}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'email',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    error={errors.email}
-                                                    placeholder="Enter school email"
-                                                    disabled={processing}
-                                                />
-                                                {errors.email && (
-                                                    <Text
-                                                        color="red"
-                                                        className="mt-1"
-                                                    >
-                                                        {errors.email}
-                                                    </Text>
-                                                )}
-                                            </div>
-                                            <div className="mt-4">
-                                                <Text>Website URL</Text>
-                                                <TextInput
-                                                    value={data.website_url}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'website_url',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    error={errors.website_url}
-                                                    placeholder="Enter website URL"
-                                                    disabled={processing}
-                                                />
-                                            </div>
-                                            <div className="mt-4">
-                                                <Text>Logo URL</Text>
-                                                <TextInput
-                                                    value={data.logo_url}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'logo_url',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    error={errors.logo_url}
-                                                    placeholder="Enter logo URL"
-                                                    disabled={processing}
-                                                />
-                                            </div>
-                                            <div className="mt-4">
-                                                <Text>Description</Text>
-                                                <TextInput
-                                                    value={data.description}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'description',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    error={errors.description}
-                                                    placeholder="Enter school description"
-                                                    disabled={processing}
-                                                />
-                                            </div>
-                                        </FormSection>
-
-                                        <FormSection
-                                            title="Regional Settings"
-                                            description="Configure timezone and regional preferences."
-                                        >
-                                            <div>
-                                                <Text>Timezone</Text>
-                                                <Select
-                                                    value={data.timezone}
-                                                    onValueChange={(value) =>
-                                                        setData(
-                                                            'timezone',
-                                                            value,
-                                                        )
-                                                    }
-                                                    error={errors.timezone}
-                                                    placeholder="Select timezone"
-                                                    disabled={processing}
-                                                >
-                                                    <SelectItem value="UTC">
-                                                        UTC
-                                                    </SelectItem>
-                                                    <SelectItem value="America/New_York">
-                                                        Eastern Time
-                                                    </SelectItem>
-                                                    <SelectItem value="America/Chicago">
-                                                        Central Time
-                                                    </SelectItem>
-                                                    <SelectItem value="America/Denver">
-                                                        Mountain Time
-                                                    </SelectItem>
-                                                    <SelectItem value="America/Los_Angeles">
-                                                        Pacific Time
-                                                    </SelectItem>
-                                                    <SelectItem value="Asia/Tokyo">
-                                                        Japan Time
-                                                    </SelectItem>
-                                                    <SelectItem value="Europe/London">
-                                                        London Time
-                                                    </SelectItem>
-                                                    <SelectItem value="Europe/Paris">
-                                                        Central European Time
-                                                    </SelectItem>
-                                                    <SelectItem value="Australia/Sydney">
-                                                        Sydney Time
-                                                    </SelectItem>
-                                                </Select>
-                                                {errors.timezone && (
-                                                    <Text
-                                                        color="red"
-                                                        className="mt-1"
-                                                    >
-                                                        {errors.timezone}
-                                                    </Text>
-                                                )}
-                                                <Text className="mt-1 text-xs text-gray-500">
-                                                    System-wide timezone for
-                                                    scheduling
+                        <TabPanels className="p-6">
+                            <TabPanel>
+                                <form onSubmit={handleSubmit} className="space-y-8">
+                                    <div className="space-y-6">
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">School Name</Text>
+                                            <TextInput
+                                                value={data.name}
+                                                onChange={(e) => setData('name', e.target.value)}
+                                                placeholder="Enter school name"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.name}
+                                            />
+                                            {errors.name && (
+                                                <Text color="red" className="mt-1 text-sm">
+                                                    {errors.name}
                                                 </Text>
-                                            </div>
-                                        </FormSection>
-
-                                        <div className="flex justify-end">
-                                            <Button
-                                                type="submit"
-                                                loading={processing}
-                                                disabled={processing}
-                                                className="w-32"
-                                            >
-                                                {processing
-                                                    ? 'Saving...'
-                                                    : 'Save Changes'}
-                                            </Button>
+                                            )}
                                         </div>
-                                    </form>
-                                </TabPanel>
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">School Code</Text>
+                                            <TextInput
+                                                value={data.code}
+                                                onChange={(e) => setData('code', e.target.value)}
+                                                placeholder="Enter school code"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.code}
+                                            />
+                                            {errors.code && (
+                                                <Text color="red" className="mt-1 text-sm">
+                                                    {errors.code}
+                                                </Text>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">Email</Text>
+                                            <TextInput
+                                                value={data.email}
+                                                onChange={(e) => setData('email', e.target.value)}
+                                                placeholder="Enter school email"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.email}
+                                            />
+                                            {errors.email && (
+                                                <Text color="red" className="mt-1 text-sm">
+                                                    {errors.email}
+                                                </Text>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">Website URL</Text>
+                                            <TextInput
+                                                value={data.website_url}
+                                                onChange={(e) => setData('website_url', e.target.value)}
+                                                placeholder="Enter website URL"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.website_url}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">Logo URL</Text>
+                                            <TextInput
+                                                value={data.logo_url}
+                                                onChange={(e) => setData('logo_url', e.target.value)}
+                                                placeholder="Enter logo URL"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.logo_url}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">Description</Text>
+                                            <TextInput
+                                                value={data.description}
+                                                onChange={(e) => setData('description', e.target.value)}
+                                                placeholder="Enter school description"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.description}
+                                            />
+                                        </div>
+                                    </div>
 
-                                <TabPanel>
-                                    <form
-                                        onSubmit={handleSubmit}
-                                        className="mt-6 space-y-6"
-                                    >
-                                        <FormSection
-                                            title="Contact Information"
-                                            description="Update the school's contact details and address."
+                                    <div className="flex justify-end pt-6">
+                                        <Button
+                                            type="submit"
+                                            loading={processing}
+                                            disabled={processing}
+                                            className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-white shadow-sm transition-all hover:shadow-md"
                                         >
-                                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                                <div>
-                                                    <Text>Address</Text>
-                                                    <TextInput
-                                                        value={data.address}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'address',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        error={errors.address}
-                                                        placeholder="Street address"
-                                                        disabled={processing}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Text>City</Text>
-                                                    <TextInput
-                                                        value={data.city}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'city',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        error={errors.city}
-                                                        placeholder="City"
-                                                        disabled={processing}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Text>State/Province</Text>
-                                                    <TextInput
-                                                        value={data.state}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'state',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        error={errors.state}
-                                                        placeholder="State or province"
-                                                        disabled={processing}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Text>Country</Text>
-                                                    <TextInput
-                                                        value={data.country}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'country',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        error={errors.country}
-                                                        placeholder="Country"
-                                                        disabled={processing}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Text>Postal Code</Text>
-                                                    <TextInput
-                                                        value={data.postal_code}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'postal_code',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        error={
-                                                            errors.postal_code
-                                                        }
-                                                        placeholder="Postal code"
-                                                        disabled={processing}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Text>Phone</Text>
-                                                    <TextInput
-                                                        value={data.phone}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'phone',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        error={errors.phone}
-                                                        placeholder="Phone number"
-                                                        disabled={processing}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </FormSection>
+                                            {processing ? 'Saving...' : 'Save Changes'}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </TabPanel>
 
-                                        <div className="flex justify-end">
-                                            <Button
-                                                type="submit"
-                                                loading={processing}
+                            <TabPanel>
+                                <form onSubmit={handleSubmit} className="space-y-8">
+                                    <div className="space-y-6">
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">Address</Text>
+                                            <TextInput
+                                                value={data.address}
+                                                onChange={(e) => setData('address', e.target.value)}
+                                                placeholder="Street address"
                                                 disabled={processing}
-                                                className="w-32"
-                                            >
-                                                {processing
-                                                    ? 'Saving...'
-                                                    : 'Save Changes'}
-                                            </Button>
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.address}
+                                            />
                                         </div>
-                                    </form>
-                                </TabPanel>
-                            </TabPanels>
-                        </Card>
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">City</Text>
+                                            <TextInput
+                                                value={data.city}
+                                                onChange={(e) => setData('city', e.target.value)}
+                                                placeholder="City"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.city}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">State/Province</Text>
+                                            <TextInput
+                                                value={data.state}
+                                                onChange={(e) => setData('state', e.target.value)}
+                                                placeholder="State or province"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.state}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">Country</Text>
+                                            <TextInput
+                                                value={data.country}
+                                                onChange={(e) => setData('country', e.target.value)}
+                                                placeholder="Country"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.country}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">Postal Code</Text>
+                                            <TextInput
+                                                value={data.postal_code}
+                                                onChange={(e) => setData('postal_code', e.target.value)}
+                                                placeholder="Postal code"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.postal_code}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Text className="mb-2 font-medium text-gray-700">Phone</Text>
+                                            <TextInput
+                                                value={data.phone}
+                                                onChange={(e) => setData('phone', e.target.value)}
+                                                placeholder="Phone number"
+                                                disabled={processing}
+                                                className="rounded-lg shadow-sm"
+                                                error={errors.phone}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end pt-6">
+                                        <Button
+                                            type="submit"
+                                            loading={processing}
+                                            disabled={processing}
+                                            className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-white shadow-sm transition-all hover:shadow-md"
+                                        >
+                                            {processing ? 'Saving...' : 'Save Changes'}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </TabPanel>
+                        </TabPanels>
                     </TabGroup>
                 </div>
             </div>
