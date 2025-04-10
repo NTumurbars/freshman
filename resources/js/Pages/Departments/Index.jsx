@@ -122,7 +122,7 @@ const DepartmentCard = ({ department, school }) => {
                     )}
                 </div>
 
-                <div className="mt-auto flex justify-end gap-2 border-t border-gray-100 pt-4">
+                <div className="mt-auto flex justify-end gap-4 border-t border-gray-100 pt-4">
                     <Link
                         href={route('departments.show', {
                             school: department.school_id,
