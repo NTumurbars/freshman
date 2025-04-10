@@ -18,6 +18,7 @@ import {
     Title,
 } from '@tremor/react';
 import { DoorOpen, Hotel, Layers } from 'lucide-react';
+import RoomCalendar from '@/Components/RoomCalendar';
 
 export default function Show({ room }) {
     const { auth } = usePage().props;
@@ -181,106 +182,14 @@ export default function Show({ room }) {
 
                 <Card>
                     <div className="flex items-center justify-between">
-                        <Title>Scheduled Sessions</Title>
+                        <Title>Room Schedule</Title>
                         <Badge color="purple">
                             {schedules.length} Sessions
                         </Badge>
                     </div>
                     <Divider className="my-4" />
 
-                    {schedules.length > 0 ? (
-                        <div className="space-y-4">
-                            {schedules.map((schedule) => (
-                                <Card key={schedule.id}>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="flex items-center">
-                                                <CalendarIcon className="mr-2 h-5 w-5 text-gray-500" />
-                                                <Text className="font-medium">
-                                                    {schedule.day_of_week},{' '}
-                                                    {schedule.start_time?.substring(
-                                                        0,
-                                                        5,
-                                                    )}{' '}
-                                                    -{' '}
-                                                    {schedule.end_time?.substring(
-                                                        0,
-                                                        5,
-                                                    )}
-                                                </Text>
-                                            </div>
-                                            {schedule.section && (
-                                                <div className="mt-2">
-                                                    <Link
-                                                        href={route(
-                                                            'sections.show',
-                                                            [
-                                                                school.id,
-                                                                schedule.section
-                                                                    .id,
-                                                            ],
-                                                        )}
-                                                        className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                                                    >
-                                                        {schedule.section.course
-                                                            ?.title ||
-                                                            'Unnamed Course'}
-                                                    </Link>
-                                                    <div className="mt-1 text-sm text-gray-600">
-                                                        <span>
-                                                            Section{' '}
-                                                            {
-                                                                schedule.section
-                                                                    .section_code
-                                                            }
-                                                        </span>
-                                                        {schedule.section
-                                                            .professor && (
-                                                            <span className="ml-3">
-                                                                Prof.{' '}
-                                                                {
-                                                                    schedule
-                                                                        .section
-                                                                        .professor
-                                                                        .name
-                                                                }
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <Badge
-                                            color={
-                                                schedule.location_type ===
-                                                'in-person'
-                                                    ? 'blue'
-                                                    : schedule.location_type ===
-                                                        'virtual'
-                                                      ? 'green'
-                                                      : 'purple'
-                                            }
-                                        >
-                                            {schedule.location_type}
-                                        </Badge>
-                                    </div>
-                                    <div className="mt-4 flex justify-end">
-                                        <Link
-                                            href={route('sections.show', [
-                                                school.id,
-                                                schedule.section?.id,
-                                            ])}
-                                            className="text-sm text-blue-600 hover:text-blue-800"
-                                        >
-                                            View Section Details →
-                                        </Link>
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <Text>No scheduled sessions for this room.</Text>
-                    )}
+                    <RoomCalendar schedules={schedules} room={room} />
                 </Card>
             </div>
         </AppLayout>

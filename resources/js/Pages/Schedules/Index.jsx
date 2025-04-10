@@ -54,7 +54,7 @@ export default function Index({
     const professors = [
         'All',
         ...new Set(
-            schedules.map((s) => s.section.professor?.name).filter(Boolean),
+            schedules.map((s) => s.section.professor_profile?.user?.name).filter(Boolean),
         ),
     ];
     const courses = [
@@ -78,7 +78,7 @@ export default function Index({
         .filter(
             (schedule) =>
                 filterOptions.professor === 'All' ||
-                schedule.section.professor?.name === filterOptions.professor,
+                schedule.section.professor_profile?.user?.name === filterOptions.professor,
         )
         .filter(
             (schedule) =>
@@ -93,7 +93,7 @@ export default function Index({
                     schedule.section.course.title
                         .toLowerCase()
                         .includes(searchLower)) ||
-                (schedule.section?.professor?.name || '')
+                (schedule.section?.professor_profile?.user?.name || '')
                     .toLowerCase()
                     .includes(searchLower) ||
                 (schedule.room?.room_number &&
@@ -115,8 +115,8 @@ export default function Index({
             compareA = a.section?.course?.title || '';
             compareB = b.section?.course?.title || '';
         } else if (sortField === 'professor') {
-            compareA = a.section?.professor?.name || '';
-            compareB = b.section?.professor?.name || '';
+            compareA = a.section?.professor_profile?.user?.name || '';
+            compareB = b.section?.professor_profile?.user?.name || '';
         } else if (sortField === 'room') {
             compareA = a.room?.room_number || '';
             compareB = b.room?.room_number || '';
@@ -511,8 +511,8 @@ export default function Index({
                                         </td>
                                         <td className="whitespace-nowrap px-6 py-4">
                                             <div className="text-sm text-gray-900">
-                                                {schedule.section.professor
-                                                    ?.name || 'Not Assigned'}
+                                                {schedule.section.professor_profile
+                                                    ?.user?.name || 'Not Assigned'}
                                             </div>
                                         </td>
                                         <td className="whitespace-nowrap px-6 py-4">
@@ -608,7 +608,7 @@ export default function Index({
                                             </svg>
                                         </div>
                                         <span className="text-gray-700">
-                                            {schedule.section.professor?.name ||
+                                            {schedule.section.professor_profile?.user?.name ||
                                                 'Not Assigned'}
                                         </span>
                                     </div>

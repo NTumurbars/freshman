@@ -15,6 +15,7 @@ import {
     Text,
     Title,
 } from '@tremor/react';
+import AppLayout from '@/Layouts/AppLayout';
 
 const BuildingCard = ({ building }) => (
     <Card>
@@ -75,7 +76,7 @@ const BuildingCard = ({ building }) => (
 
 export default function Index({ buildings, school, can_create }) {
     return (
-        <AppLayou>
+        <AppLayout>
             <Head title="Buildings" />
 
             <div className="px-4 py-6 sm:px-6 lg:px-8">
@@ -128,6 +129,6 @@ export default function Index({ buildings, school, can_create }) {
                     )}
                 </div>
             </div>
-        </AppLayou>
+        </AppLayout>
     );
 }

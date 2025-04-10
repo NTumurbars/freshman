@@ -72,7 +72,7 @@ export default function SectionCalendar({ calendarEvents, resources, school }) {
                         setSelectedEvent({
                             title: info.event.title,
                             description: info.event.extendedProps.description,
-                            professor: info.event.extendedProps.professor,
+                            professor: info.event.extendedProps.professor_profile?.user?.name || 'Not Assigned',
                             room: info.event.extendedProps.room,
                             term: info.event.extendedProps.term,
                             start: info.event.start,
@@ -113,7 +113,7 @@ export default function SectionCalendar({ calendarEvents, resources, school }) {
             <div class="p-2 bg-white shadow rounded border">
               <div class="font-semibold">${info.event.title}</div>
               <div>${info.event.extendedProps.description}</div>
-              <div class="text-sm text-gray-600">Professor: ${info.event.extendedProps.professor}</div>
+              <div class="text-sm text-gray-600">Professor: ${info.event.extendedProps.professor_profile?.user?.name || 'Not Assigned'}</div>
               <div class="text-sm text-gray-600">Room: ${info.event.extendedProps.room}</div>
               <div class="text-sm text-gray-600">Delivery: ${info.event.extendedProps.delivery_method}</div>
             </div>
@@ -327,7 +327,7 @@ export default function SectionCalendar({ calendarEvents, resources, school }) {
                             <div className="text-sm font-medium text-gray-500">
                                 Professor
                             </div>
-                            <div>{selectedEvent?.professor}</div>
+                            <div>{selectedEvent?.professor_profile?.user?.name || 'Not Assigned'}</div>
                         </div>
                         <div>
                             <div className="text-sm font-medium text-gray-500">
