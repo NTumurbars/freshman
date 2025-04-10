@@ -13,7 +13,7 @@ import {
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-export default function Create({ roles, schools, departments }) {
+export default function Create({ roles, schools }) {
     const { flash } = usePage().props;
     const { data, setData, post, errors, processing } = useForm({
         name: '',
@@ -26,6 +26,8 @@ export default function Create({ roles, schools, departments }) {
         title: '',
         website: '',
     });
+
+    console.log(schools);
 
     const handleChange = (name, value) => setData(name, value);
 
@@ -207,7 +209,7 @@ export default function Create({ roles, schools, departments }) {
                                         >
                                             Department
                                         </label>
-                                        <Select
+                                        {/* <Select
                                             id="department"
                                             value={data.department_id}
                                             onValueChange={(value) =>
@@ -237,7 +239,7 @@ export default function Create({ roles, schools, departments }) {
                                                     No departments available
                                                 </SelectItem>
                                             )}
-                                        </Select>
+                                        </Select> */}
                                     </div>
 
                                     <div>

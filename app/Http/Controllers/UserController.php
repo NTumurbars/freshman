@@ -69,21 +69,18 @@ class UserController extends Controller
         if($user->role->id == 1)
         {
             $roles = Role::where('id', 1)->get();
+            $schools = School::with('departments')->get();
             return Inertia::render('Users/Create', [
             'roles' => $roles,
-            'schools' => '',
-            'departments' => '',
+            'schools' => $schools,
         ]);
         }
         $roles = Role::where('id', '>', 1)->get();
-        $schools = $user->school;
-        $departments = $schools->departments;
-
+        $schools = $user->school()->with('departments')->first();
 
         return Inertia::render('Users/Create', [
             'roles' => $roles,
             'schools' => $schools,
-            'departments' => $departments,
         ]);
     }
 
