@@ -1,7 +1,7 @@
 // resources/js/Pages/Schools/Create.jsx
 
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import toast from 'react-hot-toast';
 
 export default function Create() {
@@ -13,7 +13,7 @@ export default function Create() {
     const submit = (e) => {
         e.preventDefault();
         console.log('Submitting data:', data);
-        
+
         post(route('schools.store'), {
             onSuccess: () => {
                 toast.success('School created successfully');
@@ -25,12 +25,8 @@ export default function Create() {
         });
     };
 
-    const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
-    const school = auth.user.school;
-    
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title="Create School" />
 
             <div className="mx-auto max-w-2xl rounded bg-white p-6 shadow">

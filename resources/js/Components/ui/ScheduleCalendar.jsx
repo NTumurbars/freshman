@@ -159,7 +159,7 @@ export default function ScheduleCalendar({
                                             {roomSchedulesForDay.map((schedule, index) => {
                                                 const position = getSchedulePosition(schedule);
                                                 const colorClass = getColorClass(schedule.location_type);
-                                                const professorName = schedule.section?.professor?.name || 'Unassigned';
+                                                const professorName = schedule.section?.professor_profile?.user?.name || 'Unassigned';
                                                 
                                                 return (
                                                     <div
@@ -287,7 +287,7 @@ export default function ScheduleCalendar({
                                 {schedulesByDay[day].map((schedule, index) => {
                                     const position = getSchedulePosition(schedule);
                                     const colorClass = getColorClass(schedule.location_type);
-                                    const professorName = schedule.section?.professor?.name || 'Unassigned';
+                                    const professorName = schedule.section?.professor_profile?.user?.name || 'Unassigned';
                                     
                                     return (
                                         <div
@@ -403,6 +403,7 @@ export default function ScheduleCalendar({
                                 {schedulesByDay[day].map((schedule, index) => {
                                     const position = getSchedulePosition(schedule);
                                     const colorClass = getColorClass(schedule.location_type);
+                                    const professorName = schedule.section?.professor_profile?.user?.name || 'Unassigned';
                                     
                                     return (
                                         <div

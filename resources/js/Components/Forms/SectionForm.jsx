@@ -7,18 +7,18 @@ export default function SectionForm({
     errors,
     courses,
     terms,
-    professors,
+    professorProfiles,
     roomFeatures,
     isSubmitting,
     onSubmit
 }) {
     const [selectedFeatures, setSelectedFeatures] = useState(data.required_features || []);
-    
+
     // Log the professor data for debugging
     useEffect(() => {
-        console.log("Professor data in SectionForm:", professors);
+        console.log("Professor profiles data in SectionForm:", professorProfiles);
         console.log("Form data:", data);
-    }, [professors, data]);
+    }, [professorProfiles, data]);
 
     // Group features by category
     const featuresByCategory = roomFeatures?.reduce((acc, feature) => {
@@ -67,7 +67,7 @@ export default function SectionForm({
                     <option value="">Select a course</option>
                     {courses?.map((course) => (
                         <option key={course.id} value={course.id}>
-                            {course.course_code} - {course.title}
+                            {course.code} - {course.title}
                         </option>
                     ))}
                 </select>
@@ -103,25 +103,25 @@ export default function SectionForm({
 
             {/* Professor Selection */}
             <div>
-                <label htmlFor="professor_id" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="professor_profile_id" className="block text-sm font-medium text-gray-700">
                     Professor
                 </label>
                 <select
-                    id="professor_id"
-                    name="professor_id"
-                    className={`mt-1 block w-full rounded-md border ${errors.professor_id ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
-                    value={data.professor_id || ''}
+                    id="professor_profile_id"
+                    name="professor_profile_id"
+                    className={`mt-1 block w-full rounded-md border ${errors.professor_profile_id ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
+                    value={data.professor_profile_id || ''}
                     onChange={handleChange}
                 >
                     <option value="">Select a professor</option>
-                    {professors && Array.isArray(professors) && professors.map((professor) => (
-                        <option key={professor.id} value={professor.id}>
-                            {professor.name}
+                    {professorProfiles && Array.isArray(professorProfiles) && professorProfiles.map((profile) => (
+                        <option key={profile.id} value={profile.id}>
+                            {profile.user.name}
                         </option>
                     ))}
                 </select>
-                {errors.professor_id && (
-                    <p className="mt-1 text-sm text-red-600">{errors.professor_id}</p>
+                {errors.professor_profile_id && (
+                    <p className="mt-1 text-sm text-red-600">{errors.professor_profile_id}</p>
                 )}
             </div>
 
@@ -147,21 +147,42 @@ export default function SectionForm({
 
             {/* Number of Students */}
             <div>
-                <label htmlFor="number_of_students" className="block text-sm font-medium text-gray-700">
-                    Current Enrollment <span className="text-red-500">*</span>
+                <label htmlFor="students_count" className="block text-sm font-medium text-gray-700">
+                    Current Enrollment
+                </label>
+                <div className="mt-1 flex items-center">
+                    <span className="block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-700 shadow-sm sm:text-sm">
+                        {data.students_count !== undefined ? data.students_count : 'Calculating...'}
+                    </span>
+                    <span className="ml-2 text-xs text-gray-500">(Automatically calculated from registrations)</span>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                    This value is calculated automatically from course registrations and cannot be edited directly.
+                </p>
+            </div>
+
+            {/* Section Capacity */}
+            <div>
+                <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">
+                    Section Capacity
                 </label>
                 <input
                     type="number"
-                    id="number_of_students"
-                    name="number_of_students"
-                    min="0"
-                    className={`mt-1 block w-full rounded-md border ${errors.number_of_students ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
-                    value={data.number_of_students || 0}
+                    id="capacity"
+                    name="capacity"
+                    className={`mt-1 block w-full rounded-md border ${errors.capacity ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
+                    value={data.capacity || ''}
                     onChange={handleChange}
-                    required
+                    min="1"
+                    placeholder="Maximum enrollment capacity"
                 />
-                {errors.number_of_students && (
-                    <p className="mt-1 text-sm text-red-600">{errors.number_of_students}</p>
+                <p className="mt-1 text-xs text-gray-500">
+                    {data.delivery_method === 'in-person' || data.delivery_method === 'hybrid'
+                        ? 'For in-person or hybrid sections, capacity will be limited by room size.'
+                        : 'For online sections, this sets the maximum enrollment limit.'}
+                </p>
+                {errors.capacity && (
+                    <p className="mt-1 text-sm text-red-600">{errors.capacity}</p>
                 )}
             </div>
 

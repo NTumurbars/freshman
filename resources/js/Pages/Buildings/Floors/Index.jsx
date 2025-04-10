@@ -1,32 +1,33 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, router, useForm, usePage, Link } from '@inertiajs/react';
-import { useState } from 'react';
 import {
-    Card,
-    Title,
-    Text,
-    Grid,
-    Col,
-    Button,
-    Badge,
-    Metric,
-    Flex,
-    TextInput,
-    Divider,
-    NumberInput,
-} from '@tremor/react';
-import {
-    BuildingOffice2Icon,
-    PlusIcon,
-    PencilIcon,
-    TrashIcon,
     ArrowLeftIcon,
-    XMarkIcon
+    BuildingOffice2Icon,
+    PencilIcon,
+    PlusIcon,
+    TrashIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import {
+    Badge,
+    Button,
+    Card,
+    Col,
+    Divider,
+    Flex,
+    Grid,
+    Metric,
+    NumberInput,
+    Text,
+    Title,
+} from '@tremor/react';
 import { Layers } from 'lucide-react';
+import { useState } from 'react';
 
 const FloorCard = ({ floor, onEdit, onDelete, editMode }) => (
-    <Card className={`${!editMode ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}>
+    <Card
+        className={`${!editMode ? 'cursor-pointer transition-shadow hover:shadow-lg' : ''}`}
+    >
         <div className="flex items-start justify-between">
             <div>
                 <Title>Floor {floor.number}</Title>
@@ -36,7 +37,9 @@ const FloorCard = ({ floor, onEdit, onDelete, editMode }) => (
         </div>
 
         <div className="mt-4">
-            <Badge color="indigo" size="lg">{floor.rooms_count} Rooms</Badge>
+            <Badge color="indigo" size="lg">
+                {floor.rooms_count} Rooms
+            </Badge>
         </div>
 
         {editMode ? (
@@ -74,7 +77,6 @@ const FloorCard = ({ floor, onEdit, onDelete, editMode }) => (
 
 export default function Index({ floors, building }) {
     const { auth, flash } = usePage().props;
-    const userRole = auth.user.role.id;
     const school = auth.user.school;
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editFloor, setEditFloor] = useState(null);
@@ -150,11 +152,11 @@ export default function Index({ floors, building }) {
     };
 
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title={`Floors - ${building.name}`} />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8">
-                <div className="sm:flex sm:items-center sm:justify-between mb-6">
+            <div className="px-4 py-6 sm:px-6 lg:px-8">
+                <div className="mb-6 sm:flex sm:items-center sm:justify-between">
                     <div className="flex items-center">
                         <Link href={route('buildings.index', school.id)}>
                             <Button
@@ -167,14 +169,14 @@ export default function Index({ floors, building }) {
                             </Button>
                         </Link>
                         <div className="flex items-center">
-                            <Layers className="h-8 w-8 text-blue-600 mr-3" />
+                            <Layers className="mr-3 h-8 w-8 text-blue-600" />
                             <div>
                                 <Title>{building.name} Floors</Title>
                                 <Text>Manage floors and their rooms</Text>
                             </div>
                         </div>
                     </div>
-                    <div className="mt-4 sm:mt-0 flex space-x-3">
+                    <div className="mt-4 flex space-x-3 sm:mt-0">
                         <Button
                             variant={!editMode ? 'light' : 'primary'}
                             color={!editMode ? 'gray' : 'blue'}
@@ -183,7 +185,10 @@ export default function Index({ floors, building }) {
                         >
                             {editMode ? 'Done Editing' : 'Edit Floors'}
                         </Button>
-                        <Button icon={PlusIcon} onClick={() => setShowCreateModal(true)}>
+                        <Button
+                            icon={PlusIcon}
+                            onClick={() => setShowCreateModal(true)}
+                        >
                             Add Floor
                         </Button>
                     </div>
@@ -206,7 +211,12 @@ export default function Index({ floors, building }) {
                         </Card>
                         <Card decoration="top" decorationColor="indigo">
                             <Text>Total Rooms</Text>
-                            <Metric>{floors.reduce((sum, floor) => sum + floor.rooms_count, 0)}</Metric>
+                            <Metric>
+                                {floors.reduce(
+                                    (sum, floor) => sum + floor.rooms_count,
+                                    0,
+                                )}
+                            </Metric>
                         </Card>
                     </Grid>
                 </Card>
@@ -230,80 +240,111 @@ export default function Index({ floors, building }) {
                             </div>
                         </Card>
                     ) : (
-                        <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
-                            {floors.sort((a, b) => b.number - a.number).map((floor) => (
-                                <Col key={floor.id}>
-                                    <Card 
-                                        className={`hover:shadow-lg transition-shadow ${!editMode ? 'cursor-default' : ''}`}
-                                    >
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <Title className="text-2xl font-bold">Floor {floor.number}</Title>
-                                                <div className="flex items-center mt-2">
-                                                    <BuildingOffice2Icon className="h-5 w-5 text-gray-500 mr-2" />
-                                                    <Text>{building.name}</Text>
+                        <Grid
+                            numItems={1}
+                            numItemsSm={2}
+                            numItemsLg={3}
+                            className="gap-6"
+                        >
+                            {floors
+                                .sort((a, b) => b.number - a.number)
+                                .map((floor) => (
+                                    <Col key={floor.id}>
+                                        <Card
+                                            className={`transition-shadow hover:shadow-lg ${!editMode ? 'cursor-default' : ''}`}
+                                        >
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <Title className="text-2xl font-bold">
+                                                        Floor {floor.number}
+                                                    </Title>
+                                                    <div className="mt-2 flex items-center">
+                                                        <BuildingOffice2Icon className="mr-2 h-5 w-5 text-gray-500" />
+                                                        <Text>
+                                                            {building.name}
+                                                        </Text>
+                                                    </div>
+                                                </div>
+                                                <Layers className="h-12 w-12 text-blue-500" />
+                                            </div>
+
+                                            <Divider className="my-4" />
+
+                                            <div className="mt-4 grid grid-cols-2 gap-4">
+                                                <div className="rounded-lg bg-blue-50 p-3 text-center">
+                                                    <Text>Rooms</Text>
+                                                    <Metric className="text-blue-700">
+                                                        {floor.rooms_count}
+                                                    </Metric>
+                                                </div>
+                                                <div className="rounded-lg bg-indigo-50 p-3 text-center">
+                                                    <Text>Floor #</Text>
+                                                    <Metric className="text-indigo-700">
+                                                        {floor.number}
+                                                    </Metric>
                                                 </div>
                                             </div>
-                                            <Layers className="h-12 w-12 text-blue-500" />
-                                        </div>
 
-                                        <Divider className="my-4" />
-
-                                        <div className="grid grid-cols-2 gap-4 mt-4">
-                                            <div className="bg-blue-50 p-3 rounded-lg text-center">
-                                                <Text>Rooms</Text>
-                                                <Metric className="text-blue-700">{floor.rooms_count}</Metric>
-                                            </div>
-                                            <div className="bg-indigo-50 p-3 rounded-lg text-center">
-                                                <Text>Floor #</Text>
-                                                <Metric className="text-indigo-700">{floor.number}</Metric>
-                                            </div>
-                                        </div>
-
-                                        {editMode && (
-                                            <Flex justifyContent="end" className="mt-4 space-x-2">
-                                                <Button
-                                                    variant="light"
-                                                    color="yellow"
-                                                    icon={PencilIcon}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setEditData({ number: floor.number });
-                                                        setEditFloor(floor);
-                                                    }}
+                                            {editMode && (
+                                                <Flex
+                                                    justifyContent="end"
+                                                    className="mt-4 space-x-2"
                                                 >
-                                                    Edit
-                                                </Button>
-                                                <Button
-                                                    variant="light"
-                                                    color="red" 
-                                                    icon={TrashIcon}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDelete(floor.id);
-                                                    }}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </Flex>
-                                        )}
-
-                                        {!editMode && (
-                                            <div className="mt-4 text-center">
-                                                <Link href={route('buildings.floors.show', {
-                                                    school: school.id,
-                                                    building: building.id,
-                                                    floor: floor.id
-                                                })}>
-                                                    <Button variant="light" color="blue">
-                                                        View Floor Details
+                                                    <Button
+                                                        variant="light"
+                                                        color="yellow"
+                                                        icon={PencilIcon}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditData({
+                                                                number: floor.number,
+                                                            });
+                                                            setEditFloor(floor);
+                                                        }}
+                                                    >
+                                                        Edit
                                                     </Button>
-                                                </Link>
-                                            </div>
-                                        )}
-                                    </Card>
-                                </Col>
-                            ))}
+                                                    <Button
+                                                        variant="light"
+                                                        color="red"
+                                                        icon={TrashIcon}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDelete(
+                                                                floor.id,
+                                                            );
+                                                        }}
+                                                    >
+                                                        Delete
+                                                    </Button>
+                                                </Flex>
+                                            )}
+
+                                            {!editMode && (
+                                                <div className="mt-4 text-center">
+                                                    <Link
+                                                        href={route(
+                                                            'buildings.floors.show',
+                                                            {
+                                                                school: school.id,
+                                                                building:
+                                                                    building.id,
+                                                                floor: floor.id,
+                                                            },
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            variant="light"
+                                                            color="blue"
+                                                        >
+                                                            View Floor Details
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </Card>
+                                    </Col>
+                                ))}
                         </Grid>
                     )}
                 </div>
@@ -311,9 +352,9 @@ export default function Index({ floors, building }) {
 
             {/* Create Modal */}
             {showCreateModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
                     <Card className="w-full max-w-lg">
-                        <div className="flex justify-between items-center mb-4">
+                        <div className="mb-4 flex items-center justify-between">
                             <Title>Add New Floor</Title>
                             <Button
                                 variant="light"
@@ -327,7 +368,9 @@ export default function Index({ floors, building }) {
                                 <Text>Floor Number</Text>
                                 <NumberInput
                                     value={data.number}
-                                    onValueChange={(value) => setData('number', value)}
+                                    onValueChange={(value) =>
+                                        setData('number', value)
+                                    }
                                     placeholder="Enter floor number"
                                     className="mt-1"
                                 />
@@ -348,9 +391,9 @@ export default function Index({ floors, building }) {
 
             {/* Edit Modal */}
             {editFloor && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
                     <Card className="w-full max-w-lg">
-                        <div className="flex justify-between items-center mb-4">
+                        <div className="mb-4 flex items-center justify-between">
                             <Title>Edit Floor</Title>
                             <Button
                                 variant="light"
@@ -364,7 +407,9 @@ export default function Index({ floors, building }) {
                                 <Text>Floor Number</Text>
                                 <NumberInput
                                     value={editData.number || editFloor.number}
-                                    onValueChange={(value) => setEditData('number', value)}
+                                    onValueChange={(value) =>
+                                        setEditData('number', value)
+                                    }
                                     placeholder="Enter floor number"
                                     className="mt-1"
                                 />

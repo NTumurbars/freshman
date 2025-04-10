@@ -21,43 +21,43 @@ class ScheduleController extends Controller
     public function index(School $school)
     {
         $this->authorize('viewAny', Schedule::class);
-        
+
         // Get departments that belong to this school
         $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
 
         // Get courses that belong to these departments
         $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
-        
+
         // Get sections from this school
         $sectionIds = Section::whereIn('course_id', $schoolCourseIds)->pluck('id');
-        
+
         // Base query
         $schedulesQuery = Schedule::with([
-                'section.course.department', 
-                'section.professor', 
+                'section.course.department',
+                'section.professor',
                 'room.floor.building'
             ])
             ->whereIn('section_id', $sectionIds);
-        
+
         // If user is a professor, only show their schedules
         $user = Auth::user();
         $isProfessor = $user->role_id === 4; // Professor role ID
-        
+
         if ($isProfessor) {
             $schedulesQuery->whereHas('section', function($query) use ($user) {
                 $query->where('professor_id', $user->id);
             });
         }
-        
+
         $schedules = $schedulesQuery->get();
-            
+
         // Get rooms for admin calendar view with their schedules and necessary relationships
         $rooms = Room::with(['floor.building', 'schedules.section.professor', 'schedules.section.course'])
             ->whereHas('floor.building', function($query) use ($school) {
                 $query->where('school_id', $school->id);
             })
             ->get();
-            
+
         return Inertia::render('Schedules/Index', [
             'schedules' => $schedules,
             'rooms' => $rooms,
@@ -70,32 +70,32 @@ class ScheduleController extends Controller
     public function create(School $school, Request $request)
     {
         $this->authorize('create', Schedule::class);
-        
+
         // Get departments that belong to this school
         $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
 
         // Get courses that belong to these departments
         $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
-            
+
         // Get sections from this school
         $query = Section::with('course')
             ->whereIn('course_id', $schoolCourseIds);
-            
+
         // If section_id was passed, prefill that section
         $selectedSectionId = $request->query('section_id');
         if ($selectedSectionId) {
             $query->orWhere('id', $selectedSectionId);
         }
-        
+
         $sections = $query->get();
-        
+
         // Filter rooms to only show those from the current school
         $rooms = Room::with('floor.building')
             ->whereHas('floor.building', function($query) use ($school) {
                 $query->where('school_id', $school->id);
             })
             ->get();
-        
+
         return Inertia::render('Schedules/Create', [
             'sections' => $sections,
             'rooms' => $rooms,
@@ -108,22 +108,26 @@ class ScheduleController extends Controller
     public function store(School $school, Request $request)
     {
         $this->authorize('create', Schedule::class);
-        
+
         try {
             // Debug the incoming request data
             $dayOfWeek = $request->input('day_of_week');
             Log::info('Schedule creation request:', [
                 'day_of_week' => $dayOfWeek,
                 'meeting_pattern' => $request->input('meeting_pattern'),
-                'data' => $request->all()
+                'data' => $request->all(),
+                'update_section_capacity_raw' => $request->input('update_section_capacity'),
+                'update_section_capacity_boolean' => $request->boolean('update_section_capacity'),
+                'new_capacity_raw' => $request->input('new_capacity'),
+                'new_capacity_type' => gettype($request->input('new_capacity'))
             ]);
-            
+
             // Normalize location_type
             $requestData = $request->all();
             if (isset($requestData['location_type']) && $requestData['location_type'] === 'in_person') {
                 $requestData['location_type'] = 'in-person';
             }
-            
+
             // Validate the request data
             $validationRules = [
                 'section_id'  => 'required|exists:sections,id',
@@ -132,6 +136,8 @@ class ScheduleController extends Controller
                 'end_time'    => 'required|date_format:H:i:s,H:i|after:start_time',
                 'location_type' => 'required|string|in:in-person,virtual,hybrid',
                 'meeting_pattern' => 'required|string|in:single,weekly,monday-wednesday-friday,tuesday-thursday,monday-wednesday,tuesday-friday',
+                'update_section_capacity' => 'sometimes|boolean',
+                'new_capacity' => 'sometimes|integer|min:1',
             ];
 
             // Add conditional validation rules
@@ -148,19 +154,19 @@ class ScheduleController extends Controller
             if ($validator->fails()) {
                 return back()->withErrors($validator)->withInput();
             }
-            
+
             $validatedData = $validator->validated();
-            
+
             // Format times consistently
             $start_time = $validatedData['start_time'];
             $end_time = $validatedData['end_time'];
-            
+
             if (!str_contains($start_time, ':')) {
                 $start_time .= ':00';
             } else if (substr_count($start_time, ':') === 1) {
                 $start_time .= ':00';
             }
-            
+
             if (!str_contains($end_time, ':')) {
                 $end_time .= ':00';
             } else if (substr_count($end_time, ':') === 1) {
@@ -173,6 +179,69 @@ class ScheduleController extends Controller
                 return back()->withErrors(['section_id' => 'The selected section does not belong to this school.']);
             }
 
+            // Check if we need to update section capacity based on room
+            if ($request->has('update_section_capacity') && $request->boolean('update_section_capacity') === true && !empty($request->new_capacity) && !empty($validatedData['room_id'])) {
+                $room = Room::findOrFail($validatedData['room_id']);
+
+                // Log the data being received for debugging
+                Log::info('Attempting to update section capacity:', [
+                    'request_has_update_section_capacity' => $request->has('update_section_capacity'),
+                    'request_update_section_capacity_raw' => $request->input('update_section_capacity'),
+                    'request_update_section_capacity_boolean' => $request->boolean('update_section_capacity'),
+                    'request_new_capacity' => $request->new_capacity,
+                    'room_id' => $validatedData['room_id'],
+                    'room_capacity' => $room->capacity,
+                    'section_id' => $section->id,
+                    'current_section_capacity' => $section->capacity,
+                ]);
+
+                // Check if the section actually needs updating
+                if ($section->capacity != $request->new_capacity) {
+                    // Update section capacity to match room capacity
+                    $oldCapacity = $section->capacity;
+                    $section->capacity = $request->new_capacity;
+                    $section->save();
+
+                    // Verify the update was actually saved to the database
+                    $updatedSection = Section::find($section->id);
+
+                    Log::info('Updated section capacity - verification:', [
+                        'section_id' => $section->id,
+                        'section_code' => $section->section_code,
+                        'old_capacity' => $oldCapacity,
+                        'requested_new_capacity' => $request->new_capacity,
+                        'actual_new_capacity' => $updatedSection->capacity,
+                        'save_successful' => ($updatedSection->capacity == $request->new_capacity)
+                    ]);
+                } else {
+                    Log::info('Section capacity already matches requested capacity, no update needed:', [
+                        'section_id' => $section->id,
+                        'section_capacity' => $section->capacity,
+                        'requested_capacity' => $request->new_capacity
+                    ]);
+                }
+            } else {
+                // Log why we're not updating
+                Log::info('Not updating section capacity, conditions not met:', [
+                    'request_has_update_section_capacity' => $request->has('update_section_capacity'),
+                    'update_section_capacity_raw' => $request->input('update_section_capacity'),
+                    'update_section_capacity_boolean' => $request->boolean('update_section_capacity'),
+                    'boolean_check_result' => $request->boolean('update_section_capacity') === true,
+                    'new_capacity_provided' => !empty($request->new_capacity),
+                    'room_id_provided' => !empty($validatedData['room_id']),
+                    'new_capacity' => $request->new_capacity,
+                    'room_id' => $validatedData['room_id'] ?? null,
+                ]);
+            }
+
+            // If a room is assigned and section has capacity set, check room capacity is adequate
+            if (!empty($validatedData['room_id']) && !is_null($section->capacity)) {
+                $room = Room::findOrFail($validatedData['room_id']);
+                if ($room->capacity < $section->capacity) {
+                    return back()->withErrors(['room_id' => 'The selected room capacity (' . $room->capacity . ') is less than the section capacity (' . $section->capacity . ').']);
+                }
+            }
+
             // Check for conflicts
             $checkData = [
                 'section_id' => $validatedData['section_id'],
@@ -182,7 +251,7 @@ class ScheduleController extends Controller
                 'end_time' => $end_time,
                 'location_type' => $validatedData['location_type'],
             ];
-            
+
             if ($conflict = $this->checkScheduleConflicts($checkData)) {
                 return back()->withErrors($conflict);
             }
@@ -191,15 +260,15 @@ class ScheduleController extends Controller
             $schedule = new Schedule();
             $schedule->section_id = $validatedData['section_id'];
             $schedule->room_id = $validatedData['room_id'] ?? null;
-            $schedule->day_of_week = $validatedData['day_of_week']; // Set day explicitly
+            $schedule->setAttribute('day_of_week', $validatedData['day_of_week']);
             $schedule->start_time = $start_time;
             $schedule->end_time = $end_time;
             $schedule->location_type = $validatedData['location_type'];
             $schedule->virtual_meeting_url = $validatedData['virtual_meeting_url'] ?? null;
-            
+
             // Save the actual meeting pattern instead of forcing it to 'single'
             $schedule->meeting_pattern = $validatedData['meeting_pattern'];
-            
+
             // Log the data we're about to save
             Log::info('Saving schedule with data:', [
                 'section_id' => $schedule->section_id,
@@ -208,10 +277,10 @@ class ScheduleController extends Controller
                 'start_time' => $schedule->start_time,
                 'end_time' => $schedule->end_time
             ]);
-            
+
             // Save the schedule
             $schedule->save();
-            
+
             // Verify the saved data
             $savedSchedule = Schedule::find($schedule->id);
             Log::info('Verified saved schedule:', [
@@ -219,11 +288,11 @@ class ScheduleController extends Controller
                 'day_of_week' => $savedSchedule->day_of_week,
                 'pattern' => $savedSchedule->meeting_pattern
             ]);
-            
+
             // Always redirect to the section show page
             return redirect()->route('sections.show', [$school->id, $section->id])
                 ->with('success', 'Schedule created successfully');
-                
+
         } catch (\Exception $e) {
             Log::error('Error in schedule creation:', [
                 'error' => $e->getMessage(),
@@ -238,33 +307,33 @@ class ScheduleController extends Controller
     {
         try {
             $this->authorize('update', $schedule);
-            
+
             // Make sure the schedule exists
             if (!$schedule || !$schedule->exists) {
                 return redirect()->route('sections.index', $school->id)
                     ->with('error', 'The schedule you are trying to edit does not exist.');
             }
-            
+
             // Get departments that belong to this school
             $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
 
             // Get courses that belong to these departments
             $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
-            
+
             // Get sections from this school
             $sections = Section::with('course')
                 ->whereIn('course_id', $schoolCourseIds)
                 ->get();
-                
+
             // Make sure to load the section with its course
             $schedule->load(['section.course', 'room.floor.building']);
-            
+
             $rooms = Room::with('floor.building')
                 ->whereHas('floor.building', function($query) use ($school) {
                     $query->where('school_id', $school->id);
                 })
                 ->get();
-            
+
             return Inertia::render('Schedules/Edit', [
                 'schedule' => $schedule,
                 'sections' => $sections,
@@ -278,7 +347,7 @@ class ScheduleController extends Controller
                 'school_id' => $school->id,
                 'error' => $e->getMessage()
             ]);
-            
+
             return redirect()->route('sections.index', $school->id)
                 ->with('error', 'The schedule you are trying to edit does not exist.');
         } catch (\Exception $e) {
@@ -288,7 +357,7 @@ class ScheduleController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return redirect()->route('sections.index', $school->id)
                 ->with('error', 'An error occurred while trying to edit the schedule.');
         }
@@ -298,9 +367,15 @@ class ScheduleController extends Controller
     public function update(School $school, Request $request, Schedule $schedule)
     {
         $this->authorize('update', $schedule);
-        
-        Log::info('Schedule update data:', $request->all());
-        
+
+        Log::info('Schedule update data:', [
+            'all_data' => $request->all(),
+            'update_section_capacity_raw' => $request->input('update_section_capacity'),
+            'update_section_capacity_boolean' => $request->boolean('update_section_capacity'),
+            'new_capacity_raw' => $request->input('new_capacity'),
+            'new_capacity_type' => gettype($request->input('new_capacity'))
+        ]);
+
         $data = $request->validate([
             'section_id'  => 'required|exists:sections,id',
             'room_id'     => 'required_if:location_type,in-person,hybrid|exists:rooms,id',
@@ -310,6 +385,8 @@ class ScheduleController extends Controller
             'location_type' => 'required|string|in:in-person,virtual,hybrid',
             'virtual_meeting_url' => 'required_if:location_type,virtual,hybrid|nullable|url',
             'meeting_pattern' => 'nullable|string|in:single,weekly,monday-wednesday-friday,tuesday-thursday,monday-wednesday,tuesday-friday',
+            'update_section_capacity' => 'sometimes|boolean',
+            'new_capacity' => 'sometimes|integer|min:1',
         ]);
 
         // Ensure time format is consistent with seconds
@@ -318,7 +395,7 @@ class ScheduleController extends Controller
         } else if (substr_count($data['start_time'], ':') === 1) {
             $data['start_time'] .= ':00';
         }
-        
+
         if (!str_contains($data['end_time'], ':')) {
             $data['end_time'] .= ':00';
         } else if (substr_count($data['end_time'], ':') === 1) {
@@ -330,9 +407,71 @@ class ScheduleController extends Controller
         // Verify section belongs to this school
         $section = Section::findOrFail($data['section_id']);
         $course = $section->course;
-        
+
         if (!$course || !$course->department || $course->department->school_id !== $school->id) {
             return back()->withErrors(['section_id' => 'The selected section does not belong to this school.']);
+        }
+
+        // Check if we need to update section capacity based on room
+        if ($request->has('update_section_capacity') && $request->boolean('update_section_capacity') === true && !empty($request->new_capacity) && !empty($data['room_id'])) {
+            $room = Room::findOrFail($data['room_id']);
+
+            // Log the data being received for debugging
+            Log::info('Attempting to update section capacity in update method:', [
+                'request_has_update_section_capacity' => $request->has('update_section_capacity'),
+                'request_update_section_capacity_raw' => $request->input('update_section_capacity'),
+                'request_update_section_capacity_boolean' => $request->boolean('update_section_capacity'),
+                'request_new_capacity' => $request->new_capacity,
+                'room_id' => $data['room_id'],
+                'room_capacity' => $room->capacity,
+                'section_id' => $section->id,
+                'current_section_capacity' => $section->capacity,
+            ]);
+
+            // Check if the section actually needs updating
+            if ($section->capacity != $request->new_capacity) {
+                // Update section capacity to match room capacity
+                $oldCapacity = $section->capacity;
+                $section->capacity = $request->new_capacity;
+                $section->save();
+
+                // Verify the update was actually saved to the database
+                $updatedSection = Section::find($section->id);
+
+                Log::info('Updated section capacity - verification:', [
+                    'section_id' => $section->id,
+                    'section_code' => $section->section_code,
+                    'old_capacity' => $oldCapacity,
+                    'new_capacity' => $section->capacity,
+                    'room_capacity' => $room->capacity
+                ]);
+            } else {
+                Log::info('Section capacity already matches requested capacity, no update needed:', [
+                    'section_id' => $section->id,
+                    'section_capacity' => $section->capacity,
+                    'requested_capacity' => $request->new_capacity
+                ]);
+            }
+        } else {
+            // Log why we're not updating
+            Log::info('Not updating section capacity in update method, conditions not met:', [
+                'request_has_update_section_capacity' => $request->has('update_section_capacity'),
+                'update_section_capacity_raw' => $request->input('update_section_capacity'),
+                'update_section_capacity_boolean' => $request->boolean('update_section_capacity'),
+                'boolean_check_result' => $request->boolean('update_section_capacity') === true,
+                'new_capacity_provided' => !empty($request->new_capacity),
+                'room_id_provided' => !empty($data['room_id']),
+                'new_capacity' => $request->new_capacity,
+                'room_id' => $data['room_id'] ?? null,
+            ]);
+        }
+
+        // If a room is assigned and section has capacity set, check room capacity is adequate
+        if (!empty($data['room_id']) && $section->capacity) {
+            $room = Room::findOrFail($data['room_id']);
+            if ($room->capacity < $section->capacity) {
+                return back()->withErrors(['room_id' => 'The selected room capacity (' . $room->capacity . ') is less than the section capacity (' . $section->capacity . ').']);
+            }
         }
 
         // Check for conflicts
@@ -341,9 +480,9 @@ class ScheduleController extends Controller
         }
 
         $schedule->update($data);
-        
+
         Log::info('Schedule updated successfully:', ['id' => $schedule->id]);
-        
+
         // Always redirect to the section show page
         return redirect()->route('sections.show', [$school->id, $section->id])
             ->with('success', 'Schedule updated successfully');
@@ -363,21 +502,21 @@ class ScheduleController extends Controller
     {
         // Find the section
         $section = Section::findOrFail($sectionId);
-        
+
         // Check authorization - if user can create schedules, they should be able to manage them
         $this->authorize('create', Schedule::class);
-        
+
         // Verify section belongs to this school
         $course = $section->course;
         if (!$course || !$course->department || $course->department->school_id !== $school->id) {
             return response()->json(['error' => 'The selected section does not belong to this school.'], 403);
         }
-        
+
         // Delete all schedules for this section
         $deleteCount = Schedule::where('section_id', $sectionId)->delete();
-        
+
         Log::info("Deleted all schedules for section {$sectionId}", ['count' => $deleteCount]);
-        
+
         // Return response based on request type
         if (request()->expectsJson()) {
             return response()->json([
@@ -386,7 +525,7 @@ class ScheduleController extends Controller
                 'count' => $deleteCount
             ]);
         }
-        
+
         return redirect()->back()
             ->with('success', "All schedules for this section deleted successfully");
     }
@@ -395,7 +534,7 @@ class ScheduleController extends Controller
     public function show(School $school, Schedule $schedule)
     {
         $this->authorize('view', $schedule);
-        
+
         $schedule->load([
             'section.course',
             'section.professor',
@@ -462,8 +601,17 @@ class ScheduleController extends Controller
     public function storeBatch(School $school, Request $request)
     {
         $this->authorize('create', Schedule::class);
-        
+
         try {
+            // Debug the incoming request data
+            Log::info('Batch schedule creation request:', [
+                'all_data' => $request->all(),
+                'update_section_capacity_raw' => $request->input('update_section_capacity'),
+                'update_section_capacity_boolean' => $request->boolean('update_section_capacity'),
+                'new_capacity_raw' => $request->input('new_capacity'),
+                'new_capacity_type' => gettype($request->input('new_capacity'))
+            ]);
+
             // Validate the request data
             $validationRules = [
                 'section_id'  => 'required|exists:sections,id',
@@ -474,44 +622,99 @@ class ScheduleController extends Controller
                 'virtual_meeting_url' => 'required_if:location_type,virtual,hybrid|nullable|url',
                 'meeting_pattern' => 'required|string|in:single,weekly,monday-wednesday-friday,tuesday-thursday,monday-wednesday,tuesday-friday',
             ];
-            
+
             // Validate the data
             $validatedData = $request->validate($validationRules);
-            
+
             // Verify section belongs to this school
             $section = Section::with('course.department')->findOrFail($validatedData['section_id']);
             if ($section->course->department->school_id !== $school->id) {
                 return response()->json(['error' => 'The selected section does not belong to this school.'], 403);
             }
-            
+
+            // Check if we need to update section capacity based on room
+            if ($request->has('update_section_capacity') && $request->boolean('update_section_capacity') === true && !empty($request->new_capacity) && !empty($validatedData['room_id'])) {
+                $room = Room::findOrFail($validatedData['room_id']);
+
+                // Log the data being received for debugging
+                Log::info('Attempting to update section capacity in storeBatch method:', [
+                    'request_has_update_section_capacity' => $request->has('update_section_capacity'),
+                    'request_update_section_capacity_raw' => $request->input('update_section_capacity'),
+                    'request_update_section_capacity_boolean' => $request->boolean('update_section_capacity'),
+                    'request_new_capacity' => $request->new_capacity,
+                    'room_id' => $validatedData['room_id'],
+                    'room_capacity' => $room->capacity,
+                    'section_id' => $section->id,
+                    'current_section_capacity' => $section->capacity,
+                ]);
+
+                // Check if the section actually needs updating
+                if ($section->capacity != $request->new_capacity) {
+                    // Update section capacity to match room capacity
+                    $oldCapacity = $section->capacity;
+                    $section->capacity = $request->new_capacity;
+                    $section->save();
+
+                    // Verify the update was actually saved to the database
+                    $updatedSection = Section::find($section->id);
+
+                    Log::info('Updated section capacity - verification in batch:', [
+                        'section_id' => $section->id,
+                        'section_code' => $section->section_code,
+                        'old_capacity' => $oldCapacity,
+                        'requested_new_capacity' => $request->new_capacity,
+                        'actual_new_capacity' => $updatedSection->capacity,
+                        'save_successful' => ($updatedSection->capacity == $request->new_capacity)
+                    ]);
+                } else {
+                    Log::info('Section capacity already matches requested capacity in batch creation, no update needed:', [
+                        'section_id' => $section->id,
+                        'section_capacity' => $section->capacity,
+                        'requested_capacity' => $request->new_capacity
+                    ]);
+                }
+            } else {
+                // Log why we're not updating
+                Log::info('Not updating section capacity in storeBatch method, conditions not met:', [
+                    'request_has_update_section_capacity' => $request->has('update_section_capacity'),
+                    'update_section_capacity_raw' => $request->input('update_section_capacity'),
+                    'update_section_capacity_boolean' => $request->boolean('update_section_capacity'),
+                    'boolean_check_result' => $request->boolean('update_section_capacity') === true,
+                    'new_capacity_provided' => !empty($request->new_capacity),
+                    'room_id_provided' => !empty($validatedData['room_id']),
+                    'new_capacity' => $request->new_capacity,
+                    'room_id' => $validatedData['room_id'] ?? null,
+                ]);
+            }
+
             // Format times consistently
             $start_time = $validatedData['start_time'];
             $end_time = $validatedData['end_time'];
-            
+
             if (!str_contains($start_time, ':')) {
                 $start_time .= ':00';
             } else if (substr_count($start_time, ':') === 1) {
                 $start_time .= ':00';
             }
-            
+
             if (!str_contains($end_time, ':')) {
                 $end_time .= ':00';
             } else if (substr_count($end_time, ':') === 1) {
                 $end_time .= ':00';
             }
-            
+
             // Delete existing schedules for this section first
             $deleteCount = Schedule::where('section_id', $validatedData['section_id'])->delete();
             Log::info("Deleted {$deleteCount} existing schedules for section {$validatedData['section_id']}");
-            
+
             // Determine which days of the week to create schedules for based on the pattern
             $daysOfWeek = $this->getDaysFromPattern($validatedData['meeting_pattern'], $request->input('day_of_week', 'Monday'));
-            
+
             Log::info("Creating schedules for pattern {$validatedData['meeting_pattern']} on days:", $daysOfWeek);
-            
+
             $createdCount = 0;
             $errors = [];
-            
+
             // Create a schedule for each day in the pattern
             foreach ($daysOfWeek as $day) {
                 try {
@@ -525,25 +728,25 @@ class ScheduleController extends Controller
                         'virtual_meeting_url' => $validatedData['virtual_meeting_url'] ?? null,
                         'meeting_pattern' => $validatedData['meeting_pattern'],
                     ];
-                    
+
                     // Check for conflicts
                     if ($conflict = $this->checkScheduleConflicts($scheduleData)) {
                         $errors[] = "Conflict for {$day}: " . json_encode($conflict);
                         continue;
                     }
-                    
+
                     // Create schedule
                     $schedule = new Schedule($scheduleData);
                     $schedule->save();
                     $createdCount++;
-                    
+
                     Log::info("Created schedule for {$day}");
                 } catch (\Exception $e) {
                     Log::error("Error creating schedule for {$day}: " . $e->getMessage());
                     $errors[] = "Error for {$day}: " . $e->getMessage();
                 }
             }
-            
+
             $responseData = [
                 'success' => $createdCount > 0,
                 'created_count' => $createdCount,
@@ -551,26 +754,26 @@ class ScheduleController extends Controller
                 'pattern' => $validatedData['meeting_pattern'],
                 'days' => $daysOfWeek,
             ];
-            
+
             if ($request->expectsJson()) {
                 return response()->json($responseData);
             }
-            
+
             if (count($errors) > 0) {
                 $errorMessage = "Created {$createdCount} schedules, but encountered errors: " . implode("; ", $errors);
                 return redirect()->route('sections.show', [$school->id, $validatedData['section_id']])
                     ->with('warning', $errorMessage);
             }
-            
+
             return redirect()->route('sections.show', [$school->id, $validatedData['section_id']])
                 ->with('success', "Created {$createdCount} schedules successfully");
         } catch (\Exception $e) {
             Log::error("Error in batch schedule creation: " . $e->getMessage());
-            
+
             if ($request->expectsJson()) {
                 return response()->json(['error' => $e->getMessage()], 500);
             }
-            
+
             return back()->withErrors(['general' => 'An error occurred: ' . $e->getMessage()]);
         }
     }

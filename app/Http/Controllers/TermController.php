@@ -28,7 +28,7 @@ class TermController extends Controller
             ]);
         }
 
-        $terms = Term::with(['school', 'sections.course', 'sections.professor'])
+        $terms = Term::with(['school', 'sections.course', 'sections.professor_profile'])
             ->where('school_id', $school->id)
             ->withCount('sections')
             ->get()
@@ -98,6 +98,9 @@ class TermController extends Controller
 
         $term = Term::create($data);
 
+        // Update active term for the school
+        Term::updateActiveTerm($school);
+
         // Add the school parameter to the redirect
         return redirect()->route('terms.index', ['school' => $school->id])
                          ->with('success', 'Term created successfully');
@@ -151,6 +154,9 @@ class TermController extends Controller
 
         $term->update($data);
 
+        // Update active term for the school
+        Term::updateActiveTerm($school);
+
         // Also fix the redirect here
         return redirect()->route('terms.index', ['school' => $school->id])
                          ->with('success', 'Term updated successfully');
@@ -177,7 +183,7 @@ class TermController extends Controller
     // GET schools/{school}/terms/{term}
     public function show(School $school, $term)
     {
-        $term = Term::with(['sections.course', 'sections.professor', 'sections.schedules.room'])
+        $term = Term::with(['sections.course', 'sections.professor_profile', 'sections.schedules.room'])
             ->findOrFail($term);
         $this->authorize('view', $term);
 
@@ -196,7 +202,7 @@ class TermController extends Controller
                         'id' => $section->id,
                         'course_name' => $section->course->title,
                         'section_code' => $section->section_code,
-                        'professor_name' => $section->professor ? $section->professor->name : 'Not assigned',
+                        'professor_name' => $section->professor_profile ? $section->professor_profile->user->name : 'Not assigned',
                         'number_of_students' => $section->number_of_students,
                         'schedules' => $section->schedules->map(function($schedule) {
                             return [

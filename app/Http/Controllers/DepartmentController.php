@@ -19,13 +19,13 @@ class DepartmentController extends Controller
 
         // Verify user has access to this school
         $user = Auth::user();
-        if ($user->role->name !== 'super_admin' && $user->school_id !== $school->id) {
+        if ($user->role->id !== 2 && $user->school_id !== $school->id) {
             abort(403, 'You do not have access to this school');
         }
 
         $departments = Department::where('school_id', $school->id)
-            ->with(['school', 'majors', 'courses', 'professorProfiles'])
-            ->withCount(['majors', 'courses', 'professorProfiles'])
+            ->with(['school', 'majors', 'courses', 'professor_profiles'])
+            ->withCount(['majors', 'courses', 'professor_profiles'])
             ->orderBy('name')
             ->get()
             ->map(function ($department) {
@@ -33,6 +33,7 @@ class DepartmentController extends Controller
                     'id' => $department->id,
                     'name' => $department->name,
                     'school_id' => $department->school_id,
+                    'code' => $department->code,
                     'stats' => [
                         'majors' => $department->majors_count,
                         'courses' => $department->courses_count,
@@ -40,7 +41,6 @@ class DepartmentController extends Controller
                     ]
                 ];
             });
-
         return Inertia::render('Departments/Index', [
             'departments' => $departments,
             'school' => $school,
@@ -52,24 +52,24 @@ class DepartmentController extends Controller
     public function show(School $school, $id)
     {
         $department = Department::findOrFail($id);
-        
+
         $this->authorize('view', $department);
 
         // Verify department belongs to the school
         if ($department->school_id !== $school->id) {
             abort(404, 'Department not found in this school');
         }
-        
+
         // Load relationships manually to ensure they work correctly
         $department->load(['majors', 'courses']);
-        
+
         // Explicitly load the professor profiles with their users
-        $professorProfiles = ProfessorProfile::where('department_id', $department->id)
+        $professor_profiles = ProfessorProfile::where('department_id', $department->id)
             ->with('user')
             ->get();
-        
+
         // Assign the profiles to the department
-        $department->professorProfiles = $professorProfiles;
+        $department->professor_profiles = $professor_profiles;
 
         return Inertia::render('Departments/Show', [
             'department' => $department,
@@ -165,6 +165,7 @@ class DepartmentController extends Controller
             'contact.office' => 'nullable|string|max:255',
         ]);
 
+
         $department->update([
             'name' => $validated['name'],
             'code' => $validated['code'] ?? $department->code,
@@ -174,16 +175,13 @@ class DepartmentController extends Controller
                 'office' => $validated['contact']['office'] ?? null,
             ]
         ]);
-
-        return redirect()
-            ->back()
+        return redirect(route('departments.show', [$school->id, $department->id]))
             ->with('success', 'Department updated successfully');
     }
 
     // DELETE /departments/{id}
-    public function destroy(School $school, $id)
+    public function destroy(School $school, Department $department)
     {
-        $department = Department::findOrFail($id);
         $this->authorize('delete', $department);
 
         // Verify department belongs to the school

@@ -43,7 +43,7 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    public function professorProfile()
+    public function professor_profile()
     {
         return $this->hasOne(ProfessorProfile::class);
     }
