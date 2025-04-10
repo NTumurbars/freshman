@@ -200,14 +200,13 @@ export default function Index({ features, school, can_create }) {
                                             {feature.rooms_count}
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex space-x-2">
+                                            <div className="flex items-center gap-2">
                                                 <Link
                                                     href={route(
                                                         'roomfeatures.edit',
                                                         {
                                                             school: school.id,
-                                                            roomfeature:
-                                                                feature.id,
+                                                            roomfeature: feature.id,
                                                         },
                                                     )}
                                                 >
@@ -215,53 +214,60 @@ export default function Index({ features, school, can_create }) {
                                                         variant="light"
                                                         color="blue"
                                                         icon={PencilIcon}
-                                                        tooltip="Edit"
+                                                        tooltip="Edit feature"
                                                         size="xs"
-                                                    />
+                                                        className="rounded-lg bg-blue-50 px-3 py-1.5 text-blue-600 transition-all hover:bg-blue-100 hover:text-blue-700"
+                                                    >
+                                                        Edit
+                                                    </Button>
                                                 </Link>
 
-                                                {deleteConfirmId ===
-                                                feature.id ? (
-                                                    <div className="flex space-x-2">
-                                                        <Button
-                                                            variant="light"
-                                                            color="red"
-                                                            size="xs"
-                                                            loading={deleting}
-                                                            onClick={() =>
-                                                                handleDelete(
-                                                                    feature.id,
-                                                                )
-                                                            }
-                                                        >
-                                                            Confirm
-                                                        </Button>
-                                                        <Button
-                                                            variant="light"
-                                                            color="gray"
-                                                            size="xs"
-                                                            onClick={() =>
-                                                                setDeleteConfirmId(
-                                                                    null,
-                                                                )
-                                                            }
-                                                        >
-                                                            Cancel
-                                                        </Button>
+                                                {deleteConfirmId === feature.id ? (
+                                                    <div className="flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 p-1">
+                                                        <Text className="px-2 text-sm text-red-600">
+                                                            Delete this feature?
+                                                        </Text>
+                                                        <div className="flex items-center gap-1">
+                                                            <Button
+                                                                variant="light"
+                                                                color="red"
+                                                                size="xs"
+                                                                loading={deleting}
+                                                                onClick={() => handleDelete(feature.id)}
+                                                                className="rounded-lg bg-red-100 px-3 py-1.5 font-medium text-red-600 transition-all hover:bg-red-200"
+                                                            >
+                                                                {deleting ? (
+                                                                    <span className="flex items-center gap-1">
+                                                                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+                                                                        Deleting...
+                                                                    </span>
+                                                                ) : (
+                                                                    'Yes, delete'
+                                                                )}
+                                                            </Button>
+                                                            <Button
+                                                                variant="light"
+                                                                color="gray"
+                                                                size="xs"
+                                                                onClick={() => setDeleteConfirmId(null)}
+                                                                className="rounded-lg bg-white px-3 py-1.5 font-medium text-gray-600 transition-all hover:bg-gray-100"
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 ) : (
                                                     <Button
                                                         variant="light"
                                                         color="red"
                                                         icon={TrashIcon}
-                                                        tooltip="Delete"
+                                                        tooltip="Delete feature"
                                                         size="xs"
-                                                        onClick={() =>
-                                                            setDeleteConfirmId(
-                                                                feature.id,
-                                                            )
-                                                        }
-                                                    />
+                                                        onClick={() => setDeleteConfirmId(feature.id)}
+                                                        className="rounded-lg bg-red-50 px-3 py-1.5 text-red-600 transition-all hover:bg-red-100 hover:text-red-700"
+                                                    >
+                                                        Delete
+                                                    </Button>
                                                 )}
                                             </div>
                                         </TableCell>
