@@ -243,7 +243,7 @@ export default function Index({ departments, school, can_create }) {
                                 </div>
                                 <div className="flex w-full gap-2 sm:w-auto">
                                     <input
-                                        className="max-w-xs rounded-md border border-gray-300 p-2"
+                                        className="w-64 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm ring-gray-200 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-50"
                                         placeholder="Search departments"
                                         value={searchQuery}
                                         onChange={handleSearchChange}
@@ -253,7 +253,7 @@ export default function Index({ departments, school, can_create }) {
                                         icon={ArrowsUpDownIcon}
                                         placeholder="Sort By"
                                         value={sortBy}
-                                        onChange={(value) => setSortBy(value)} // Use the direct value passed by Select
+                                        onChange={(value) => setSortBy(value)}
                                     >
                                         <SelectItem value="name">
                                             Name (A-Z)
