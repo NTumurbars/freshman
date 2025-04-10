@@ -11,6 +11,7 @@ import {
     SelectItem, 
     Divider 
 } from '@tremor/react';
+import toast from 'react-hot-toast';
 
 export default function Create({ roles, schools, departments }) {
     const { flash } = usePage().props;
@@ -30,7 +31,15 @@ export default function Create({ roles, schools, departments }) {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('users.store'));
+        post(route('users.store'), {
+            onSuccess: () => {
+                toast.success('User created successfully');
+            },
+            onError: (errors) => {
+                console.log('Errors:', errors); // Error logging
+                toast.error('Something went wrong');
+            },
+        });
     };
 
     const { auth } = usePage().props;

@@ -2,13 +2,12 @@ import AppLayout from '@/Layouts/AppLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
 
 export default function Edit({ departments, majors, course }) {
-    const { data, setData, put, errors } = useForm({
+    const { data, setData, patch, errors, processing } = useForm({
         department_id: course.department_id,
-        major_id: course.major_id || '',
-        course_code: course.course_code,
+        major_id: course.major_id,
+        code: course.code,
         title: course.title,
         description: course.description || '',
-        capacity: course.capacity,
     });
 
     const { auth } = usePage().props;
@@ -17,7 +16,7 @@ export default function Edit({ departments, majors, course }) {
 
     const submit = (e) => {
         e.preventDefault();
-        put(route('courses.update', { school: school.id, course: course.id }), {
+        patch(route('courses.update', { school: school.id, course: course.id }), {
             onSuccess: () => {
                 console.log('Success!');
             },
@@ -26,7 +25,7 @@ export default function Edit({ departments, majors, course }) {
             },
         });
     };
-    
+
     return (
         <AppLayout userRole={userRole} school={school}>
             <Head title="Edit Course" />
@@ -88,12 +87,12 @@ export default function Edit({ departments, majors, course }) {
                         <input
                             type="text"
                             className="mt-1 block w-full rounded border-gray-300"
-                            value={data.course_code}
-                            onChange={(e) => setData('course_code', e.target.value)}
+                            value={data.code}
+                            onChange={(e) => setData('code', e.target.value)}
                         />
-                        {errors.course_code && (
+                        {errors.code && (
                             <div className="mt-1 text-sm text-red-600">
-                                {errors.course_code}
+                                {errors.code}
                             </div>
                         )}
                     </div>
@@ -132,24 +131,6 @@ export default function Edit({ departments, majors, course }) {
                         )}
                     </div>
 
-                    <div className="mb-4">
-                        <label className="block font-medium text-gray-700">
-                            Capacity
-                        </label>
-                        <input
-                            type="number"
-                            min="0"
-                            className="mt-1 block w-full rounded border-gray-300"
-                            value={data.capacity}
-                            onChange={(e) => setData('capacity', parseInt(e.target.value) || 0)}
-                        />
-                        {errors.capacity && (
-                            <div className="mt-1 text-sm text-red-600">
-                                {errors.capacity}
-                            </div>
-                        )}
-                    </div>
-
                     <div className="flex justify-between">
                         <button
                             type="submit"
@@ -157,7 +138,7 @@ export default function Edit({ departments, majors, course }) {
                         >
                             Update Course
                         </button>
-                        
+
                         <a
                             href={route('courses.index', { school: school.id })}
                             className="rounded bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"

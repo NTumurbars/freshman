@@ -68,7 +68,7 @@ class CourseController extends Controller
             'code'          => 'required|string|unique:courses,code',
             'title'         => 'required|string|max:255',
             'description'   => 'nullable|string',
-            'capacity'      => 'required|integer|min:0',
+            'credits'       => 'required|integer|min:1|max:6',
         ]);
 
         Course::create($data);
@@ -89,7 +89,7 @@ class CourseController extends Controller
 
         // Get departments from this school
         $departments = Department::where('school_id', $school->id)->get();
-        
+
         // Get majors related to these departments
         $majors = Major::whereIn('department_id', $departments->pluck('id'))->get();
 
@@ -124,7 +124,7 @@ class CourseController extends Controller
             'code'          => 'required|string|unique:courses,code,' . $course->id,
             'title'         => 'required|string|max:255',
             'description'   => 'nullable|string',
-            'capacity'      => 'required|integer|min:0',
+            'credits'       => 'required|integer|min:1|max:6',
         ]);
 
         $course->update($data);
@@ -152,11 +152,11 @@ class CourseController extends Controller
     {
         // Load relationships
         $course->load([
-            'department', 
-            'major', 
+            'department',
+            'major',
             'sections.term',
             'sections.schedules.room.floor.building',
-            'sections.professor'
+            'sections.professor_profile.user'
         ]);
 
         // Check if the user can view this course

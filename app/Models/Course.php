@@ -16,7 +16,6 @@ class Course extends Model
         'code',
         'title',
         'description',
-        'capacity',
         'credits',
         'level',
         'is_active',

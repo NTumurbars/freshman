@@ -27,7 +27,6 @@ return new class extends Migration
             $table->string('postal_code')->nullable();
             $table->string('phone')->nullable();
             $table->string('timezone')->nullable();
-            $table->json('settings')->nullable();
             $table->timestamps();
         });
 
@@ -91,7 +90,6 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date');
             $table->boolean('is_active')->default(false);
-            $table->json('settings')->nullable();
             $table->timestamps();
         });
 
@@ -105,6 +103,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->integer('credits');
             $table->string('level')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 
@@ -114,11 +113,11 @@ return new class extends Migration
             $table->foreignId('course_id')->constrained()->onDelete('cascade');
             $table->foreignId('professor_profile_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('term_id')->constrained()->onDelete('cascade');
-            $table->string('section_number');
-            $table->integer('capacity');
-            $table->string('status')->nullable();
-            $table->string('delivery_method')->nullable();
+            $table->string('section_code');
+            $table->string('status')->default('active');
+            $table->string('delivery_method')->default('in-person');
             $table->text('notes')->nullable();
+            $table->integer('capacity')->nullable();
             $table->timestamps();
         });
 
@@ -151,6 +150,8 @@ return new class extends Migration
         Schema::create('room_features', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->text('description')->nullable();
+            $table->string('category')->default('Other');
             $table->timestamps();
         });
 
@@ -173,6 +174,8 @@ return new class extends Migration
             $table->string('meeting_pattern')->nullable();
             $table->string('location_type')->nullable();
             $table->string('virtual_meeting_url')->nullable();
+            $table->string('type')->default('lecture');
+            $table->integer('capacity')->nullable();
             $table->timestamps();
         });
 
@@ -185,7 +188,7 @@ return new class extends Migration
         });
 
         // Create section_room_features table (pivot)
-        Schema::create('section_room_features', function (Blueprint $table) {
+        Schema::create('section_room_feature', function (Blueprint $table) {
             $table->id();
             $table->foreignId('section_id')->constrained()->onDelete('cascade');
             $table->foreignId('room_feature_id')->constrained()->onDelete('cascade');
@@ -242,7 +245,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('sessions');
-        Schema::dropIfExists('section_room_features');
+        Schema::dropIfExists('section_room_feature');
         Schema::dropIfExists('course_registrations');
         Schema::dropIfExists('schedules');
         Schema::dropIfExists('room_details');
@@ -264,4 +267,4 @@ return new class extends Migration
         Schema::dropIfExists('cache_locks');
         Schema::dropIfExists('cache');
     }
-}; 
+};

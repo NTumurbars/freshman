@@ -28,16 +28,6 @@ class School extends Model
         'postal_code',
         'phone',
         'timezone',
-        'settings',
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'settings' => 'array',
     ];
 
     /**
@@ -66,7 +56,6 @@ class School extends Model
             'postal_code' => 'nullable|string|max:20',
             'phone' => 'nullable|string|max:20',
             'timezone' => 'nullable|string|max:100',
-            'settings' => 'nullable|array',
         ];
     }
 

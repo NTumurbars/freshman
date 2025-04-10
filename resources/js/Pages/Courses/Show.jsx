@@ -6,15 +6,15 @@ import { Badge, Card, Title } from '@tremor/react';
 export default function Show({ course, school }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
-    
+
     // Debug output
     console.log('Course data:', course);
     console.log('School data:', school);
-    
+
     if (course.sections && course.sections.length > 0) {
         console.log('First section:', course.sections[0]);
         console.log('Section term data:', course.sections[0].term);
-        console.log('Professor data:', course.sections[0].professor);
+        console.log('Professor data:', course.sections[0].professor_profile);
     }
 
     // Helper function to format time
@@ -67,33 +67,33 @@ export default function Show({ course, school }) {
                     </div>
                 </div>
 
-                <Card className="mb-8">
-                    <div className="px-6 py-5">
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="mb-6">
+                    <div className="bg-white shadow rounded-lg p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <h3 className="mb-1 text-sm font-medium text-gray-500">Department</h3>
-                                <p className="text-base">{course.department?.name || 'N/A'}</p>
+                                <h2 className="text-lg font-semibold text-gray-700 mb-2">Course Information</h2>
+                                <dl className="space-y-2">
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Department</dt>
+                                        <dd className="mt-1 text-sm text-gray-900">{course.department?.name}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Major</dt>
+                                        <dd className="mt-1 text-sm text-gray-900">{course.major?.name || 'N/A'}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Credits</dt>
+                                        <dd className="mt-1 text-sm text-gray-900">{course.credits}</dd>
+                                    </div>
+                                </dl>
                             </div>
                             <div>
-                                <h3 className="mb-1 text-sm font-medium text-gray-500">Major</h3>
-                                <p className="text-base">{course.major?.name || 'Not Specified'}</p>
+                                <h2 className="text-lg font-semibold text-gray-700 mb-2">Description</h2>
+                                <p className="text-sm text-gray-600">{course.description || 'No description available.'}</p>
                             </div>
-                            <div>
-                                <h3 className="mb-1 text-sm font-medium text-gray-500">Course Code</h3>
-                                <p className="text-base">{course.code}</p>
-                            </div>
-                            <div>
-                                <h3 className="mb-1 text-sm font-medium text-gray-500">Credits</h3>
-                                <p className="text-base">{course.credits || 'N/A'}</p>
-                            </div>
-                        </div>
-
-                        <div className="mt-6">
-                            <h3 className="mb-1 text-sm font-medium text-gray-500">Description</h3>
-                            <p className="text-base">{course.description || 'No description available.'}</p>
                         </div>
                     </div>
-                </Card>
+                </div>
 
                 <div className="mb-4 flex items-center justify-between">
                     <Title>Sections</Title>
@@ -138,7 +138,7 @@ export default function Show({ course, school }) {
                                     {course.sections.map((section) => (
                                         <tr key={section.id} className="hover:bg-gray-50">
                                             <td className="whitespace-nowrap px-6 py-4">
-                                                <Link 
+                                                <Link
                                                     href={route('sections.show', [school.id, section.id])}
                                                     className="text-blue-600 hover:text-blue-900"
                                                 >
@@ -153,8 +153,8 @@ export default function Show({ course, school }) {
                                                 )}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4">
-                                                {section.professor ? (
-                                                    <span>{section.professor.name}</span>
+                                                {section.professor_profile?.user ? (
+                                                    <span>{section.professor_profile.user.name}</span>
                                                 ) : (
                                                     <Badge color="gray">Not Assigned</Badge>
                                                 )}
@@ -213,7 +213,7 @@ export default function Show({ course, school }) {
                                                         <PencilIcon className="mr-1 h-3 w-3" />
                                                         Edit
                                                     </Link>
-                                                    
+
                                                     {(!section.schedules || section.schedules.length === 0) && (
                                                         <Link
                                                             href={route('schedules.create', { school: school.id, section_id: section.id })}
@@ -223,7 +223,7 @@ export default function Show({ course, school }) {
                                                             Add Schedule
                                                         </Link>
                                                     )}
-                                                    
+
                                                     {section.schedules && section.schedules.length > 0 && (
                                                         <Link
                                                             href={route('schedules.edit', [school.id, section.schedules[0].id])}

@@ -5,7 +5,7 @@ import { Link } from '@inertiajs/react';
 import SectionForm from '@/Components/Forms/SectionForm';
 import { useState, useEffect } from 'react';
 
-export default function Edit({ section, courses, terms, professors, roomFeatures, school }) {
+export default function Edit({ section, courses, terms, professorProfiles, roomFeatures, school }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
     const userSchool = auth.user.school;
@@ -14,9 +14,9 @@ export default function Edit({ section, courses, terms, professors, roomFeatures
 
     // Log professor data for debugging
     useEffect(() => {
-        console.log("Professor data in Edit component:", professors);
+        console.log("Professor profiles data in Edit component:", professorProfiles);
         console.log("Section object:", section);
-    }, [professors]);
+    }, [professorProfiles]);
 
     // Extract feature IDs from section.requiredFeatures array
     const getRequiredFeatureIds = () => {
@@ -29,13 +29,14 @@ export default function Edit({ section, courses, terms, professors, roomFeatures
     const { data, setData, put, processing, errors } = useForm({
         course_id: section.course_id || '',
         term_id: section.term_id || '',
-        professor_id: section.professor_id || '',
+        professor_profile_id: section.professor_profile_id || '',
         section_code: section.section_code || '',
-        number_of_students: section.number_of_students || 0,
         required_features: getRequiredFeatureIds(),
         status: section.status || 'active',
         delivery_method: section.delivery_method || 'in-person',
-        notes: section.notes || ''
+        notes: section.notes || '',
+        capacity: section.capacity || '',
+        students_count: section.students_count || 0
     });
 
     const handleSubmit = (e) => {
@@ -78,7 +79,7 @@ export default function Edit({ section, courses, terms, professors, roomFeatures
                         errors={errors}
                         courses={courses}
                         terms={terms}
-                        professors={professors}
+                        professorProfiles={professorProfiles}
                         roomFeatures={roomFeatures}
                         isSubmitting={isSubmitting || processing}
                         onSubmit={handleSubmit}

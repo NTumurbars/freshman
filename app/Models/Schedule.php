@@ -71,7 +71,7 @@ class Schedule extends Model
         if ($this->meeting_pattern === self::PATTERN_SINGLE || empty($this->meeting_pattern)) {
             return [$this->day_of_week];
         }
-        
+
         // For schedules with meeting patterns, return all days in the pattern
         switch($this->meeting_pattern) {
             case self::PATTERN_MWF:
@@ -97,7 +97,7 @@ class Schedule extends Model
         $timeFormat = substr($this->start_time, 0, 5) . ' - ' . substr($this->end_time, 0, 5);
         return $this->day_of_week . ', ' . $timeFormat;
     }
-    
+
     // Add accessor for pattern name
     public function getPatternNameAttribute()
     {
@@ -115,5 +115,25 @@ class Schedule extends Model
             default:
                 return $this->day_of_week;
         }
+    }
+
+    /**
+     * Check if the assigned room has sufficient capacity for the section
+     * Used during room assignment to ensure adequate capacity
+     */
+    public function hasAdequateRoomCapacity()
+    {
+        // If no room is assigned, no capacity check needed
+        if (!$this->room_id) {
+            return true;
+        }
+
+        // If no section exists, skip check
+        if (!$this->section) {
+            return true;
+        }
+
+        // Check if the room capacity is adequate for the section
+        return $this->section->hasEnoughCapacity($this->room->capacity);
     }
 }

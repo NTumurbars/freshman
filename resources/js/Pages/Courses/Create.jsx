@@ -6,12 +6,12 @@ import { BookOpen } from 'lucide-react';
 
 export default function Create({ departments, majors }) {
     const { data, setData, post, errors, processing } = useForm({
-        course_code: '',
-        title: '',
-        description: '',
         department_id: '',
         major_id: '',
-        capacity: 0,
+        code: '',
+        title: '',
+        description: '',
+        credits: '',
     });
 
     // Filter majors based on selected department
@@ -59,7 +59,7 @@ export default function Create({ departments, majors }) {
                 <form onSubmit={submit} className="px-6 py-6 space-y-6">
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
                         <h2 className="text-blue-800 font-medium mb-2">Course Department Information</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
                                 <label className="block font-medium text-gray-700 mb-1">
                                     Department
@@ -69,10 +69,10 @@ export default function Create({ departments, majors }) {
                                     value={data.department_id}
                                     onChange={handleDepartmentChange}
                                 >
-                                    <option value="">Select Department</option>
-                                    {departments.map((department) => (
-                                        <option key={department.id} value={department.id}>
-                                            {department.name}
+                                    <option value="">Select a department</option>
+                                    {departments.map(dept => (
+                                        <option key={dept.id} value={dept.id}>
+                                            {dept.name}
                                         </option>
                                     ))}
                                 </select>
@@ -85,18 +85,18 @@ export default function Create({ departments, majors }) {
 
                             <div>
                                 <label className="block font-medium text-gray-700 mb-1">
-                                    Major
+                                    Major (Optional)
                                 </label>
                                 <select
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     value={data.major_id}
-                                    onChange={(e) => setData('major_id', parseInt(e.target.value))}
+                                    onChange={(e) => setData('major_id', e.target.value)}
                                     disabled={!data.department_id}
                                 >
-                                    <option value="">Select Major</option>
-                                    {filteredMajors.map((major) => (
+                                    <option value="">Select a major</option>
+                                    {filteredMajors.map(major => (
                                         <option key={major.id} value={major.id}>
-                                            {major.code}
+                                            {major.name}
                                         </option>
                                     ))}
                                 </select>
@@ -120,53 +120,56 @@ export default function Create({ departments, majors }) {
                                     <input
                                         type="text"
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        value={data.course_code}
-                                        onChange={(e) => setData('course_code', e.target.value)}
+                                        value={data.code}
+                                        onChange={(e) => setData('code', e.target.value)}
                                         placeholder="e.g., CS101"
                                     />
-                                    {errors.course_code && (
+                                    {errors.code && (
                                         <div className="mt-1 text-sm text-red-600">
-                                            {errors.course_code}
+                                            {errors.code}
                                         </div>
                                     )}
                                 </div>
 
                                 <div>
                                     <label className="block font-medium text-gray-700 mb-1">
-                                        Capacity
+                                        Credits
                                     </label>
                                     <input
                                         type="number"
-                                        min="0"
+                                        min="1"
+                                        max="6"
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        value={data.capacity}
-                                        onChange={(e) => setData('capacity', parseInt(e.target.value) || 0)}
-                                        placeholder="Maximum students"
+                                        value={data.credits}
+                                        onChange={(e) => setData('credits', e.target.value)}
+                                        placeholder="e.g., 3"
                                     />
-                                    {errors.capacity && (
+                                    {errors.credits && (
                                         <div className="mt-1 text-sm text-red-600">
-                                            {errors.capacity}
+                                            {errors.credits}
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block font-medium text-gray-700 mb-1">
-                                    Title
-                                </label>
-                                <input
-                                    type="text"
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    value={data.title}
-                                    onChange={(e) => setData('title', e.target.value)}
-                                    placeholder="Introduction to Computer Science"
-                                />
-                                {errors.title && (
-                                    <div className="mt-1 text-sm text-red-600">
-                                        {errors.title}
-                                    </div>
-                                )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block font-medium text-gray-700 mb-1">
+                                        Title
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        value={data.title}
+                                        onChange={(e) => setData('title', e.target.value)}
+                                        placeholder="Introduction to Computer Science"
+                                    />
+                                    {errors.title && (
+                                        <div className="mt-1 text-sm text-red-600">
+                                            {errors.title}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div>

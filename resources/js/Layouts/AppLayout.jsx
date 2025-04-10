@@ -5,27 +5,37 @@ import MajorCoordinatorSideBar from '@/Components/SideBars/MajorCoordinatorSideB
 import ProfessorSideBar from '@/Components/SideBars/ProfessorSideBar';
 import StudentSideBar from '@/Components/SideBars/StudentSideBar';
 import SuperUserSideBar from '@/Components/SideBars/SuperUserSideBar';
-import { useState, useEffect } from 'react';
-import { PanelLeftClose, PanelLeftOpen, Menu } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
+import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 
-export default function AppLayout({ children, navChildren, school, userRole }) {
+export default function AppLayout({ children, navChildren }) {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     const { auth: globalAuth } = usePage().props;
 
+    const roleId = globalAuth.user.role.id;
+
+    const schoolData = globalAuth.user?.school;
+
     // Store school in sessionStorage when available for persistence across pages
     useEffect(() => {
         // If school is provided directly, store it in sessionStorage
-        if (school?.id) {
+        if (schoolData?.id) {
             try {
-                sessionStorage.setItem('cachedSchool', JSON.stringify(school));
+                sessionStorage.setItem(
+                    'cachedSchool',
+                    JSON.stringify(schoolData),
+                );
             } catch (error) {
-                console.error('Failed to cache school in session storage:', error);
+                console.error(
+                    'Failed to cache school in session storage:',
+                    error,
+                );
             }
         }
-    }, [school]);
+    }, [schoolData]);
 
     // Get school from various sources with fallbacks
     const getCachedSchool = () => {
@@ -40,12 +50,6 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
         return null;
     };
 
-    // Convert user role to number if needed
-    const roleId = parseInt(userRole || globalAuth?.user?.role?.id || 0, 10);
-
-    // Get school info from props, global auth, or session cache
-    const schoolData = school || globalAuth?.school || getCachedSchool() || null;
-    
     // Handle responsive sidebar
     useEffect(() => {
         const checkScreenSize = () => {
@@ -66,7 +70,7 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
     }, []);
 
     const toggleSidebar = () => {
-        setSidebarOpen(prevState => !prevState);
+        setSidebarOpen((prevState) => !prevState);
     };
 
     // Ensure we have the proper auth data for Navbar
@@ -78,19 +82,19 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
         user: {
             ...globalAuth?.user,
             // If userRole is provided, use it to ensure role_id is available
-            role_id: roleId
-        }
+            role_id: roleId,
+        },
     };
 
     return (
         <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-indigo-50">
             <Toaster />
-            
+
             {/* Navbar */}
             <Navbar auth={mergedAuth}>
                 <button
                     onClick={toggleSidebar}
-                    className="md:hidden p-2 rounded-md text-blue-600 hover:bg-blue-100 transition-colors duration-200"
+                    className="rounded-md p-2 text-blue-600 transition-colors duration-200 hover:bg-blue-100 md:hidden"
                     aria-label="Toggle sidebar"
                 >
                     <Menu className="h-5 w-5" />
@@ -101,32 +105,32 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
             <div className="flex flex-1 pt-16">
                 {/* Sidebar */}
                 <aside
-                    className={`
-                        fixed top-16 left-0 h-[calc(100vh-4rem)]
-                        w-64 z-40 bg-white shadow-lg
-                        transition-transform duration-300 ease-in-out
-                        ${sidebarOpen ? 'translate-x-0' : '-translate-x-64'}
-                        border-r border-blue-100 overflow-y-auto scrollbar-hide
-                    `}
+                    className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 bg-white shadow-lg transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-64'} overflow-y-auto border-r border-blue-100 scrollbar-hide`}
                 >
                     {roleId === 1 && <SuperUserSideBar />}
                     {roleId === 2 && <AdminSideBar school={schoolData} />}
-                    {roleId === 3 && <MajorCoordinatorSideBar school={schoolData} />}
+                    {roleId === 3 && (
+                        <MajorCoordinatorSideBar school={schoolData} />
+                    )}
                     {roleId === 4 && <ProfessorSideBar school={schoolData} />}
                     {roleId === 5 && <StudentSideBar school={schoolData} />}
                 </aside>
 
                 {/* Sidebar toggle button (positioned in a fixed container) */}
-                <div className="fixed z-50 top-1/2 left-0 transition-transform duration-300 ease-in-out"
-                     style={{
-                        transform: `translateY(-50%) ${sidebarOpen ? 'translateX(16rem)' : 'translateX(0)'}`
-                     }}>
+                <div
+                    className="fixed left-0 top-1/2 z-50 transition-transform duration-300 ease-in-out"
+                    style={{
+                        transform: `translateY(-50%) ${sidebarOpen ? 'translateX(16rem)' : 'translateX(0)'}`,
+                    }}
+                >
                     <button
                         onClick={toggleSidebar}
-                        className="bg-white rounded-full shadow-lg p-2.5 border border-blue-100 hidden md:flex items-center justify-center hover:border-blue-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
+                        className="hidden items-center justify-center rounded-full border border-blue-100 bg-white p-2.5 shadow-lg transition-all hover:border-blue-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:flex"
                         style={{ width: '2.5rem', height: '2.5rem' }}
-                        aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
-                        title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+                        aria-label={
+                            sidebarOpen ? 'Hide sidebar' : 'Show sidebar'
+                        }
+                        title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
                     >
                         {sidebarOpen ? (
                             <PanelLeftClose className="h-5 w-5 text-blue-600" />
@@ -146,20 +150,14 @@ export default function AppLayout({ children, navChildren, school, userRole }) {
 
                 {/* Main Content */}
                 <main
-                    className={`
-                        w-full transition-all duration-300 ease-in-out
-                        ${sidebarOpen ? 'md:ml-64' : 'md:ml-0'}
-                    `}
+                    className={`w-full transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'md:ml-0'} `}
                 >
-                    <div className="p-6">
-                        {children}
-                    </div>
+                    <div className="p-6">{children}</div>
                 </main>
             </div>
 
             <footer className="border-t border-blue-100 bg-white py-4 text-center text-sm text-gray-600 shadow-inner">
-                &copy; {new Date().getFullYear()} UniMan. All
-                rights reserved.
+                &copy; {new Date().getFullYear()} UniMan. All rights reserved.
             </footer>
         </div>
     );

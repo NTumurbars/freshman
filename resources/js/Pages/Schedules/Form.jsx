@@ -5,10 +5,10 @@ import { Clock, Info, Eye, Calendar, Video, MapPin } from 'lucide-react';
 import Modal from '@/Components/UI/Modal';
 import axios from 'axios';
 
-export default function ScheduleForm({ 
-    schedule = null, 
+export default function ScheduleForm({
+    schedule = null,
     sections = [],
-    rooms = [], 
+    rooms = [],
     submitLabel = 'Save Schedule',
     preselectedSectionId = null,
     onPreview = null,
@@ -16,7 +16,7 @@ export default function ScheduleForm({
 }) {
     const { auth } = usePage().props;
     const school = auth.user.school;
-    
+
     const { data, setData, post, put, processing, errors, delete: destroy } = useForm({
         section_id: schedule?.section_id || preselectedSectionId || '',
         room_id: schedule?.room_id || '',
@@ -32,6 +32,10 @@ export default function ScheduleForm({
     const [isVirtual, setIsVirtual] = useState(data.location_type === 'virtual');
     const [selectedSection, setSelectedSection] = useState(null);
     const [isEditingPattern, setIsEditingPattern] = useState(false);
+    const [showCapacityPrompt, setShowCapacityPrompt] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState(null);
+    const [capacityMismatch, setCapacityMismatch] = useState(null);
+    const [shouldUpdateCapacity, setShouldUpdateCapacity] = useState(false);
 
     useEffect(() => {
         // Find the selected section in the sections array
@@ -56,7 +60,7 @@ export default function ScheduleForm({
             if (!data.day_of_week && data.meeting_pattern === 'single') {
                 setData('day_of_week', 'Monday');
             }
-            
+
             // If preview callback is provided, send initial data
             if (onPreview && data.section_id && data.start_time && data.end_time) {
                 handlePreview();
@@ -73,7 +77,7 @@ export default function ScheduleForm({
             if (data.meeting_pattern === 'single' && !data.day_of_week) {
                 setData('day_of_week', 'Monday');
             }
-            
+
             // Update preview when relevant data changes
             if (onPreview && data.section_id && data.start_time && data.end_time) {
                 handlePreview();
@@ -91,11 +95,53 @@ export default function ScheduleForm({
                 value = 'in-person';
             }
         }
-        
+
+        if (field === 'room_id' && value) {
+            const room = rooms.find(r => r.id.toString() === value.toString());
+            setSelectedRoom(room);
+
+            // Check capacity mismatch if a section is selected and has capacity
+            if (selectedSection && selectedSection.capacity && room) {
+                if (room.capacity < selectedSection.capacity) {
+                    // Room capacity is less than section capacity - show warning
+                    setCapacityMismatch({
+                        type: 'warning',
+                        message: `This room's capacity (${room.capacity}) is less than the section's capacity (${selectedSection.capacity}).`
+                    });
+                    setShouldUpdateCapacity(false);
+                    setData('update_section_capacity', false);
+                    setData('new_capacity', null);
+                } else if (room.capacity > selectedSection.capacity) {
+                    // Room capacity is more than section capacity - show prompt
+                    setCapacityMismatch({
+                        type: 'prompt',
+                        message: `This room's capacity (${room.capacity}) is greater than the section's capacity (${selectedSection.capacity}).`
+                    });
+                    setShowCapacityPrompt(true);
+
+                    // If checkbox was already checked, update the new capacity to match new room
+                    if (shouldUpdateCapacity) {
+                        setData('new_capacity', Number(room.capacity));
+                    }
+                } else {
+                    // Capacities match
+                    setCapacityMismatch(null);
+                    setShouldUpdateCapacity(false);
+                    setData('update_section_capacity', false);
+                    setData('new_capacity', null);
+                }
+            } else {
+                setCapacityMismatch(null);
+                setShouldUpdateCapacity(false);
+                setData('update_section_capacity', false);
+                setData('new_capacity', null);
+            }
+        }
+
         if (field === 'meeting_pattern') {
             console.log('Changing meeting pattern to:', value);
             setData('meeting_pattern', value);
-            
+
             if (value !== 'single') {
                 try {
                     const daysFromPattern = getDaysFromPattern(value);
@@ -108,13 +154,13 @@ export default function ScheduleForm({
                     setData('day_of_week', 'Monday');
                 }
             }
-            
+
             if (schedule) {
                 setIsEditingPattern(true);
             }
             return;
         }
-        
+
         setData(field, value);
     };
 
@@ -158,7 +204,7 @@ export default function ScheduleForm({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!data.section_id) {
             alert('Please select a section first');
             return;
@@ -179,19 +225,70 @@ export default function ScheduleForm({
             alert('Please enter a virtual meeting URL for virtual or hybrid classes');
             return;
         }
-        
+
+        // Check if there's a capacity warning to acknowledge
+        if (capacityMismatch && capacityMismatch.type === 'warning' &&
+            !confirm('The selected room has less capacity than the section requires. Continue anyway?')) {
+            return;
+        }
+
+        // Include capacity update if user chose to update it
+        const finalData = { ...data };
+
+        // Debug logging for the capacity update
+        console.log('Before capacity update check:', {
+            shouldUpdateCapacity,
+            hasSelectedRoom: !!selectedRoom,
+            selectedRoomCapacity: selectedRoom?.capacity,
+            hasSelectedSection: !!selectedSection,
+            selectedSectionCapacity: selectedSection?.capacity
+        });
+
+        if (shouldUpdateCapacity && selectedRoom && selectedSection) {
+            // Explicitly set as boolean true, not as string
+            finalData.update_section_capacity = true;
+            finalData.new_capacity = Number(selectedRoom.capacity);
+
+            // More explicit logging
+            console.log('Will update section capacity:', {
+                update_section_capacity: true,
+                section_id: selectedSection.id,
+                new_capacity: Number(selectedRoom.capacity),
+                from: selectedSection.capacity,
+                to: selectedRoom.capacity
+            });
+        } else {
+            // Explicitly set as boolean false, not as string
+            finalData.update_section_capacity = false;
+            finalData.new_capacity = null;
+
+            console.log('Not updating section capacity');
+        }
+
         try {
             // If editing an existing schedule with pattern change, handle pattern change
             if (schedule && isEditingPattern) {
                 console.log('Changing schedule pattern to:', data.meeting_pattern);
-                await createSchedulesWithPattern(data);
+                await createSchedulesWithPattern(finalData);
                 return;
             }
 
             // For normal editing (not changing pattern)
             if (schedule && !isEditingPattern) {
-                await put(route('schedules.update', [school.id, schedule.id]), data);
-                
+                console.log('Updating schedule with data:', finalData);
+                console.log('Should update capacity:', shouldUpdateCapacity);
+                console.log('Form data update_section_capacity:', data.update_section_capacity);
+
+                // Create a new object for the submission that explicitly includes all needed fields
+                const submissionData = {
+                    ...data,
+                    update_section_capacity: shouldUpdateCapacity, // Use the checkbox state directly
+                    new_capacity: shouldUpdateCapacity && selectedRoom ? Number(selectedRoom.capacity) : null
+                };
+
+                console.log('Final submission data:', submissionData);
+                await put(route('schedules.update', [school.id, schedule.id]), submissionData);
+
                 if (data.redirect_section) {
                     window.location.href = route('sections.show', [school.id, data.section_id]);
                 }
@@ -199,26 +296,38 @@ export default function ScheduleForm({
             }
 
             // For new schedules (creating, not editing)
-            await createSchedulesWithPattern(data);
-            
+            console.log('Creating new schedule with data:', finalData);
+            await createSchedulesWithPattern(finalData);
+
         } catch (error) {
             console.error('Error in schedule creation/update:', error);
             alert('Error: ' + (error.response?.data?.message || error.message || 'Unknown error occurred'));
         }
     };
-    
+
     // Helper function to create schedules based on pattern
     const createSchedulesWithPattern = async (formData) => {
         try {
+            // Ensure update_section_capacity is properly formatted in all cases
+            console.log('Pattern creation with should update capacity:', {
+                shouldUpdateCapacity,
+                update_section_capacity: formData.update_section_capacity,
+                new_capacity: formData.new_capacity
+            });
+
             // For single schedule patterns
             if (formData.meeting_pattern === 'single') {
                 console.log('Creating single schedule for day:', formData.day_of_week);
                 const finalData = {
                     ...formData,
-                    meeting_pattern: 'single' // Ensure it's set to single
+                    meeting_pattern: 'single', // Ensure it's set to single
+                    update_section_capacity: Boolean(formData.update_section_capacity),
+                    new_capacity: formData.new_capacity ? Number(formData.new_capacity) : null
                 };
+
+                console.log('Single schedule final data:', finalData);
                 await post(route('schedules.store', school.id), finalData);
-                
+
                 if (formData.redirect_section) {
                     window.location.href = route('sections.show', [school.id, formData.section_id]);
                 } else {
@@ -226,25 +335,34 @@ export default function ScheduleForm({
                 }
                 return;
             }
-            
+
             // For multi-day patterns, use the batch endpoint
             console.log(`Creating schedules for pattern "${formData.meeting_pattern}" using batch endpoint`);
-            
+
+            // Ensure update_section_capacity is properly formatted for batch endpoint
+            const batchData = {
+                ...formData,
+                update_section_capacity: Boolean(formData.update_section_capacity),
+                new_capacity: formData.new_capacity ? Number(formData.new_capacity) : null
+            };
+
+            console.log('Batch endpoint final data:', batchData);
+
             try {
                 // Use the dedicated batch endpoint that handles multiple days at once
-                const response = await axios.post(route('schedules.store-batch', school.id), formData);
+                const response = await axios.post(route('schedules.store-batch', school.id), batchData);
                 console.log('Batch creation response:', response.data);
-                
+
                 if (response.data && response.data.success) {
                     console.log(`Successfully created ${response.data.created_count} schedules`);
-                    
+
                     if (formData.redirect_section) {
                         window.location.href = route('sections.show', [school.id, formData.section_id]);
                     } else {
                         window.location.reload();
                     }
                 } else {
-                    const errorMsg = response.data?.errors?.length 
+                    const errorMsg = response.data?.errors?.length
                         ? `Created ${response.data.created_count} schedules, but encountered errors: ${response.data.errors.join('; ')}`
                         : 'Failed to create schedules';
                     alert(errorMsg);
@@ -258,7 +376,7 @@ export default function ScheduleForm({
             console.error('Error in schedule creation:', error);
             alert('Error creating schedules: ' + (error.response?.data?.message || error.message || 'Unknown error'));
         }
-        
+
         // Reset editing state
         if (isEditingPattern) {
             setIsEditingPattern(false);
@@ -273,7 +391,7 @@ export default function ScheduleForm({
     };
 
     const daysOfWeek = [
-        'Monday', 'Tuesday', 'Wednesday', 
+        'Monday', 'Tuesday', 'Wednesday',
         'Thursday', 'Friday', 'Saturday', 'Sunday'
     ];
 
@@ -282,7 +400,7 @@ export default function ScheduleForm({
         { value: 'virtual', label: 'Virtual' },
         { value: 'hybrid', label: 'Hybrid' }
     ];
-    
+
     const meetingPatterns = [
         { value: 'single', label: 'Single Meeting' },
         { value: 'monday-wednesday-friday', label: 'Monday/Wednesday/Friday' },
@@ -291,7 +409,7 @@ export default function ScheduleForm({
         { value: 'tuesday-friday', label: 'Tuesday/Friday' },
         { value: 'weekly', label: 'Weekly (Mon-Fri)' }
     ];
-    
+
     // Helper function to get days from meeting pattern
     const getDaysFromPattern = (pattern) => {
         const patternMap = {
@@ -302,7 +420,7 @@ export default function ScheduleForm({
             'weekly': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
             'single': []
         };
-        
+
         return patternMap[pattern] || [];
     };
 
@@ -335,7 +453,7 @@ export default function ScheduleForm({
                             <option value="">Select Section</option>
                             {sections.map((section) => (
                                 <option key={section.id} value={section.id}>
-                                    {section.course?.course_code} - {section.section_code} ({section.course?.title})
+                                    {section.course?.code} - {section.section_code} ({section.course?.title})
                                 </option>
                             ))}
                         </select>
@@ -352,7 +470,7 @@ export default function ScheduleForm({
                     <div className="flex items-start justify-between mb-4">
                         <h3 className="text-gray-800 font-medium">Meeting Pattern</h3>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -398,7 +516,7 @@ export default function ScheduleForm({
                             </div>
                         )}
                     </div>
-                    
+
                     {data.meeting_pattern !== 'single' && (
                         <div className="mt-2 flex items-center text-sm text-blue-600 bg-blue-50 p-2 rounded">
                             <Info className="h-4 w-4 mr-2" />
@@ -486,13 +604,43 @@ export default function ScheduleForm({
                                 <option value="">Select Room</option>
                                 {rooms.map((room) => (
                                     <option key={room.id} value={room.id}>
-                                        {room.room_number} - {room.floor?.building?.name || 'Unknown Building'}
+                                        {room.room_number} - {room.floor?.building?.name || 'Unknown Building'} (Capacity: {room.capacity})
                                     </option>
                                 ))}
                             </select>
                             {errors.room_id && (
                                 <div className="mt-1 text-sm text-red-600">
                                     {errors.room_id}
+                                </div>
+                            )}
+                            {capacityMismatch && capacityMismatch.type === 'warning' && (
+                                <div className="mt-1 text-sm text-red-600 bg-red-50 p-2 rounded">
+                                    <span className="font-medium">Warning:</span> {capacityMismatch.message}
+                                </div>
+                            )}
+                            {capacityMismatch && capacityMismatch.type === 'prompt' && (
+                                <div className="mt-1 text-sm text-yellow-600 bg-yellow-50 p-2 rounded">
+                                    <span className="font-medium">Note:</span> {capacityMismatch.message}
+                                    <div className="mt-1">
+                                        <label className="inline-flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                checked={shouldUpdateCapacity}
+                                                onChange={(e) => {
+                                                    console.log('Checkbox changed:', e.target.checked);
+                                                    setShouldUpdateCapacity(e.target.checked);
+                                                    setData('update_section_capacity', e.target.checked);
+                                                    if (e.target.checked && selectedRoom) {
+                                                        setData('new_capacity', Number(selectedRoom.capacity));
+                                                    } else {
+                                                        setData('new_capacity', null);
+                                                    }
+                                                }}
+                                            />
+                                            <span className="ml-2">Update section capacity to match room capacity</span>
+                                        </label>
+                                    </div>
                                 </div>
                             )}
                         </div>
