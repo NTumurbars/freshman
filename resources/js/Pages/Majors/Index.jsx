@@ -183,7 +183,7 @@ export default function Index({ majors, school, can_create }) {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex items-center justify-end gap-6">
+                                            <div className="flex items-center justify-end gap-4">
                                                 <Link
                                                     href={route('majors.edit', {
                                                         school: school.id,
@@ -215,7 +215,6 @@ export default function Index({ majors, school, can_create }) {
                                                     method="delete"
                                                     as="button"
                                                     type="button"
-                                                    className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
                                                     onClick={(e) =>
                                                         e.stopPropagation()
                                                     }
