@@ -9,6 +9,9 @@ import {
     PhoneIcon,
     PlusIcon,
     UserGroupIcon,
+    EyeIcon,
+    PencilSquareIcon,
+    TrashIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -130,9 +133,11 @@ const DepartmentCard = ({ department, school }) => {
                         })}
                     >
                         <Button
+                            icon={EyeIcon}
                             variant="light"
-                            size="sm"
-                            className="text-blue-600"
+                            color="blue"
+                            size="xs"
+                            tooltip="View department"
                         >
                             View
                         </Button>
@@ -144,9 +149,11 @@ const DepartmentCard = ({ department, school }) => {
                         })}
                     >
                         <Button
+                            icon={PencilSquareIcon}
                             variant="light"
-                            size="sm"
-                            className="text-blue-600"
+                            color="blue"
+                            size="xs"
+                            tooltip="Edit department"
                         >
                             Edit
                         </Button>
@@ -159,9 +166,16 @@ const DepartmentCard = ({ department, school }) => {
                         method="delete"
                         as="button"
                         type="button"
-                        className="text-sm text-red-600 hover:text-red-800"
                     >
-                        Delete
+                        <Button 
+                            icon={TrashIcon}
+                            variant="light"
+                            color="red"
+                            size="xs"
+                            tooltip="Delete department"
+                        >
+                            Delete
+                        </Button>
                     </Link>
                 </div>
             </div>
