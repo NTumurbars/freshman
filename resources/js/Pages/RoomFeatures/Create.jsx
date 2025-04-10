@@ -15,6 +15,7 @@ import {
     Title,
 } from '@tremor/react';
 import { Settings } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function Create({ school, categories }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -25,7 +26,15 @@ export default function Create({ school, categories }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('roomfeatures.store', school.id));
+        post(route('roomfeatures.store', school.id), {
+            onSuccess: () => {
+                toast.success('Room feature created successfully');
+            },
+            onError: (errors) => {
+                console.log('Errors:', errors); // Error logging
+                toast.error('Something went wrong');
+            },
+        });
     };
 
     return (

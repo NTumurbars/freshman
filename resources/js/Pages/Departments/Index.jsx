@@ -9,6 +9,9 @@ import {
     PhoneIcon,
     PlusIcon,
     UserGroupIcon,
+    EyeIcon,
+    PencilSquareIcon,
+    TrashIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -122,7 +125,7 @@ const DepartmentCard = ({ department, school }) => {
                     )}
                 </div>
 
-                <div className="mt-auto flex justify-end gap-2 border-t border-gray-100 pt-4">
+                <div className="mt-auto flex justify-end gap-4 border-t border-gray-100 pt-4">
                     <Link
                         href={route('departments.show', {
                             school: department.school_id,
@@ -130,9 +133,11 @@ const DepartmentCard = ({ department, school }) => {
                         })}
                     >
                         <Button
+                            icon={EyeIcon}
                             variant="light"
-                            size="sm"
-                            className="text-blue-600"
+                            color="blue"
+                            size="xs"
+                            tooltip="View department"
                         >
                             View
                         </Button>
@@ -144,9 +149,11 @@ const DepartmentCard = ({ department, school }) => {
                         })}
                     >
                         <Button
+                            icon={PencilSquareIcon}
                             variant="light"
-                            size="sm"
-                            className="text-blue-600"
+                            color="blue"
+                            size="xs"
+                            tooltip="Edit department"
                         >
                             Edit
                         </Button>
@@ -159,9 +166,16 @@ const DepartmentCard = ({ department, school }) => {
                         method="delete"
                         as="button"
                         type="button"
-                        className="text-sm text-red-600 hover:text-red-800"
                     >
-                        Delete
+                        <Button 
+                            icon={TrashIcon}
+                            variant="light"
+                            color="red"
+                            size="xs"
+                            tooltip="Delete department"
+                        >
+                            Delete
+                        </Button>
                     </Link>
                 </div>
             </div>
@@ -243,7 +257,7 @@ export default function Index({ departments, school, can_create }) {
                                 </div>
                                 <div className="flex w-full gap-2 sm:w-auto">
                                     <input
-                                        className="max-w-xs rounded-md border border-gray-300 p-2"
+                                        className="w-64 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm ring-gray-200 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-50"
                                         placeholder="Search departments"
                                         value={searchQuery}
                                         onChange={handleSearchChange}
@@ -253,7 +267,7 @@ export default function Index({ departments, school, can_create }) {
                                         icon={ArrowsUpDownIcon}
                                         placeholder="Sort By"
                                         value={sortBy}
-                                        onChange={(value) => setSortBy(value)} // Use the direct value passed by Select
+                                        onChange={(value) => setSortBy(value)}
                                     >
                                         <SelectItem value="name">
                                             Name (A-Z)
