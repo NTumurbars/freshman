@@ -8,7 +8,7 @@ use App\Models\Department;
 
 class ProfessorProfile extends Model
 {
-    protected $fillable = 
+    protected $fillable =
     [
         'user_id',
         'department_id',
@@ -29,5 +29,5 @@ class ProfessorProfile extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
-    } 
+    }
 }

@@ -13,14 +13,10 @@ class SchoolController extends Controller
     public function index()
     {
         $this->authorize('viewAny', School::class);
-
         $user = Auth::user();
-
-        // If super admin, show all schools
         if ($user->role->name === 'super_admin') {
             $schools = School::all();
         } else {
-            // For school admins, only show their own school
             $schools = School::where('id', $user->school_id)->get();
         }
 

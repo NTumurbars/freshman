@@ -18,7 +18,7 @@ class RoomController extends Controller
     {
         $this->authorize('viewAny', Room::class);
         
-        $rooms = Room::with(['features', 'floor.building.school', 'schedules.section.course', 'schedules.section.professor'])
+        $rooms = Room::with(['features', 'floor.building.school', 'schedules.section.course', 'schedules.section.professor_profile.user'])
             ->whereHas('floor.building', function($query) use ($school) {
                 $query->where('school_id', $school->id);
             })
@@ -164,7 +164,7 @@ class RoomController extends Controller
     public function show(School $school, Room $room)
     {
         $this->authorize('view', $room);
-        $room->load(['features', 'schedules.section.course', 'schedules.section.professor', 'floor.building.school']);
+        $room->load(['features', 'schedules.section.course', 'schedules.section.professor_profile.user', 'floor.building.school']);
         
         return Inertia::render('Rooms/Show', [
             'room' => $room,
@@ -181,7 +181,7 @@ class RoomController extends Controller
         $rooms = $floor->rooms()->with([
             'features', 
             'schedules.section.course', 
-            'schedules.section.professor'
+            'schedules.section.professor_profile.user'
         ])->get();
 
         return Inertia::render('Buildings/Floors/Rooms/Index', [

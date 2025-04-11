@@ -1,34 +1,37 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
 import {
-    Card,
-    Title,
-    Text,
-    Grid,
-    Col,
-    Metric,
-    Button,
-    Flex,
-    Divider,
-    Badge,
-} from '@tremor/react';
-import {
-    BuildingOffice2Icon,
-    PencilIcon,
     ArrowLeftIcon,
+    BuildingOffice2Icon,
     HomeModernIcon,
+    PencilIcon,
     UsersIcon,
 } from '@heroicons/react/24/outline';
+import { Head, Link } from '@inertiajs/react';
+import {
+    Badge,
+    Button,
+    Card,
+    Col,
+    Divider,
+    Flex,
+    Grid,
+    Metric,
+    Text,
+    Title,
+} from '@tremor/react';
 
 const RoomCard = ({ room, school, building, floor }) => {
     const features = room.features || [];
 
     return (
-        <Card className="hover:shadow-lg transition-shadow">
-            <Link href={route('rooms.show', {
-                school: school.id,
-                room: room.id
-            })} className="block">
+        <Card className="transition-shadow hover:shadow-lg">
+            <Link
+                href={route('rooms.show', {
+                    school: school.id,
+                    room: room.id,
+                })}
+                className="block"
+            >
                 <div className="flex items-start justify-between">
                     <div>
                         <Title>{room.room_number}</Title>
@@ -41,7 +44,7 @@ const RoomCard = ({ room, school, building, floor }) => {
                     <div className="mt-4">
                         <Text className="font-medium">Features:</Text>
                         <div className="mt-2 flex flex-wrap gap-2">
-                            {features.map(feature => (
+                            {features.map((feature) => (
                                 <Badge key={feature.id} color="blue">
                                     {feature.name}
                                 </Badge>
@@ -54,15 +57,17 @@ const RoomCard = ({ room, school, building, floor }) => {
             <Divider className="my-4" />
 
             <Flex justifyContent="end">
-                <Link href={route('rooms.edit', {
-                    school: school.id,
-                    room: room.id,
-                    return_url: route('buildings.floors.show', {
+                <Link
+                    href={route('rooms.edit', {
                         school: school.id,
-                        building: building.id,
-                        floor: floor.id
-                    })
-                })}>
+                        room: room.id,
+                        return_url: route('buildings.floors.show', {
+                            school: school.id,
+                            building: building.id,
+                            floor: floor.id,
+                        }),
+                    })}
+                >
                     <Button variant="light" icon={PencilIcon}>
                         Edit Room
                     </Button>
@@ -73,23 +78,23 @@ const RoomCard = ({ room, school, building, floor }) => {
 };
 
 export default function Show({ floor, building, school }) {
-    const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
     const rooms = floor.rooms || [];
 
     const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
 
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title={`Floor ${floor.number} - ${building.name}`} />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8">
-                <div className="sm:flex sm:items-center sm:justify-between mb-6">
+            <div className="px-4 py-6 sm:px-6 lg:px-8">
+                <div className="mb-6 sm:flex sm:items-center sm:justify-between">
                     <div className="flex items-center">
-                        <Link href={route('buildings.floors.index', {
-                            school: school.id,
-                            building: building.id
-                        })}>
+                        <Link
+                            href={route('buildings.floors.index', {
+                                school: school.id,
+                                building: building.id,
+                            })}
+                        >
                             <Button
                                 variant="light"
                                 color="gray"
@@ -100,7 +105,7 @@ export default function Show({ floor, building, school }) {
                             </Button>
                         </Link>
                         <div className="flex items-center">
-                            <BuildingOffice2Icon className="h-8 w-8 text-blue-600 mr-3" />
+                            <BuildingOffice2Icon className="mr-3 h-8 w-8 text-blue-600" />
                             <div>
                                 <Title>Floor {floor.number}</Title>
                                 <Text>Floor details in {building.name}</Text>
@@ -108,26 +113,25 @@ export default function Show({ floor, building, school }) {
                         </div>
                     </div>
                     <div className="mt-4 flex space-x-3 sm:mt-0">
-                        <Link href={route('buildings.floors.edit', {
-                            school: school.id,
-                            building: building.id,
-                            floor: floor.id
-                        })}>
-                            <Button
-                                variant="secondary"
-                                icon={PencilIcon}
-                            >
+                        <Link
+                            href={route('buildings.floors.edit', {
+                                school: school.id,
+                                building: building.id,
+                                floor: floor.id,
+                            })}
+                        >
+                            <Button variant="secondary" icon={PencilIcon}>
                                 Edit Floor
                             </Button>
                         </Link>
-                        <Link href={route('buildings.floors.rooms.index', {
-                            school: school.id,
-                            building: building.id,
-                            floor: floor.id
-                        })}>
-                            <Button>
-                                Manage Rooms
-                            </Button>
+                        <Link
+                            href={route('buildings.floors.rooms.index', {
+                                school: school.id,
+                                building: building.id,
+                                floor: floor.id,
+                            })}
+                        >
+                            <Button>Manage Rooms</Button>
                         </Link>
                     </div>
                 </div>
@@ -145,14 +149,14 @@ export default function Show({ floor, building, school }) {
                     <Grid numItems={1} numItemsSm={2} className="gap-6">
                         <Card decoration="top" decorationColor="blue">
                             <Flex alignItems="center">
-                                <HomeModernIcon className="h-6 w-6 text-blue-600 mr-2" />
+                                <HomeModernIcon className="mr-2 h-6 w-6 text-blue-600" />
                                 <Text>Total Rooms</Text>
                             </Flex>
                             <Metric>{rooms.length}</Metric>
                         </Card>
                         <Card decoration="top" decorationColor="indigo">
                             <Flex alignItems="center">
-                                <UsersIcon className="h-6 w-6 text-indigo-600 mr-2" />
+                                <UsersIcon className="mr-2 h-6 w-6 text-indigo-600" />
                                 <Text>Total Capacity</Text>
                             </Flex>
                             <Metric>{totalCapacity}</Metric>
@@ -167,16 +171,24 @@ export default function Show({ floor, building, school }) {
                         <Card>
                             <div className="flex flex-col items-center justify-center py-12">
                                 <HomeModernIcon className="h-12 w-12 text-gray-400" />
-                                <Text className="mt-2">No rooms found in this floor</Text>
-                                <Link href={route('rooms.create', {
-                                    school: school.id,
-                                    floor_id: floor.id,
-                                    return_url: route('buildings.floors.show', {
+                                <Text className="mt-2">
+                                    No rooms found in this floor
+                                </Text>
+                                <Link
+                                    href={route('rooms.create', {
                                         school: school.id,
-                                        building: building.id,
-                                        floor: floor.id
-                                    })
-                                })} className="mt-4">
+                                        floor_id: floor.id,
+                                        return_url: route(
+                                            'buildings.floors.show',
+                                            {
+                                                school: school.id,
+                                                building: building.id,
+                                                floor: floor.id,
+                                            },
+                                        ),
+                                    })}
+                                    className="mt-4"
+                                >
                                     <Button variant="light" icon={PencilIcon}>
                                         Add your first room
                                     </Button>
@@ -184,10 +196,20 @@ export default function Show({ floor, building, school }) {
                             </div>
                         </Card>
                     ) : (
-                        <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
-                            {rooms.map(room => (
+                        <Grid
+                            numItems={1}
+                            numItemsSm={2}
+                            numItemsLg={3}
+                            className="gap-6"
+                        >
+                            {rooms.map((room) => (
                                 <Col key={room.id}>
-                                    <RoomCard room={room} school={school} building={building} floor={floor} />
+                                    <RoomCard
+                                        room={room}
+                                        school={school}
+                                        building={building}
+                                        floor={floor}
+                                    />
                                 </Col>
                             ))}
                         </Grid>

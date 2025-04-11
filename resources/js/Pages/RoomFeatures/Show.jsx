@@ -1,40 +1,36 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { ArrowLeftIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { Head, Link } from '@inertiajs/react';
 import {
-    Card,
-    Title,
-    Text,
-    Button,
     Badge,
+    Button,
+    Card,
     Table,
-    TableHead,
-    TableRow,
-    TableHeaderCell,
     TableBody,
     TableCell,
-    Divider,
+    TableHead,
+    TableHeaderCell,
+    TableRow,
+    Text,
+    Title,
 } from '@tremor/react';
-import { ArrowLeftIcon, PencilIcon } from '@heroicons/react/24/outline';
-import { Settings, BuildingIcon } from 'lucide-react';
+import { BuildingIcon, Settings } from 'lucide-react';
 
 export default function Show({ roomfeature, school }) {
-    const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
-
     const categoryColors = {
-        'Technology': 'blue',
-        'Furniture': 'amber',
-        'Accessibility': 'green',
-        'Safety': 'red',
-        'Other': 'gray'
+        Technology: 'blue',
+        Furniture: 'amber',
+        Accessibility: 'green',
+        Safety: 'red',
+        Other: 'gray',
     };
 
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title={`${roomfeature.name} Feature`} />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center mb-6">
+            <div className="px-4 py-6 sm:px-6 lg:px-8">
+                <div className="mb-6 flex items-center">
                     <Link href={route('roomfeatures.index', school.id)}>
                         <Button
                             variant="light"
@@ -48,17 +44,29 @@ export default function Show({ roomfeature, school }) {
                     <div className="flex-1">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
-                                <Settings className="h-8 w-8 text-blue-600 mr-3" />
+                                <Settings className="mr-3 h-8 w-8 text-blue-600" />
                                 <div>
                                     <Title>{roomfeature.name}</Title>
-                                    <div className="flex items-center mt-1">
-                                        <Badge color={categoryColors[roomfeature.category] || 'gray'} size="md">
+                                    <div className="mt-1 flex items-center">
+                                        <Badge
+                                            color={
+                                                categoryColors[
+                                                    roomfeature.category
+                                                ] || 'gray'
+                                            }
+                                            size="md"
+                                        >
                                             {roomfeature.category}
                                         </Badge>
                                     </div>
                                 </div>
                             </div>
-                            <Link href={route('roomfeatures.edit', { school: school.id, roomfeature: roomfeature.id })}>
+                            <Link
+                                href={route('roomfeatures.edit', {
+                                    school: school.id,
+                                    roomfeature: roomfeature.id,
+                                })}
+                            >
                                 <Button variant="light" icon={PencilIcon}>
                                     Edit Feature
                                 </Button>
@@ -71,12 +79,21 @@ export default function Show({ roomfeature, school }) {
                     <div className="flex items-start gap-4">
                         <div className="flex-1">
                             <Title className="mb-2">Description</Title>
-                            <Text>{roomfeature.description || 'No description provided.'}</Text>
+                            <Text>
+                                {roomfeature.description ||
+                                    'No description provided.'}
+                            </Text>
                         </div>
                         <div>
                             <Title className="mb-2">Category</Title>
                             <div className="flex items-center">
-                                <Badge size="lg" color={categoryColors[roomfeature.category] || 'gray'}>
+                                <Badge
+                                    size="lg"
+                                    color={
+                                        categoryColors[roomfeature.category] ||
+                                        'gray'
+                                    }
+                                >
                                     {roomfeature.category}
                                 </Badge>
                             </div>
@@ -86,10 +103,10 @@ export default function Show({ roomfeature, school }) {
 
                 <Card>
                     <Title className="mb-4">Rooms with this feature</Title>
-                    
+
                     {roomfeature.rooms.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8">
-                            <BuildingIcon className="h-10 w-10 text-gray-400 mb-2" />
+                            <BuildingIcon className="mb-2 h-10 w-10 text-gray-400" />
                             <Text>No rooms currently have this feature</Text>
                         </div>
                     ) : (
@@ -97,7 +114,9 @@ export default function Show({ roomfeature, school }) {
                             <TableHead>
                                 <TableRow>
                                     <TableHeaderCell>Building</TableHeaderCell>
-                                    <TableHeaderCell>Room Number</TableHeaderCell>
+                                    <TableHeaderCell>
+                                        Room Number
+                                    </TableHeaderCell>
                                     <TableHeaderCell>Capacity</TableHeaderCell>
                                     <TableHeaderCell>Actions</TableHeaderCell>
                                 </TableRow>
@@ -105,12 +124,24 @@ export default function Show({ roomfeature, school }) {
                             <TableBody>
                                 {roomfeature.rooms.map((room) => (
                                     <TableRow key={room.id}>
-                                        <TableCell>{room.building_name}</TableCell>
-                                        <TableCell className="font-medium">{room.room_number}</TableCell>
+                                        <TableCell>
+                                            {room.building_name}
+                                        </TableCell>
+                                        <TableCell className="font-medium">
+                                            {room.room_number}
+                                        </TableCell>
                                         <TableCell>{room.capacity}</TableCell>
                                         <TableCell>
-                                            <Link href={route('rooms.show', { school: school.id, room: room.id })}>
-                                                <Button size="xs" variant="light">
+                                            <Link
+                                                href={route('rooms.show', {
+                                                    school: school.id,
+                                                    room: room.id,
+                                                })}
+                                            >
+                                                <Button
+                                                    size="xs"
+                                                    variant="light"
+                                                >
                                                     View
                                                 </Button>
                                             </Link>
@@ -124,4 +155,4 @@ export default function Show({ roomfeature, school }) {
             </div>
         </AppLayout>
     );
-} 
+}

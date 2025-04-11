@@ -3,10 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+// Models
 use App\Models\User;
 use App\Models\School;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
+use App\Models\Floor;
 
 // Controllers
 use App\Http\Controllers\{
@@ -36,10 +39,8 @@ use App\Http\Controllers\{
 */
 Route::get('/', function () {
     return Inertia::render('Welcome', [
-        'auth' => [
-            'user' => Auth::user(),
-        ],
-        'users' => User::count(),
+        'auth'    => ['user' => Auth::user()],
+        'users'   => User::count(),
         'schools' => School::count(),
     ]);
 })->name('welcome');
@@ -55,23 +56,23 @@ require __DIR__ . '/auth.php';
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->prefix('api')->group(function () {
-    // API route for fetching buildings by school
+    // API route for fetching buildings by school with associated stats
     Route::get('/schools/{school}/buildings', function (School $school) {
         return $school->buildings()
             ->with('school')
             ->withCount('floors')
             ->withCount('rooms')
             ->get()
-            ->map(function($building) {
+            ->map(function ($building) {
                 return [
-                    'id' => $building->id,
-                    'name' => $building->name,
-                    'stats' => [
+                    'id'          => $building->id,
+                    'name'        => $building->name,
+                    'stats'       => [
                         'floors' => $building->floors_count,
-                        'rooms' => $building->rooms_count,
+                        'rooms'  => $building->rooms_count,
                     ],
-                    'school_id' => $building->school_id,
-                    'school_name' => $building->school->name
+                    'school_id'   => $building->school_id,
+                    'school_name' => $building->school->name,
                 ];
             });
     })->name('api.buildings.list');
@@ -83,7 +84,7 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Dashboard
+    // Dashboard View
     Route::get('/dashboard', fn() => Inertia::render('Dashboard'))->name('dashboard');
 
     // Profile Management
@@ -97,50 +98,48 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Global Resource Routes
     Route::resources([
         'schools' => SchoolController::class,
-        'users' => UserController::class,
+        'users'   => UserController::class,
     ]);
 
-    // Professor Profile Update
+    // Professor Profile Update (Global Route)
     Route::post('/users/{userId}/professor-profile', [ProfessorProfileController::class, 'update'])
-        ->name('professorProfile.update');
+        ->name('professor_profile.update');
 
     // Nested Resources Under Schools
     Route::prefix('schools/{school}')->group(function () {
         Route::resources([
-            'departments' => DepartmentController::class,
-            'majors' => MajorController::class,
-            'terms' => TermController::class,
-            'courses' => CourseController::class,
-            'sections' => SectionController::class,
-            'rooms' => RoomController::class,
-            'roomfeatures' => RoomFeatureController::class,
-            'schedules' => ScheduleController::class,
-            'professor-profiles' => ProfessorProfileController::class,
-            'course-registrations' => CourseRegistrationController::class,
-            'buildings' => BuildingController::class,
-            'buildings.floors' => FloorController::class,
-            'buildings.floors.rooms' => RoomController::class,
+            'departments'             => DepartmentController::class,
+            'majors'                  => MajorController::class,
+            'terms'                   => TermController::class,
+            'courses'                 => CourseController::class,
+            'sections'                => SectionController::class,
+            'rooms'                   => RoomController::class,
+            'roomfeatures'            => RoomFeatureController::class,
+            'schedules'               => ScheduleController::class,
+            'professor-profiles'      => ProfessorProfileController::class,
+            'course-registrations'    => CourseRegistrationController::class,
+            'buildings'               => BuildingController::class,
+            'buildings.floors'        => FloorController::class,
+            'buildings.floors.rooms'  => RoomController::class,
         ]);
-        
-        // Batch schedule creation routes - adding an alias to make more flexible
-        Route::post('schedules-batch', [ScheduleController::class, 'storeBatch'])->name('schedules.store-batch');
-        Route::post('api/schedules/batch', [ScheduleController::class, 'storeBatch'])->name('api.schedules.batch');
-        
+
+        // Batch schedule creation routes – adding an alias for flexibility
+        Route::post('schedules-batch', [ScheduleController::class, 'storeBatch'])
+            ->name('schedules.store-batch');
+        Route::post('api/schedules/batch', [ScheduleController::class, 'storeBatch'])
+            ->name('api.schedules.batch');
+
         // Delete all schedules for a section
         Route::delete('sections/{section}/schedules', [ScheduleController::class, 'destroyAll'])
             ->name('schedules.destroyAll');
-        
+
         // Section calendar view
-        Route::get('sections/calendar', [SectionController::class, 'calendar'])->name('sections.calendar');
-        
-        // Direct route for creating room with floor
-        Route::get('rooms/create/{floor}', [RoomController::class, 'create'])->name('rooms.create.with.floor');
-        
-        // Explicit debug route to force direct access
-        Route::get('direct-room-create/{floor_id}', function(Request $request, $floor_id) {
-            $floor = \App\Models\Floor::findOrFail($floor_id);
-            return app(RoomController::class)->create($request, $floor->building->school, $floor);
-        });
+        Route::get('sections/calendar', [SectionController::class, 'calendar'])
+            ->name('sections.calendar');
+
+        // Direct route for creating a room associated with a floor
+        Route::get('rooms/create/{floor}', [RoomController::class, 'create'])
+            ->name('rooms.create.with.floor');
     });
 });
 

@@ -1,22 +1,21 @@
-import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
-import {
-    Card,
-    Title,
-    Text,
-    Grid,
-    Col,
-    Metric,
-    Badge,
-    Button,
-    Icon,
-} from '@tremor/react';
 import {
     BuildingOffice2Icon,
     BuildingStorefrontIcon,
-    PlusIcon,
     ChevronRightIcon,
+    PlusIcon,
 } from '@heroicons/react/24/outline';
+import { Head, Link } from '@inertiajs/react';
+import {
+    Button,
+    Card,
+    Col,
+    Grid,
+    Icon,
+    Metric,
+    Text,
+    Title,
+} from '@tremor/react';
+import AppLayout from '@/Layouts/AppLayout';
 
 const BuildingCard = ({ building }) => (
     <Card>
@@ -53,33 +52,34 @@ const BuildingCard = ({ building }) => (
         </Grid>
 
         <div className="mt-6 flex items-center justify-end gap-2">
-            <Link href={route('buildings.show', { school: building.school_id, building: building.id })}>
-                <Button
-                    variant="light"
-                    color="gray"
-                    icon={ChevronRightIcon}
-                >
+            <Link
+                href={route('buildings.show', {
+                    school: building.school_id,
+                    building: building.id,
+                })}
+            >
+                <Button variant="light" color="gray" icon={ChevronRightIcon}>
                     View Details
                 </Button>
             </Link>
-            <Link href={route('buildings.floors.index', { school: building.school_id, building: building.id })}>
-                <Button variant="secondary">
-                    Manage Floors
-                </Button>
+            <Link
+                href={route('buildings.floors.index', {
+                    school: building.school_id,
+                    building: building.id,
+                })}
+            >
+                <Button variant="secondary">Manage Floors</Button>
             </Link>
         </div>
     </Card>
 );
 
 export default function Index({ buildings, school, can_create }) {
-    const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
-
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title="Buildings" />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8">
+            <div className="px-4 py-6 sm:px-6 lg:px-8">
                 <div className="sm:flex sm:items-center sm:justify-between">
                     <div>
                         <Title>Buildings</Title>
@@ -99,7 +99,13 @@ export default function Index({ buildings, school, can_create }) {
                                 <BuildingOffice2Icon className="h-12 w-12 text-gray-400" />
                                 <Text className="mt-2">No buildings found</Text>
                                 {can_create && (
-                                    <Link href={route('buildings.create', school.id)} className="mt-4">
+                                    <Link
+                                        href={route(
+                                            'buildings.create',
+                                            school.id,
+                                        )}
+                                        className="mt-4"
+                                    >
                                         <Button variant="light" icon={PlusIcon}>
                                             Add your first building
                                         </Button>
@@ -108,7 +114,12 @@ export default function Index({ buildings, school, can_create }) {
                             </div>
                         </Card>
                     ) : (
-                        <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
+                        <Grid
+                            numItems={1}
+                            numItemsSm={2}
+                            numItemsLg={3}
+                            className="gap-6"
+                        >
                             {buildings.map((building) => (
                                 <Col key={building.id}>
                                     <BuildingCard building={building} />

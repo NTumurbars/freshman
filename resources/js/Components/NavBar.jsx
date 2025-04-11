@@ -49,10 +49,12 @@ export default function Navbar({ children, auth: propAuth }) {
                     <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setDropdownOpen(!dropdownOpen)}
-                            className="flex items-center rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 p-2 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className="group flex items-center gap-2.5 rounded-full bg-white px-3 py-2 shadow-sm ring-1 ring-gray-200/50 transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:shadow hover:ring-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
-                            <User className="h-5 w-5 text-blue-600" />
-                            <span className="ml-2 hidden md:block text-gray-700">
+                            <div className="rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 p-1.5">
+                                <User className="h-4 w-4 text-white" />
+                            </div>
+                            <span className="hidden text-sm font-medium text-gray-700 group-hover:text-gray-900 md:block">
                                 {userName}
                             </span>
                         </button>

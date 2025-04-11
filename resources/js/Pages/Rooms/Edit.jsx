@@ -1,29 +1,28 @@
-import React, { useState, useEffect } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm, usePage, Link } from '@inertiajs/react';
 import {
-    Card,
-    Title,
-    Text,
-    Button,
-    Flex,
-    TextInput,
-    Divider,
-    Select,
-    SelectItem,
-    NumberInput,
-    MultiSelect,
-    MultiSelectItem,
-} from '@tremor/react';
-import {
-    HomeModernIcon,
     ArrowLeftIcon,
     BuildingOffice2Icon,
+    HomeModernIcon,
 } from '@heroicons/react/24/outline';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import {
+    Button,
+    Card,
+    Divider,
+    Flex,
+    MultiSelect,
+    MultiSelectItem,
+    NumberInput,
+    Select,
+    SelectItem,
+    Text,
+    TextInput,
+    Title,
+} from '@tremor/react';
+import { useEffect, useState } from 'react';
 
 export default function Edit({ room, floors, features, returnUrl }) {
     const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
     const school = auth.user.school;
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +31,7 @@ export default function Edit({ room, floors, features, returnUrl }) {
     const [selectedBuilding, setSelectedBuilding] = useState('');
 
     // Convert feature_ids to strings for MultiSelect
-    const initialFeatureIds = (room.features || []).map(f => f.id.toString());
+    const initialFeatureIds = (room.features || []).map((f) => f.id.toString());
 
     const { data, setData, put, processing, errors } = useForm({
         room_number: room.room_number || '',
@@ -46,7 +45,7 @@ export default function Edit({ room, floors, features, returnUrl }) {
     useEffect(() => {
         const buildingsMap = new Map();
 
-        floors.forEach(floor => {
+        floors.forEach((floor) => {
             const building = floor.building;
             if (building) {
                 if (!buildingsMap.has(building.id)) {
@@ -71,7 +70,8 @@ export default function Edit({ room, floors, features, returnUrl }) {
 
     const updateBuildingFloors = (buildingId) => {
         const filteredFloors = floors.filter(
-            floor => floor.building && floor.building.id.toString() === buildingId
+            (floor) =>
+                floor.building && floor.building.id.toString() === buildingId,
         );
         setBuildingFloors(filteredFloors);
     };
@@ -86,31 +86,39 @@ export default function Edit({ room, floors, features, returnUrl }) {
         e.preventDefault();
         setIsSubmitting(true);
 
-        put(route('rooms.update', {
-            school: school.id,
-            room: room.id
-        }), {
-            onSuccess: () => {
-                setIsSubmitting(false);
+        put(
+            route('rooms.update', {
+                school: school.id,
+                room: room.id,
+            }),
+            {
+                onSuccess: () => {
+                    setIsSubmitting(false);
 
-                if (data.return_url) {
-                    window.location.href = data.return_url;
-                }
+                    if (data.return_url) {
+                        window.location.href = data.return_url;
+                    }
+                },
+                onError: () => {
+                    setIsSubmitting(false);
+                },
             },
-            onError: () => {
-                setIsSubmitting(false);
-            }
-        });
+        );
     };
 
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title={`Edit Room - ${room.room_number}`} />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8">
-                <div className="sm:flex sm:items-center sm:justify-between mb-6">
+            <div className="px-4 py-6 sm:px-6 lg:px-8">
+                <div className="mb-6 sm:flex sm:items-center sm:justify-between">
                     <div className="flex items-center">
-                        <Link href={returnUrl || route('rooms.index', { school: school.id })}>
+                        <Link
+                            href={
+                                returnUrl ||
+                                route('rooms.index', { school: school.id })
+                            }
+                        >
                             <Button
                                 variant="light"
                                 color="gray"
@@ -121,7 +129,7 @@ export default function Edit({ room, floors, features, returnUrl }) {
                             </Button>
                         </Link>
                         <div className="flex items-center">
-                            <HomeModernIcon className="h-8 w-8 text-blue-600 mr-3" />
+                            <HomeModernIcon className="mr-3 h-8 w-8 text-blue-600" />
                             <div>
                                 <Title>Edit Room</Title>
                                 <Text>{room.name || room.room_number}</Text>
@@ -137,12 +145,17 @@ export default function Edit({ room, floors, features, returnUrl }) {
                                 <Text>Room Information</Text>
                                 <Divider className="my-2" />
 
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 mt-4">
+                                <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
                                         <Text>Room Number/Name</Text>
                                         <TextInput
                                             value={data.room_number}
-                                            onChange={(e) => setData('room_number', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'room_number',
+                                                    e.target.value,
+                                                )
+                                            }
                                             placeholder="Enter room number or name (e.g. 101, Lab A)"
                                             className="mt-1"
                                             error={!!errors.room_number}
@@ -155,7 +168,9 @@ export default function Edit({ room, floors, features, returnUrl }) {
                                         <Text>Capacity</Text>
                                         <NumberInput
                                             value={data.capacity}
-                                            onValueChange={(value) => setData('capacity', value)}
+                                            onValueChange={(value) =>
+                                                setData('capacity', value)
+                                            }
                                             placeholder="Enter room capacity"
                                             className="mt-1"
                                             error={!!errors.capacity}
@@ -171,7 +186,7 @@ export default function Edit({ room, floors, features, returnUrl }) {
                                 <Text>Location</Text>
                                 <Divider className="my-2" />
 
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 mt-4">
+                                <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
                                         <Text>Building</Text>
                                         <Select
@@ -183,7 +198,10 @@ export default function Edit({ room, floors, features, returnUrl }) {
                                             required
                                         >
                                             {buildings.map((building) => (
-                                                <SelectItem key={building.id} value={building.id.toString()}>
+                                                <SelectItem
+                                                    key={building.id}
+                                                    value={building.id.toString()}
+                                                >
                                                     {building.name}
                                                 </SelectItem>
                                             ))}
@@ -194,7 +212,9 @@ export default function Edit({ room, floors, features, returnUrl }) {
                                         <Text>Floor</Text>
                                         <Select
                                             value={data.floor_id}
-                                            onValueChange={(value) => setData('floor_id', value)}
+                                            onValueChange={(value) =>
+                                                setData('floor_id', value)
+                                            }
                                             placeholder="Select a floor"
                                             className="mt-1"
                                             error={!!errors.floor_id}
@@ -203,7 +223,10 @@ export default function Edit({ room, floors, features, returnUrl }) {
                                             required
                                         >
                                             {buildingFloors.map((floor) => (
-                                                <SelectItem key={floor.id} value={floor.id.toString()}>
+                                                <SelectItem
+                                                    key={floor.id}
+                                                    value={floor.id.toString()}
+                                                >
                                                     {floor.name}
                                                 </SelectItem>
                                             ))}
@@ -220,18 +243,24 @@ export default function Edit({ room, floors, features, returnUrl }) {
                                     <Text>Room Features</Text>
                                     <MultiSelect
                                         value={data.feature_ids}
-                                        onValueChange={(values) => setData('feature_ids', values)}
+                                        onValueChange={(values) =>
+                                            setData('feature_ids', values)
+                                        }
                                         placeholder="Select room features"
                                         className="mt-1"
                                     >
                                         {features.map((feature) => (
-                                            <MultiSelectItem key={feature.id} value={feature.id.toString()}>
+                                            <MultiSelectItem
+                                                key={feature.id}
+                                                value={feature.id.toString()}
+                                            >
                                                 {feature.name}
                                             </MultiSelectItem>
                                         ))}
                                     </MultiSelect>
-                                    <Text className="mt-1 text-gray-500 text-sm">
-                                        Select all equipment and features available in this room
+                                    <Text className="mt-1 text-sm text-gray-500">
+                                        Select all equipment and features
+                                        available in this room
                                     </Text>
                                 </div>
                             </div>

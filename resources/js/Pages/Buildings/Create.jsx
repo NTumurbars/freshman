@@ -1,21 +1,22 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm, usePage, Link } from '@inertiajs/react';
 import {
+    ArrowLeftIcon,
+    BuildingOffice2Icon,
+} from '@heroicons/react/24/outline';
+import { Head, Link, useForm } from '@inertiajs/react';
+import {
+    Button,
     Card,
-    Title,
+    Divider,
+    Flex,
     Text,
     TextInput,
-    Button,
-    Flex,
-    Divider,
+    Title,
 } from '@tremor/react';
-import { BuildingOffice2Icon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 export default function Create({ school }) {
-    const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data, setData, errors, post, processing } = useForm({
@@ -38,20 +39,20 @@ export default function Create({ school }) {
                 setIsSubmitting(false);
             },
             onError: (errors) => {
-                Object.keys(errors).forEach(key => {
+                Object.keys(errors).forEach((key) => {
                     toast.error(errors[key]);
                 });
                 setIsSubmitting(false);
-            }
+            },
         });
     };
 
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title="Create Building" />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8">
-                <div className="sm:flex sm:items-center sm:justify-between mb-6">
+            <div className="px-4 py-6 sm:px-6 lg:px-8">
+                <div className="mb-6 sm:flex sm:items-center sm:justify-between">
                     <div className="flex items-center">
                         <Link href={route('buildings.index', school.id)}>
                             <Button
@@ -73,11 +74,13 @@ export default function Create({ school }) {
                 <Card>
                     <form onSubmit={handleSubmit}>
                         <Flex flexDirection="col" alignItems="start">
-                            <div className="w-full mb-6">
+                            <div className="mb-6 w-full">
                                 <Text>Building Name</Text>
                                 <TextInput
                                     value={data.name}
-                                    onChange={e => setData('name', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('name', e.target.value)
+                                    }
                                     placeholder="Enter building name"
                                     error={errors.name}
                                     icon={BuildingOffice2Icon}
@@ -85,7 +88,9 @@ export default function Create({ school }) {
                                     disabled={isSubmitting}
                                 />
                                 {errors.name && (
-                                    <Text color="red" className="mt-1">{errors.name}</Text>
+                                    <Text color="red" className="mt-1">
+                                        {errors.name}
+                                    </Text>
                                 )}
                             </div>
                         </Flex>
@@ -98,7 +103,9 @@ export default function Create({ school }) {
                                 loading={isSubmitting}
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? 'Creating...' : 'Create Building'}
+                                {isSubmitting
+                                    ? 'Creating...'
+                                    : 'Create Building'}
                             </Button>
                         </Flex>
                     </form>

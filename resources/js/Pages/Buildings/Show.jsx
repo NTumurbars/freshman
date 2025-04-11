@@ -1,29 +1,34 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
 import {
-    Card,
-    Title,
-    Text,
-    Grid,
-    Col,
-    Metric,
-    Button,
-    Flex,
-    Divider,
-    Badge,
-} from '@tremor/react';
-import {
-    BuildingOffice2Icon,
-    PencilIcon,
     ArrowLeftIcon,
+    BuildingOffice2Icon,
     BuildingStorefrontIcon,
     HomeModernIcon,
+    PencilIcon,
 } from '@heroicons/react/24/outline';
+import { Head, Link } from '@inertiajs/react';
+import {
+    Badge,
+    Button,
+    Card,
+    Divider,
+    Flex,
+    Grid,
+    Metric,
+    Text,
+    Title,
+} from '@tremor/react';
 
 const FloorCard = ({ floor }) => {
     const totalRooms = floor.rooms.length;
-    const totalCapacity = floor.rooms.reduce((sum, room) => sum + room.capacity, 0);
-    const totalOccupied = floor.rooms.reduce((sum, room) => sum + room.occupied_slots, 0);
+    const totalCapacity = floor.rooms.reduce(
+        (sum, room) => sum + room.capacity,
+        0,
+    );
+    const totalOccupied = floor.rooms.reduce(
+        (sum, room) => sum + room.occupied_slots,
+        0,
+    );
 
     return (
         <Card>
@@ -54,22 +59,22 @@ const FloorCard = ({ floor }) => {
 };
 
 export default function Show({ building, school }) {
-    const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
-
     // Sort floors by number in descending order (top floor first)
-    const sortedFloors = [...building.floors].sort((a, b) => b.number - a.number);
+    const sortedFloors = [...building.floors].sort(
+        (a, b) => b.number - a.number,
+    );
     const totalFloors = building.floors.length;
     const totalRooms = building.floors.reduce(
-        (sum, floor) => sum + floor.rooms.length, 0
+        (sum, floor) => sum + floor.rooms.length,
+        0,
     );
 
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title={building.name} />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8">
-                <div className="sm:flex sm:items-center sm:justify-between mb-6">
+            <div className="px-4 py-6 sm:px-6 lg:px-8">
+                <div className="mb-6 sm:flex sm:items-center sm:justify-between">
                     <div className="flex items-center">
                         <Link href={route('buildings.index', school.id)}>
                             <Button
@@ -82,19 +87,23 @@ export default function Show({ building, school }) {
                             </Button>
                         </Link>
                         <div className="flex items-center">
-                            <BuildingOffice2Icon className="h-8 w-8 text-blue-600 mr-3" />
+                            <BuildingOffice2Icon className="mr-3 h-8 w-8 text-blue-600" />
                             <div>
                                 <Title>{building.name}</Title>
-                                <Text>Building details and floor information</Text>
+                                <Text>
+                                    Building details and floor information
+                                </Text>
                             </div>
                         </div>
                     </div>
                     <div className="mt-4 sm:mt-0">
-                        <Link href={route('buildings.edit', { school: school.id, building: building.id })}>
-                            <Button
-                                icon={PencilIcon}
-                                variant="secondary"
-                            >
+                        <Link
+                            href={route('buildings.edit', {
+                                school: school.id,
+                                building: building.id,
+                            })}
+                        >
+                            <Button icon={PencilIcon} variant="secondary">
                                 Edit Building
                             </Button>
                         </Link>
@@ -106,10 +115,13 @@ export default function Show({ building, school }) {
                         <div>
                             <Title>Building Summary</Title>
                         </div>
-                        <Link href={route('buildings.floors.index', { school: school.id, building: building.id })}>
-                            <Button>
-                                Manage Floors
-                            </Button>
+                        <Link
+                            href={route('buildings.floors.index', {
+                                school: school.id,
+                                building: building.id,
+                            })}
+                        >
+                            <Button>Manage Floors</Button>
                         </Link>
                     </Flex>
 
@@ -118,14 +130,14 @@ export default function Show({ building, school }) {
                     <Grid numItems={1} numItemsSm={2} className="gap-6">
                         <Card decoration="top" decorationColor="blue">
                             <Flex alignItems="center">
-                                <BuildingOffice2Icon className="h-6 w-6 text-blue-600 mr-2" />
+                                <BuildingOffice2Icon className="mr-2 h-6 w-6 text-blue-600" />
                                 <Text>Total Floors</Text>
                             </Flex>
                             <Metric>{totalFloors}</Metric>
                         </Card>
                         <Card decoration="top" decorationColor="indigo">
                             <Flex alignItems="center">
-                                <BuildingStorefrontIcon className="h-6 w-6 text-indigo-600 mr-2" />
+                                <BuildingStorefrontIcon className="mr-2 h-6 w-6 text-indigo-600" />
                                 <Text>Total Rooms</Text>
                             </Flex>
                             <Metric>{totalRooms}</Metric>
@@ -134,9 +146,18 @@ export default function Show({ building, school }) {
                 </Card>
 
                 <div className="mt-8">
-                    <Flex justifyContent="between" alignItems="center" className="mb-4">
+                    <Flex
+                        justifyContent="between"
+                        alignItems="center"
+                        className="mb-4"
+                    >
                         <Title>Building Layout</Title>
-                        <Link href={route('buildings.floors.create', { school: school.id, building: building.id })}>
+                        <Link
+                            href={route('buildings.floors.create', {
+                                school: school.id,
+                                building: building.id,
+                            })}
+                        >
                             <Button variant="light" icon={PencilIcon}>
                                 Add Floor
                             </Button>
@@ -148,7 +169,13 @@ export default function Show({ building, school }) {
                             <div className="flex flex-col items-center justify-center py-12">
                                 <HomeModernIcon className="h-12 w-12 text-gray-400" />
                                 <Text className="mt-2">No floors found</Text>
-                                <Link href={route('buildings.floors.create', { school: school.id, building: building.id })} className="mt-4">
+                                <Link
+                                    href={route('buildings.floors.create', {
+                                        school: school.id,
+                                        building: building.id,
+                                    })}
+                                    className="mt-4"
+                                >
                                     <Button variant="light">
                                         Add your first floor
                                     </Button>
@@ -162,24 +189,41 @@ export default function Show({ building, school }) {
                                     <div key={floor.id} className="floor-box">
                                         <div className="floor-header">
                                             <h3>Floor {floor.number}</h3>
-                                            <Link href={route('buildings.floors.show', {
-                                                school: school.id,
-                                                building: building.id,
-                                                floor: floor.id
-                                            })}>
-                                                <Button variant="light" size="xs">
+                                            <Link
+                                                href={route(
+                                                    'buildings.floors.show',
+                                                    {
+                                                        school: school.id,
+                                                        building: building.id,
+                                                        floor: floor.id,
+                                                    },
+                                                )}
+                                            >
+                                                <Button
+                                                    variant="light"
+                                                    size="xs"
+                                                >
                                                     Manage
                                                 </Button>
                                             </Link>
                                         </div>
                                         <div className="rooms-container">
-                                            {floor.rooms && floor.rooms.length > 0 ? (
+                                            {floor.rooms &&
+                                            floor.rooms.length > 0 ? (
                                                 <div className="rooms-grid">
                                                     {floor.rooms.map((room) => (
-                                                        <div key={room.id} className="room-box">
-                                                            <span>{room.room_number}</span>
+                                                        <div
+                                                            key={room.id}
+                                                            className="room-box"
+                                                        >
+                                                            <span>
+                                                                {
+                                                                    room.room_number
+                                                                }
+                                                            </span>
                                                             <div className="mt-1 text-xs text-gray-500">
-                                                                Cap: {room.capacity}
+                                                                Cap:{' '}
+                                                                {room.capacity}
                                                             </div>
                                                         </div>
                                                     ))}
@@ -191,7 +235,12 @@ export default function Show({ building, school }) {
                                             )}
                                         </div>
                                         <div className="floor-footer">
-                                            <Badge color="indigo">{floor.rooms ? floor.rooms.length : 0} Rooms</Badge>
+                                            <Badge color="indigo">
+                                                {floor.rooms
+                                                    ? floor.rooms.length
+                                                    : 0}{' '}
+                                                Rooms
+                                            </Badge>
                                         </div>
                                     </div>
                                 ))}
