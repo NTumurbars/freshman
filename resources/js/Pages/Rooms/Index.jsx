@@ -14,19 +14,36 @@ import {
     Divider,
     Flex,
     Grid,
+    ProgressBar,
     Select,
     SelectItem,
     Text,
     TextInput,
     Title,
 } from '@tremor/react';
-import { DoorOpen, Hotel, Layers } from 'lucide-react';
+import { DoorOpen, Hotel, Layers, Clock, Percent } from 'lucide-react';
 import { useState } from 'react';
 
 const RoomCard = ({ room, school }) => {
     const features = room.features || [];
     const floor = room.floor || {};
     const building = floor.building || {};
+    const utilization = room.utilization || {
+        utilization_percentage: 0,
+        used_slots: 0,
+        total_slots: 60,
+        available_slots: 60
+    };
+
+    // Determine color based on utilization percentage
+    const getUtilizationColor = (percentage) => {
+        if (percentage >= 75) return 'red';
+        if (percentage >= 50) return 'amber';
+        if (percentage >= 25) return 'emerald';
+        return 'blue';
+    };
+
+    const utilizationColor = getUtilizationColor(utilization.utilization_percentage);
 
     return (
         <Card className="transition-shadow hover:shadow-lg">
@@ -50,6 +67,24 @@ const RoomCard = ({ room, school }) => {
                     <Text className="text-sm">
                         {floor.number ? `Floor ${floor.number}` : 'Unknown Floor'}
                     </Text>
+                </div>
+            </div>
+
+            {/* Room Utilization Section */}
+            <div className="mt-4">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center">
+                        <Percent className="mr-1 h-4 w-4 text-gray-500" />
+                        <Text className="text-sm font-medium">Utilization</Text>
+                    </div>
+                    <Badge color={utilizationColor} size="sm">
+                        {utilization.utilization_percentage}%
+                    </Badge>
+                </div>
+                <ProgressBar value={utilization.utilization_percentage} color={utilizationColor} className="mt-1" />
+                <div className="mt-1 flex justify-between text-xs text-gray-500">
+                    <span>Used: {utilization.used_slots} slots</span>
+                    <span>Available: {utilization.available_slots} slots</span>
                 </div>
             </div>
 
@@ -115,6 +150,7 @@ export default function Index({ rooms }) {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterBuilding, setFilterBuilding] = useState('');
+    const [utilizationFilter, setUtilizationFilter] = useState('');
 
     // Extract unique buildings from rooms for filter dropdown
     const buildings = [
@@ -125,7 +161,7 @@ export default function Index({ rooms }) {
         ).values(),
     ];
 
-    // Filter rooms based on search and building filter
+    // Filter rooms based on search, building filter, and utilization
     const filteredRooms = rooms.filter((room) => {
         const matchesSearch =
             !searchTerm ||
@@ -139,7 +175,15 @@ export default function Index({ rooms }) {
             (room.floor?.building &&
                 room.floor.building.id.toString() === filterBuilding);
 
-        return matchesSearch && matchesBuilding;
+        // Utilization filter
+        const percentage = room.utilization?.utilization_percentage || 0;
+        const matchesUtilization =
+            !utilizationFilter ||
+            (utilizationFilter === 'high' && percentage >= 75) ||
+            (utilizationFilter === 'medium' && percentage >= 25 && percentage < 75) ||
+            (utilizationFilter === 'low' && percentage < 25);
+
+        return matchesSearch && matchesBuilding && matchesUtilization;
     });
 
     return (
@@ -205,6 +249,56 @@ export default function Index({ rooms }) {
                                 ))}
                             </Select>
                         </div>
+
+                        <div>
+                            <Text>Filter by Utilization</Text>
+                            <Select
+                                value={utilizationFilter}
+                                onValueChange={setUtilizationFilter}
+                                placeholder="All Utilization Levels"
+                                className="mt-1"
+                                icon={Percent}
+                            >
+                                <SelectItem value="">All Utilization Levels</SelectItem>
+                                <SelectItem value="high">High (75%+)</SelectItem>
+                                <SelectItem value="medium">Medium (25-75%)</SelectItem>
+                                <SelectItem value="low">Low (&lt; 25%)</SelectItem>
+                            </Select>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Room utilization summary */}
+                <Card className="mb-6">
+                    <Title>Utilization Summary</Title>
+                    <Text className="mt-1 text-gray-500">Overview of room usage across campus</Text>
+                    <Divider className="my-4" />
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div className="rounded-lg bg-blue-50 p-4">
+                            <div className="flex items-center justify-between">
+                                <Text>Total Rooms</Text>
+                                <Badge color="blue" size="lg">{rooms.length}</Badge>
+                            </div>
+                        </div>
+
+                        <div className="rounded-lg bg-green-50 p-4">
+                            <div className="flex items-center justify-between">
+                                <Text>Available Slots</Text>
+                                <Badge color="green" size="lg">
+                                    {rooms.reduce((sum, room) => sum + (room.utilization?.available_slots || 0), 0)}
+                                </Badge>
+                            </div>
+                        </div>
+
+                        <div className="rounded-lg bg-amber-50 p-4">
+                            <div className="flex items-center justify-between">
+                                <Text>Avg. Utilization</Text>
+                                <Badge color="amber" size="lg">
+                                    {Math.round(rooms.reduce((sum, room) => sum + (room.utilization?.utilization_percentage || 0), 0) / rooms.length)}%
+                                </Badge>
+                            </div>
+                        </div>
                     </div>
                 </Card>
 
@@ -213,7 +307,7 @@ export default function Index({ rooms }) {
                         <div className="flex flex-col items-center justify-center py-12">
                             <DoorOpen className="h-12 w-12 text-gray-400" />
                             <Text className="mt-2">
-                                {searchTerm || filterBuilding
+                                {searchTerm || filterBuilding || utilizationFilter
                                     ? 'No rooms found matching your filters'
                                     : 'No rooms found'}
                             </Text>

@@ -13,6 +13,10 @@ import {
     Loader,
     School,
     Users,
+    Home,
+    ArrowUpRight,
+    ArrowDownRight,
+    Percent
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -260,15 +264,11 @@ export default function Dashboard() {
                         />
                         <DashboardCard
                             title="Active Courses"
-                            value={stats.activeCourses || 0}
+                            value={stats.activeCourses}
                             icon={BookOpen}
                             linkTo={schoolRoute('courses.index')}
-                            color="green"
-                            subtitle={
-                                stats.currentTerm
-                                    ? `Courses for ${stats.currentTerm.name}`
-                                    : 'No current term'
-                            }
+                            color="orange"
+                            subtitle="Currently running courses"
                         />
                         <DashboardCard
                             title="Current Term"
@@ -301,6 +301,194 @@ export default function Dashboard() {
                             You need to be assigned to a school to view
                             school-specific information.
                         </p>
+                    </div>
+                )}
+
+                {/* Room Utilization Section */}
+                {canShowSchoolContent && stats.roomStats && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Room Utilization
+                            </h2>
+                            <Link
+                                href={schoolRoute('rooms.index')}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                            >
+                                View all rooms
+                            </Link>
+                        </div>
+
+                        {/* Overall stats */}
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                            <DashboardCard
+                                title="Room Utilization"
+                                value={`${stats.roomStats.utilizationPercentage}%`}
+                                icon={Percent}
+                                linkTo={schoolRoute('rooms.index')}
+                                color="blue"
+                                subtitle="Of all available time slots"
+                            />
+                            <DashboardCard
+                                title="Rooms In Use"
+                                value={`${stats.roomStats.roomsUtilizedPercentage}%`}
+                                icon={Home}
+                                linkTo={schoolRoute('rooms.index')}
+                                color="green"
+                                subtitle={`${stats.roomStats.roomsWithSchedules} of ${stats.roomStats.totalRooms} rooms`}
+                            />
+                        </div>
+
+                        {/* Most and Least Utilized Rooms */}
+                        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            {/* Most Utilized Rooms */}
+                            <div className="overflow-hidden rounded-lg bg-white shadow">
+                                <div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
+                                    <div className="-ml-4 -mt-4 flex flex-wrap items-center justify-between sm:flex-nowrap">
+                                        <div className="ml-4 mt-4">
+                                            <h3 className="text-base font-semibold leading-6 text-gray-900">
+                                                Most Utilized Rooms
+                                            </h3>
+                                            <p className="mt-1 text-sm text-gray-500">
+                                                Rooms with highest percentage of time slots in use
+                                            </p>
+                                        </div>
+                                        <div className="ml-4 mt-4 flex-shrink-0">
+                                            <ArrowUpRight className="h-5 w-5 text-green-600" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-white px-4 py-5 sm:p-6">
+                                    <div className="flow-root">
+                                        <ul className="-mb-8">
+                                            {loading ? (
+                                                <div className="flex justify-center py-4">
+                                                    <Loader className="h-8 w-8 animate-spin text-blue-500" />
+                                                </div>
+                                            ) : stats.roomStats.mostUtilizedRooms.length > 0 ? (
+                                                stats.roomStats.mostUtilizedRooms.map((room, idx) => (
+                                                    <li key={room.id}>
+                                                        <div className="relative pb-8">
+                                                            {idx !== stats.roomStats.mostUtilizedRooms.length - 1 && (
+                                                                <span
+                                                                    className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            )}
+                                                            <div className="relative flex space-x-3">
+                                                                <div>
+                                                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-500 ring-8 ring-white">
+                                                                        {idx + 1}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                                                    <div>
+                                                                        <p className="text-sm font-medium text-gray-900">
+                                                                            <Link
+                                                                                href={schoolRoute('rooms.show', { room: room.id })}
+                                                                                className="hover:text-blue-600 hover:underline"
+                                                                            >
+                                                                                {room.name}
+                                                                            </Link>
+                                                                        </p>
+                                                                        <p className="text-sm text-gray-500">
+                                                                            Capacity: {room.capacity}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="whitespace-nowrap text-right text-sm font-medium">
+                                                                        <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800">
+                                                                            {room.utilization_percentage}%
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <div className="py-4 text-center text-sm text-gray-500">
+                                                    No room data available
+                                                </div>
+                                            )}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Most Available Rooms */}
+                            <div className="overflow-hidden rounded-lg bg-white shadow">
+                                <div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
+                                    <div className="-ml-4 -mt-4 flex flex-wrap items-center justify-between sm:flex-nowrap">
+                                        <div className="ml-4 mt-4">
+                                            <h3 className="text-base font-semibold leading-6 text-gray-900">
+                                                Most Available Rooms
+                                            </h3>
+                                            <p className="mt-1 text-sm text-gray-500">
+                                                Rooms with highest number of available time slots
+                                            </p>
+                                        </div>
+                                        <div className="ml-4 mt-4 flex-shrink-0">
+                                            <ArrowDownRight className="h-5 w-5 text-indigo-600" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-white px-4 py-5 sm:p-6">
+                                    <div className="flow-root">
+                                        <ul className="-mb-8">
+                                            {loading ? (
+                                                <div className="flex justify-center py-4">
+                                                    <Loader className="h-8 w-8 animate-spin text-blue-500" />
+                                                </div>
+                                            ) : stats.roomStats.mostAvailableRooms.length > 0 ? (
+                                                stats.roomStats.mostAvailableRooms.map((room, idx) => (
+                                                    <li key={room.id}>
+                                                        <div className="relative pb-8">
+                                                            {idx !== stats.roomStats.mostAvailableRooms.length - 1 && (
+                                                                <span
+                                                                    className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            )}
+                                                            <div className="relative flex space-x-3">
+                                                                <div>
+                                                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-500 ring-8 ring-white">
+                                                                        {idx + 1}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                                                    <div>
+                                                                        <p className="text-sm font-medium text-gray-900">
+                                                                            <Link
+                                                                                href={schoolRoute('rooms.show', { room: room.id })}
+                                                                                className="hover:text-blue-600 hover:underline"
+                                                                            >
+                                                                                {room.name}
+                                                                            </Link>
+                                                                        </p>
+                                                                        <p className="text-sm text-gray-500">
+                                                                            Capacity: {room.capacity}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="whitespace-nowrap text-right text-sm font-medium">
+                                                                        <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-sm font-medium text-indigo-800">
+                                                                            {room.available_slots} slots
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <div className="py-4 text-center text-sm text-gray-500">
+                                                    No room data available
+                                                </div>
+                                            )}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 

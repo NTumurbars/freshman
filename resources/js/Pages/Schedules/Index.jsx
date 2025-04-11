@@ -64,7 +64,6 @@ export default function Index({
 
     // Add state for calendar view type
     const [calendarViewType, setCalendarViewType] = useState(() => {
-        if (userRole <= 2) return 'room'; // Admin and School Admin
         if (isProfessor) return 'professor'; // Professor
         return 'default'; // Others
     });
@@ -673,19 +672,6 @@ export default function Index({
                                             <CalendarDays className="mr-1 inline-block h-4 w-4" />
                                             Weekly View
                                         </button>
-                                        <button
-                                            onClick={() =>
-                                                setCalendarViewType('room')
-                                            }
-                                            className={`rounded-md px-3 py-1.5 text-sm ${
-                                                calendarViewType === 'room'
-                                                    ? 'bg-blue-100 text-blue-700'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                            }`}
-                                        >
-                                            <Building className="mr-1 inline-block h-4 w-4" />
-                                            Room View
-                                        </button>
                                     </div>
                                 )}
 
@@ -698,11 +684,9 @@ export default function Index({
                                 )}
                             </div>
                             <p className="mt-1 text-sm text-gray-500">
-                                {calendarViewType === 'room'
-                                    ? 'View schedules organized by room to see availability and utilization'
-                                    : calendarViewType === 'professor'
-                                      ? 'Your personal teaching schedule for the current term'
-                                      : 'View all schedules in a weekly calendar format'}
+                                {calendarViewType === 'professor'
+                                    ? 'Your personal teaching schedule for the current term'
+                                    : 'View all schedules in a weekly calendar format'}
                             </p>
                         </div>
                         <ScheduleCalendar

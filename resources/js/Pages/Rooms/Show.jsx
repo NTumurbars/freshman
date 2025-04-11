@@ -14,10 +14,11 @@ import {
     Divider,
     Grid,
     Metric,
+    ProgressBar,
     Text,
     Title,
 } from '@tremor/react';
-import { DoorOpen, Hotel, Layers } from 'lucide-react';
+import { DoorOpen, Hotel, Layers, Percent, Clock } from 'lucide-react';
 import RoomCalendar from '@/Components/RoomCalendar';
 
 export default function Show({ room }) {
@@ -28,6 +29,32 @@ export default function Show({ room }) {
     const schedules = room.schedules || [];
     const floor = room.floor || {};
     const building = floor.building || {};
+    const utilization = room.utilization || {
+        utilization_percentage: 0,
+        used_slots: 0,
+        total_slots: 60,
+        available_slots: 60
+    };
+
+    // Determine color based on utilization percentage
+    const getUtilizationColor = (percentage) => {
+        if (percentage >= 75) return 'red';
+        if (percentage >= 50) return 'amber';
+        if (percentage >= 25) return 'emerald';
+        return 'blue';
+    };
+
+    const utilizationColor = getUtilizationColor(utilization.utilization_percentage);
+
+    // Determine utilization status text
+    const getUtilizationStatus = (percentage) => {
+        if (percentage >= 75) return 'Heavily Utilized';
+        if (percentage >= 50) return 'Moderately Utilized';
+        if (percentage >= 25) return 'Lightly Utilized';
+        return 'Underutilized';
+    };
+
+    const utilizationStatus = getUtilizationStatus(utilization.utilization_percentage);
 
     return (
         <AppLayout>
@@ -94,7 +121,7 @@ export default function Show({ room }) {
                     </div>
                 </div>
 
-                <Grid numItems={1} numItemsSm={2} className="mb-6 gap-6">
+                <Grid numItems={1} numItemsSm={3} className="mb-6 gap-6">
                     <Card decoration="top" decorationColor="blue">
                         <div className="flex items-center justify-between">
                             <div>
@@ -114,7 +141,78 @@ export default function Show({ room }) {
                             <UsersIcon className="h-8 w-8 text-indigo-500" />
                         </div>
                     </Card>
+
+                    <Card decoration="top" decorationColor={utilizationColor}>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <Text>Utilization</Text>
+                                <Metric>{utilization.utilization_percentage}%</Metric>
+                            </div>
+                            <Percent className="h-8 w-8 text-blue-500" />
+                        </div>
+                    </Card>
                 </Grid>
+
+                {/* Room Utilization Section */}
+                <Card className="mb-6">
+                    <div className="flex items-center">
+                        <Percent className="mr-2 h-5 w-5 text-gray-500" />
+                        <Title>Room Utilization</Title>
+                    </div>
+                    <Divider className="my-4" />
+
+                    <div className="mb-5">
+                        <div className="flex items-center justify-between mb-2">
+                            <Text>Current Utilization</Text>
+                            <Badge color={utilizationColor} size="lg">
+                                {utilizationStatus}
+                            </Badge>
+                        </div>
+                        <ProgressBar
+                            value={utilization.utilization_percentage}
+                            color={utilizationColor}
+                            className="h-2"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div className={`rounded-md bg-${utilizationColor}-50 p-4`}>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <Clock className="mr-1 h-4 w-4 text-gray-600" />
+                                    <Text>Used Slots</Text>
+                                </div>
+                                <Text className="font-semibold">{utilization.used_slots}</Text>
+                            </div>
+                        </div>
+
+                        <div className="rounded-md bg-green-50 p-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <Clock className="mr-1 h-4 w-4 text-gray-600" />
+                                    <Text>Available Slots</Text>
+                                </div>
+                                <Text className="font-semibold">{utilization.available_slots}</Text>
+                            </div>
+                        </div>
+
+                        <div className="rounded-md bg-gray-50 p-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <Clock className="mr-1 h-4 w-4 text-gray-600" />
+                                    <Text>Total Slots</Text>
+                                </div>
+                                <Text className="font-semibold">{utilization.total_slots}</Text>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4">
+                        <Text className="text-xs text-gray-500">
+                            *Utilization is calculated based on 12 hours per day, 5 days per week (60 total possible time slots)
+                        </Text>
+                    </div>
+                </Card>
 
                 <Card className="mb-6">
                     <Title>Location</Title>

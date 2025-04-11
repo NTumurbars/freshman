@@ -8,6 +8,7 @@ export default function Edit({ departments, majors, course }) {
         code: course.code,
         title: course.title,
         description: course.description || '',
+        credits: course.credits,
     });
 
     const { auth } = usePage().props;
@@ -141,6 +142,25 @@ export default function Edit({ departments, majors, course }) {
                         {errors.description && (
                             <div className="mt-1 text-sm text-red-600">
                                 {errors.description}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block font-medium text-gray-700">
+                            Credits
+                        </label>
+                        <input
+                            type="number"
+                            min="1"
+                            max="6"
+                            className="mt-1 block w-full rounded border-gray-300"
+                            value={data.credits}
+                            onChange={(e) => setData('credits', e.target.value)}
+                        />
+                        {errors.credits && (
+                            <div className="mt-1 text-sm text-red-600">
+                                {errors.credits}
                             </div>
                         )}
                     </div>
