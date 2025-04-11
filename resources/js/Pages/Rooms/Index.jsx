@@ -48,7 +48,7 @@ const RoomCard = ({ room, school }) => {
                 <div className="mt-1 flex items-center">
                     <Layers className="mr-1 h-4 w-4 text-gray-500" />
                     <Text className="text-sm">
-                        {floor.name || 'Unknown Floor'}
+                        {floor.number ? `Floor ${floor.number}` : 'Unknown Floor'}
                     </Text>
                 </div>
             </div>

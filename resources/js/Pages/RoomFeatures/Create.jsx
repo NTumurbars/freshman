@@ -3,7 +3,7 @@ import {
     ArrowLeftIcon,
     ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     Button,
     Card,
@@ -18,6 +18,7 @@ import { Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Create({ school, categories }) {
+    const { flash } = usePage().props;
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',

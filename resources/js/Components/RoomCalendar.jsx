@@ -17,8 +17,8 @@ const RoomCalendar = ({ schedules, room }) => {
             .indexOf(schedule.day_of_week);
 
         // Create a title that includes section info
-        const sectionInfo = schedule.section ? 
-            `${schedule.section.course?.code} (${schedule.section.section_code})` : 
+        const sectionInfo = schedule.section ?
+            `${schedule.section.course?.code} (${schedule.section.section_code})` :
             'Reserved';
 
         return {
@@ -27,7 +27,7 @@ const RoomCalendar = ({ schedules, room }) => {
             daysOfWeek: [dayIndex],
             startTime: schedule.start_time,
             endTime: schedule.end_time,
-            backgroundColor: schedule.location_type === 'virtual' ? '#4CAF50' : 
+            backgroundColor: schedule.location_type === 'virtual' ? '#4CAF50' :
                            schedule.location_type === 'hybrid' ? '#FF9800' : '#1976D2',
             extendedProps: {
                 schedule,
@@ -111,8 +111,8 @@ const RoomCalendar = ({ schedules, room }) => {
                                     <MapPinIcon className="h-5 w-5 text-gray-500" />
                                     <Text className="capitalize">{selectedEvent.extendedProps.schedule.location_type}</Text>
                                     {selectedEvent.extendedProps.schedule.virtual_meeting_url && (
-                                        <a href={selectedEvent.extendedProps.schedule.virtual_meeting_url} 
-                                           target="_blank" 
+                                        <a href={selectedEvent.extendedProps.schedule.virtual_meeting_url}
+                                           target="_blank"
                                            className="text-blue-600 hover:underline ml-2">
                                             Join Meeting →
                                         </a>
@@ -128,7 +128,7 @@ const RoomCalendar = ({ schedules, room }) => {
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <Text className="font-semibold">{selectedEvent.extendedProps.section.course?.code}</Text>
-                                                    <Badge color={selectedEvent.extendedProps.section.status === 'active' ? 'green' : 
+                                                    <Badge color={selectedEvent.extendedProps.section.status === 'active' ? 'green' :
                                                                  selectedEvent.extendedProps.section.status === 'full' ? 'red' : 'yellow'}>
                                                         {selectedEvent.extendedProps.section.status}
                                                     </Badge>
@@ -162,7 +162,7 @@ const RoomCalendar = ({ schedules, room }) => {
                                         </div>
 
                                         <div className="mt-2">
-                                            <Link 
+                                            <Link
                                                 href={route('sections.show', {
                                                     school: selectedEvent.extendedProps.section.course?.department?.school_id,
                                                     section: selectedEvent.extendedProps.section.id
@@ -183,4 +183,4 @@ const RoomCalendar = ({ schedules, room }) => {
     );
 };
 
-export default RoomCalendar; 
+export default RoomCalendar;
