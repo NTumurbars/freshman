@@ -34,19 +34,36 @@ class ScheduleController extends Controller
         // Base query
         $schedulesQuery = Schedule::with([
                 'section.course.department',
-                'section.professor_profile',
+                'section.professor_profile.user',
                 'room.floor.building'
             ])
             ->whereIn('section_id', $sectionIds);
 
-        // If user is a professor, only show their schedules
+        // If user is a professor, show all schedules but mark their own
         $user = Auth::user();
-        $isProfessor = $user->role_id === 4; // Professor role ID
+        $isProfessor = $user->role->name === 'professor' || $user->role->name === 'major_coordinator';
 
-        if ($isProfessor) {
-            $schedulesQuery->whereHas('section', function($query) use ($user) {
-                $query->where('professor_id', $user->id);
+        if ($isProfessor && $user->professor_profile) {
+            // Get all schedules
+            $allSchedules = $schedulesQuery->get();
+
+            // Filter to get professor's schedules
+            $professorSchedules = $allSchedules->filter(function($schedule) use ($user) {
+                return $schedule->section->professor_profile_id === $user->professor_profile->id;
+            })->values();
+
+            // Add a flag to mark the professor's own schedules
+            $allSchedules->map(function($schedule) use ($user) {
+                $schedule->is_professor_schedule = $schedule->section->professor_profile_id === $user->professor_profile->id;
+                return $schedule;
             });
+
+            return Inertia::render('Schedules/Index', [
+                'schedules' => $allSchedules,
+                'professorSchedules' => $professorSchedules,
+                'school' => $school,
+                'isProfessor' => true
+            ]);
         }
 
         $schedules = $schedulesQuery->get();
@@ -54,7 +71,7 @@ class ScheduleController extends Controller
         return Inertia::render('Schedules/Index', [
             'schedules' => $schedules,
             'school' => $school,
-            'isProfessor' => $isProfessor
+            'isProfessor' => false
         ]);
     }
 

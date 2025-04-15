@@ -2,9 +2,14 @@
 
 import AppLayout from '@/Layouts/AppLayout';
 import {
+    AcademicCapIcon,
+    BuildingOfficeIcon,
     CalendarIcon,
     EnvelopeIcon,
+    GlobeAltIcon,
+    MapPinIcon,
     PencilIcon,
+    PhoneIcon,
     UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -20,8 +25,13 @@ import {
 } from '@tremor/react';
 
 export default function Show({ user, status }) {
-    const { auth } = usePage().props;
+    const { auth, professorProfile } = usePage().props;
     const school = auth.user.school;
+
+    // Ensure we have consistent access to professor profile data
+    const profile = professorProfile || user.professor_profile;
+
+    console.log("Profile data:", profile);
 
     const getRoleBadgeColor = (roleId) => {
         const colorMap = {
@@ -37,6 +47,8 @@ export default function Show({ user, status }) {
     const getFormattedRoleName = (roleName) => {
         return roleName?.replace('_', ' ').toUpperCase() || 'N/A';
     };
+
+    const isProfessor = auth.user.role.id === 3 || auth.user.role.id === 4;
 
     return (
         <AppLayout>
@@ -171,33 +183,126 @@ export default function Show({ user, status }) {
                         </Card>
 
                         {/* If user has role-specific information like professor or student */}
-                        {auth.user.role.id === 3 || auth.user.role.id === 4 ? (
+                        {isProfessor && (
                             <Card className="mt-6 p-6">
-                                <Title>Professor Information</Title>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                        <AcademicCapIcon className="mr-3 h-6 w-6 text-amber-500" />
+                                        <Title>Professor Information</Title>
+                                    </div>
+                                    <Link href={route('profile.edit')}>
+                                        <Button
+                                            icon={PencilIcon}
+                                            variant="light"
+                                            color="amber"
+                                            size="xs"
+                                        >
+                                            Edit
+                                        </Button>
+                                    </Link>
+                                </div>
                                 <Divider className="my-4" />
 
-                                <div className="rounded-md bg-amber-50 p-4">
-                                    <Text>
-                                        To view or edit your professor details,
-                                        please visit the User Management
-                                        section.
-                                    </Text>
-                                </div>
-                            </Card>
-                        ) : auth.user.role.id === 5 ? (
-                            <Card className="mt-6 p-6">
-                                <Title>Student Information</Title>
-                                <Divider className="my-4" />
+                                {profile ? (
+                                    <div className="space-y-5">
+                                        <div className="flex items-start">
+                                            <BuildingOfficeIcon className="mr-3 mt-0.5 h-5 w-5 text-amber-500" />
+                                            <div>
+                                                <Text className="font-medium">Department</Text>
+                                                <Text className="text-gray-800 text-base">
+                                                    {profile.department?.name || (
+                                                        <span className="italic text-gray-500">Not assigned</span>
+                                                    )}
+                                                </Text>
+                                            </div>
+                                        </div>
 
-                                <div className="rounded-md bg-indigo-50 p-4">
-                                    <Text>
-                                        To view your student details and
-                                        enrollments, please check the Courses
-                                        section.
-                                    </Text>
-                                </div>
+                                        <div className="flex items-start">
+                                            <AcademicCapIcon className="mr-3 mt-0.5 h-5 w-5 text-amber-500" />
+                                            <div>
+                                                <Text className="font-medium">Academic Title</Text>
+                                                <Text className="text-gray-800 text-base">
+                                                    {profile.title || (
+                                                        <span className="italic text-gray-500">Not specified</span>
+                                                    )}
+                                                </Text>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start">
+                                            <MapPinIcon className="mr-3 mt-0.5 h-5 w-5 text-amber-500" />
+                                            <div>
+                                                <Text className="font-medium">Office Location</Text>
+                                                <Text className="text-gray-800 text-base">
+                                                    {profile.office || (
+                                                        <span className="italic text-gray-500">Not specified</span>
+                                                    )}
+                                                </Text>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start">
+                                            <PhoneIcon className="mr-3 mt-0.5 h-5 w-5 text-amber-500" />
+                                            <div>
+                                                <Text className="font-medium">Contact Phone</Text>
+                                                <Text className="text-gray-800 text-base">
+                                                    {profile.phone || (
+                                                        <span className="italic text-gray-500">Not specified</span>
+                                                    )}
+                                                </Text>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start">
+                                            <GlobeAltIcon className="mr-3 mt-0.5 h-5 w-5 text-amber-500" />
+                                            <div>
+                                                <Text className="font-medium">Website</Text>
+                                                {profile.website ? (
+                                                    <a
+                                                        href={profile.website}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                    >
+                                                        {profile.website}
+                                                    </a>
+                                                ) : (
+                                                    <Text className="italic text-gray-500">Not specified</Text>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="rounded-md bg-yellow-50 p-4">
+                                        <div className="flex">
+                                            <div className="flex-shrink-0">
+                                                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div className="ml-3">
+                                                <h3 className="text-sm font-medium text-yellow-800">Professor profile not set up</h3>
+                                                <div className="mt-2 text-sm text-yellow-700">
+                                                    <p>Your professor profile hasn't been created yet. Use the Edit button above to set up your profile.</p>
+                                                </div>
+                                                <div className="mt-3">
+                                                    <Link href={route('profile.edit')}>
+                                                        <Button
+                                                            variant="light"
+                                                            color="amber"
+                                                            size="xs"
+                                                            icon={PencilIcon}
+                                                        >
+                                                            Set Up Profile
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </Card>
-                        ) : null}
+                        )}
                     </Col>
                 </Grid>
             </div>

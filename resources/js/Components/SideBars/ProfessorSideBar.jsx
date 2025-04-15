@@ -1,11 +1,68 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Calendar, Clock, Users } from 'lucide-react';
+import {
+    BookOpen,
+    Calendar,
+    Clock,
+    Users,
+    BarChart3,
+    Briefcase,
+    BookMarked,
+    User,
+    CalendarClock
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function ProfessorSideBar({ school }) {
+    const [routeIssue, setRouteIssue] = useState(null);
+
+    // Log when component mounts to help diagnose issues
+    useEffect(() => {
+        console.log('ProfessorSideBar - School data:', school);
+
+        if (!school?.id) {
+            console.warn('Missing school ID in ProfessorSideBar');
+        }
+
+        // Try to generate the route to see what's happening
+        try {
+            const calendarUrl = route('sections.calendar', { school: school?.id || 1 });
+            console.log('Calendar URL:', calendarUrl);
+        } catch (error) {
+            console.error('Error generating calendar route:', error);
+            setRouteIssue(error.message);
+        }
+    }, [school]);
+
     // Helper function to generate school-specific routes
     const schoolRoute = (name, params = {}) => {
-        if (!school?.id) return '#';
-        return route(name, { school: school.id, ...params });
+        // Ensure we have a school ID
+        if (!school?.id) {
+            // Try to get school ID from sessionStorage as a fallback
+            try {
+                const cachedData = sessionStorage.getItem('cachedSchool');
+                if (cachedData) {
+                    const cachedSchool = JSON.parse(cachedData);
+                    if (cachedSchool?.id) {
+                        const url = route(name, { school: cachedSchool.id, ...params });
+                        console.log(`Generated route ${name} with cached school ID:`, url);
+                        return url;
+                    }
+                }
+            } catch (error) {
+                console.error(`Error generating route ${name}:`, error);
+            }
+            console.warn(`Unable to generate route ${name} - No school ID available`);
+            return '#';
+        }
+
+        // Normal route generation with school ID
+        try {
+            const url = route(name, { school: school.id, ...params });
+            return url;
+        } catch (error) {
+            console.error(`Error generating route ${name}:`, error);
+            return '#';
+        }
     };
 
     const NavItem = ({ href, icon, children }) => {
@@ -29,6 +86,11 @@ export default function ProfessorSideBar({ school }) {
             <div className="space-y-1">{children}</div>
         </div>
     );
+
+    // Generate calendar URL outside the component
+    const calendarUrl = school?.id ?
+        `/schools/${school.id}/sections/calendar` :
+        '#';
 
     return (
         <aside className="h-full min-h-screen w-64 overflow-y-auto border-r border-gray-200 bg-white p-4 scrollbar-hide">
@@ -78,36 +140,84 @@ export default function ProfessorSideBar({ school }) {
                             title={school?.name || 'No School Assigned'}
                         >
                             {school?.name || 'No School Assigned'}
+                            {school?.id ? ` (ID: ${school.id})` : ' (No School ID)'}
                         </p>
                     </div>
                 </div>
             </div>
 
+            {routeIssue && (
+                <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">
+                    Route issue: {routeIssue}
+                </div>
+            )}
+
             <div className="space-y-6">
-                <NavGroup title="Teaching">
+                <NavItem href={route('dashboard')} icon={BarChart3}>
+                    Dashboard
+                </NavItem>
+
+                <NavGroup title="My Teaching">
                     <NavItem
-                        href={schoolRoute('courses.index')}
-                        icon={BookOpen}
+                        href={schoolRoute('sections.index')}
+                        icon={BookMarked}
                     >
-                        My Courses
+                        My Sections
                     </NavItem>
-                    <NavItem href={schoolRoute('schedules.index')} icon={Clock}>
+                    <NavItem
+                        href={schoolRoute('schedules.index')}
+                        icon={Clock}
+                    >
                         My Schedule
                     </NavItem>
-                </NavGroup>
-
-                <NavGroup title="Academic Calendar">
-                    <NavItem href={schoolRoute('terms.index')} icon={Calendar}>
-                        Academic Terms
+                    <NavItem
+                        href={calendarUrl}
+                        icon={CalendarClock}
+                    >
+                        My Calendar
                     </NavItem>
                 </NavGroup>
 
                 <NavGroup title="Students">
-                    <NavItem href="#" icon={Users}>
+                    <NavItem
+                        href={schoolRoute('course-registrations.index')}
+                        icon={Users}
+                    >
                         My Students
+                    </NavItem>
+                </NavGroup>
+
+                <NavGroup title="Academic Resources">
+                    <NavItem
+                        href={schoolRoute('departments.index')}
+                        icon={Briefcase}
+                    >
+                        Departments
+                    </NavItem>
+                    <NavItem
+                        href={schoolRoute('courses.index')}
+                        icon={BookOpen}
+                    >
+                        Course Catalog
+                    </NavItem>
+                    <NavItem
+                        href={schoolRoute('terms.index')}
+                        icon={Calendar}
+                    >
+                        Academic Terms
+                    </NavItem>
+                </NavGroup>
+
+                <NavGroup title="Profile">
+                    <NavItem
+                        href={route('profile.edit')}
+                        icon={User}
+                    >
+                        Edit Profile
                     </NavItem>
                 </NavGroup>
             </div>
         </aside>
     );
 }
+

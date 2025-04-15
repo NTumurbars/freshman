@@ -16,16 +16,23 @@ import {
     Home,
     ArrowUpRight,
     ArrowDownRight,
-    Percent
+    Percent,
+    User,
+    Clipboard,
+    BookMarked,
+    GraduationCap as GraduationCapIcon,
+    CalendarCheck,
+    BookCopy
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function Dashboard() {
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
+    const isProfessor = auth.user.role.name === 'professor' || auth.user.role.name === 'major_coordinator';
 
     // Try all possible places where school data might be
-    const school = auth.user.school || auth.school || null;
+    const initialSchool = auth.user.school || auth.school || null;
     console.log(
         'Dashboard - School data source:',
         auth.user.school
@@ -34,22 +41,37 @@ export default function Dashboard() {
               ? 'auth.school'
               : 'none available',
     );
-    console.log('Dashboard - School data:', school);
+    console.log('Dashboard - School data:', initialSchool);
 
     const [stats, setStats] = useState({});
     const [loading, setLoading] = useState(true);
+    const [school, setSchool] = useState(initialSchool);
 
     useEffect(() => {
         const fetchStats = async () => {
             setLoading(true);
             try {
-                const endpoint =
-                    userRole === 1
-                        ? route('superuser.stats')
-                        : route('school.admin.stats');
+                let endpoint;
+                if (userRole === 1) {
+                    endpoint = route('superuser.stats');
+                } else if (isProfessor) {
+                    endpoint = route('professor.stats');
+                } else {
+                    endpoint = route('school.admin.stats');
+                }
 
                 const response = await axios.get(endpoint);
                 setStats(response.data);
+
+                // Update school data if it's returned from the API
+                if (response.data.school) {
+                    setSchool(response.data.school);
+
+                    // Store in sessionStorage for persistence
+                    try {
+                        sessionStorage.setItem('cachedSchool', JSON.stringify(response.data.school));
+                    } catch (error) {}
+                }
             } catch (error) {
                 console.error('Error fetching stats:', error);
             } finally {
@@ -58,11 +80,13 @@ export default function Dashboard() {
         };
 
         fetchStats();
-    }, [userRole]);
+    }, [userRole, isProfessor]);
 
     // Helper function to generate school-specific routes
     const schoolRoute = (name, params = {}) => {
-        if (!school?.id) return '#';
+        if (!school?.id) {
+            return '#';
+        }
         return route(name, { school: school.id, ...params });
     };
 
@@ -204,7 +228,9 @@ export default function Dashboard() {
                     <h1 className="text-2xl font-bold text-gray-900">
                         {userRole === 1
                             ? 'Global Dashboard'
-                            : `${school?.name || 'School'} Dashboard`}
+                            : isProfessor
+                              ? 'Professor Dashboard'
+                              : `${school?.name || 'School'} Dashboard`}
                     </h1>
                     <p className="mt-2 text-sm text-gray-600">
                         Welcome back! Here's what's happening in your system.
@@ -213,6 +239,7 @@ export default function Dashboard() {
 
                 {/* Main Stats */}
                 {userRole === 1 ? (
+                    // Super admin stats
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         <DashboardCard
                             title="Total Users"
@@ -237,7 +264,36 @@ export default function Dashboard() {
                             subtitle="Current academic terms"
                         />
                     </div>
+                ) : isProfessor ? (
+                    // Professor stats
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <DashboardCard
+                            title="Current Courses"
+                            value={stats?.stats?.current_term_sections || 0}
+                            icon={BookCopy}
+                            linkTo={schoolRoute('sections.index')}
+                            color="blue"
+                            subtitle={stats?.stats?.current_term ? `For ${stats?.stats?.current_term.name}` : 'No active term'}
+                        />
+                        <DashboardCard
+                            title="Total Students"
+                            value={stats?.stats?.current_term_students || 0}
+                            icon={Users}
+                            color="green"
+                            linkTo={schoolRoute('course-registrations.index')}
+                            subtitle="Students in your courses"
+                        />
+                        <DashboardCard
+                            title="Department"
+                            value={stats?.stats?.department?.name || 'Not Assigned'}
+                            icon={Building}
+                            linkTo={stats?.stats?.department ? schoolRoute('departments.show', { department: stats?.stats?.department.id }) : '#'}
+                            color="purple"
+                            subtitle="Your academic department"
+                        />
+                    </div>
                 ) : canShowSchoolContent ? (
+                    // School admin stats
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         <DashboardCard
                             title="Total Users"
@@ -301,6 +357,206 @@ export default function Dashboard() {
                             You need to be assigned to a school to view
                             school-specific information.
                         </p>
+                    </div>
+                )}
+
+                {/* Professor-specific sections */}
+                {isProfessor && stats?.stats?.today_classes && stats?.stats?.today_classes.length > 0 && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Today's Classes
+                            </h2>
+                            <Link
+                                href={schoolRoute('sections.calendar')}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                            >
+                                View calendar
+                            </Link>
+                        </div>
+
+                        <div className="overflow-hidden rounded-lg bg-white shadow">
+                            <ul className="divide-y divide-gray-200">
+                                {stats?.stats?.today_classes.map((schedule) => (
+                                    <li key={schedule.id} className="flex items-center px-6 py-4 hover:bg-gray-50">
+                                        <div className="flex w-12 flex-shrink-0 items-center justify-center">
+                                            <div className="rounded-full bg-blue-100 p-2">
+                                                <Clock className="h-6 w-6 text-blue-600" />
+                                            </div>
+                                        </div>
+                                        <div className="ml-4 flex-grow">
+                                            <div className="font-medium text-gray-900">
+                                                {schedule.course_code}: {schedule.course_title}
+                                            </div>
+                                            <div className="text-sm text-gray-500">
+                                                Section: {schedule.section_code}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <div className="flex items-center text-sm text-gray-700">
+                                                <Clock className="mr-1 h-4 w-4 text-gray-400" />
+                                                {schedule.start_time.substring(0, 5)} - {schedule.end_time.substring(0, 5)}
+                                            </div>
+                                            <div className="flex items-center text-sm text-gray-700">
+                                                <Home className="mr-1 h-4 w-4 text-gray-400" />
+                                                {schedule.room}
+                                            </div>
+                                        </div>
+                                        <div className="ml-4">
+                                            <Link
+                                                href={schoolRoute('sections.show', { section: schedule.section_id })}
+                                                className="rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100"
+                                            >
+                                                View
+                                            </Link>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                )}
+
+                {/* Upcoming classes for professor */}
+                {isProfessor && stats?.stats?.upcoming_classes && stats?.stats?.upcoming_classes.length > 0 && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Upcoming Classes
+                            </h2>
+                            <Link
+                                href={schoolRoute('schedules.index')}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                            >
+                                View all schedules
+                            </Link>
+                        </div>
+
+                        <div className="overflow-hidden rounded-lg bg-white shadow">
+                            <ul className="divide-y divide-gray-200">
+                                {stats?.stats?.upcoming_classes.filter(schedule => !schedule.is_today).slice(0, 5).map((schedule) => (
+                                    <li key={schedule.id} className="flex items-center px-6 py-4 hover:bg-gray-50">
+                                        <div className="flex w-12 flex-shrink-0 items-center justify-center">
+                                            <div className="rounded-full bg-green-100 p-2">
+                                                <CalendarCheck className="h-6 w-6 text-green-600" />
+                                            </div>
+                                        </div>
+                                        <div className="ml-4 flex-grow">
+                                            <div className="font-medium text-gray-900">
+                                                {schedule.course_code}: {schedule.course_title}
+                                            </div>
+                                            <div className="text-sm text-gray-500">
+                                                {schedule.day_of_week}, {new Date(schedule.next_date).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <div className="flex items-center text-sm text-gray-700">
+                                                <Clock className="mr-1 h-4 w-4 text-gray-400" />
+                                                {schedule.start_time.substring(0, 5)} - {schedule.end_time.substring(0, 5)}
+                                            </div>
+                                            <div className="flex items-center text-sm text-gray-700">
+                                                <Home className="mr-1 h-4 w-4 text-gray-400" />
+                                                {schedule.room}
+                                            </div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                )}
+
+                {/* Teaching History for professors */}
+                {isProfessor && stats?.stats?.sections_by_term && stats?.stats?.sections_by_term.length > 0 && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Teaching History
+                            </h2>
+                        </div>
+
+                        <div className="overflow-hidden rounded-lg bg-white shadow">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            Term
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            Sections
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            Students
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            Status
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 bg-white">
+                                    {stats?.stats?.sections_by_term.map((term) => (
+                                        <tr key={term.term_id} className={term.is_current ? "bg-blue-50" : ""}>
+                                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                                                {term.term_name}
+                                            </td>
+                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                {term.section_count}
+                                            </td>
+                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                {term.student_count}
+                                            </td>
+                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                                {term.is_current ? (
+                                                    <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
+                                                        Current
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex rounded-full bg-gray-100 px-2 text-xs font-semibold leading-5 text-gray-800">
+                                                        Past
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Students by Course for professors */}
+                {isProfessor && stats?.stats?.students_by_course && stats?.stats?.students_by_course.length > 0 && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                Students by Course
+                            </h2>
+                            <Link
+                                href={schoolRoute('course-registrations.index')}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                            >
+                                View all students
+                            </Link>
+                        </div>
+
+                        <div className="overflow-hidden rounded-lg bg-white shadow">
+                            <ul className="divide-y divide-gray-200">
+                                {stats?.stats?.students_by_course.map((course, index) => (
+                                    <li key={index} className="flex items-center p-4">
+                                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                                            {index + 1}
+                                        </div>
+                                        <div className="ml-4 flex-grow">
+                                            <div className="font-medium text-gray-900">{course.title}</div>
+                                            <div className="text-sm text-gray-500">{course.code}</div>
+                                        </div>
+                                        <div className="text-xl font-semibold text-gray-900">
+                                            {course.count} <span className="text-sm text-gray-500">students</span>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 )}
 
@@ -498,42 +754,57 @@ export default function Dashboard() {
                         <h2 className="mb-6 text-xl font-semibold text-gray-900">
                             Quick Actions
                         </h2>
+
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                            <QuickAction
-                                title="Add Course"
-                                description="Create and configure a new course in your academic catalog"
-                                icon={BookOpen}
-                                href={schoolRoute('courses.create')}
-                                color="blue"
-                            />
-                            <QuickAction
-                                title="Create Section"
-                                description="Set up a new class section for course offerings"
-                                icon={GraduationCap}
-                                href={schoolRoute('sections.create')}
-                                color="purple"
-                            />
-                            <QuickAction
-                                title="Schedule Class"
-                                description="Manage and organize class schedules and timings"
-                                icon={Clock}
-                                href={schoolRoute('schedules.create')}
-                                color="green"
-                            />
-                            <QuickAction
-                                title="Add Department"
-                                description="Create a new academic department structure"
-                                icon={School}
-                                href={schoolRoute('departments.create')}
-                                color="indigo"
-                            />
-                            <QuickAction
-                                title="Add Building"
-                                description="Register and configure new campus facilities"
-                                icon={Building}
-                                href={schoolRoute('buildings.create')}
-                                color="orange"
-                            />
+                            {isProfessor ? (
+                                <>
+                                    <QuickAction
+                                        title="View Your Schedule"
+                                        description="Check your teaching schedule and class locations."
+                                        icon={Calendar}
+                                        href={schoolRoute('schedules.index')}
+                                        color="blue"
+                                    />
+                                    <QuickAction
+                                        title="Manage Courses"
+                                        description="View and manage your course sections and students."
+                                        icon={BookMarked}
+                                        href={schoolRoute('sections.index')}
+                                        color="green"
+                                    />
+                                    <QuickAction
+                                        title="Update Profile"
+                                        description="Update your professor information and contact details."
+                                        icon={User}
+                                        href={route('profile.edit')}
+                                        color="purple"
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    <QuickAction
+                                        title="Manage Users"
+                                        description="Add, edit, or remove users from your institution."
+                                        icon={Users}
+                                        href={route('users.index')}
+                                        color="blue"
+                                    />
+                                    <QuickAction
+                                        title="Course Planning"
+                                        description="Set up courses and assign professors."
+                                        icon={BookOpen}
+                                        href={schoolRoute('courses.index')}
+                                        color="green"
+                                    />
+                                    <QuickAction
+                                        title="Manage Schedule"
+                                        description="View and modify class schedules and room assignments."
+                                        icon={Calendar}
+                                        href={schoolRoute('schedules.index')}
+                                        color="purple"
+                                    />
+                                </>
+                            )}
                         </div>
                     </div>
                 )}

@@ -47,6 +47,7 @@ Route::get('/', function () {
 
 Route::get('/dashboard/all/stats', [StatsController::class, 'superUser'])->name('superuser.stats');
 Route::get('/dashboard/admin/stats', [StatsController::class, 'schoolAdmin'])->name('school.admin.stats');
+Route::get('/dashboard/professor/stats', [StatsController::class, 'professorStats'])->name('professor.stats');
 
 require __DIR__ . '/auth.php';
 
@@ -107,6 +108,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Nested Resources Under Schools
     Route::prefix('schools/{school}')->group(function () {
+        // Section calendar view - place first to avoid resource route conflicts
+        Route::get('sections/calendar', [SectionController::class, 'calendar'])
+            ->name('sections.calendar');
+
         Route::resources([
             'departments'             => DepartmentController::class,
             'majors'                  => MajorController::class,
@@ -132,10 +137,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Delete all schedules for a section
         Route::delete('sections/{section}/schedules', [ScheduleController::class, 'destroyAll'])
             ->name('schedules.destroyAll');
-
-        // Section calendar view
-        Route::get('sections/calendar', [SectionController::class, 'calendar'])
-            ->name('sections.calendar');
 
         // Direct route for creating a room associated with a floor
         Route::get('rooms/create/{floor}', [RoomController::class, 'create'])

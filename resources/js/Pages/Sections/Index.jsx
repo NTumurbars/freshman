@@ -15,13 +15,17 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-export default function Index({ sections, flash, school }) {
+export default function Index({ sections, professorSections, isProfessor, flash, school }) {
     const { auth } = usePage().props;
     const userSchool = auth.user.school;
+    const canCreateSection = auth.can?.create_section || false;
+    const canUpdateSection = auth.can?.update_section || false;
+    const canDeleteSection = auth.can?.delete_section || false;
 
     const [searchTerm, setSearchTerm] = useState('');
     const [termFilter, setTermFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const [showOnlyMySections, setShowOnlyMySections] = useState(false);
 
     // Extract unique terms from sections for the term filter.
     const terms = useMemo(() => {
@@ -43,9 +47,16 @@ export default function Index({ sections, flash, school }) {
         return 'unscheduled';
     };
 
-    // Filter sections based on search term, term, and status filters.
+    // Filter sections based on search term, term, status filters, and professor's sections.
     const filteredSections = useMemo(() => {
-        return sections.filter((section) => {
+        let filtered = sections;
+
+        // If professor is viewing only their sections
+        if (isProfessor && showOnlyMySections) {
+            filtered = sections.filter(section => section.is_teaching);
+        }
+
+        return filtered.filter((section) => {
             if (termFilter && section.term?.id !== parseInt(termFilter))
                 return false;
 
@@ -67,7 +78,7 @@ export default function Index({ sections, flash, school }) {
                         .includes(searchLower))
             );
         });
-    }, [sections, searchTerm, termFilter, statusFilter]);
+    }, [sections, searchTerm, termFilter, statusFilter, isProfessor, showOnlyMySections]);
 
     // Helper: Check if two arrays are equal.
     const arraysEqual = (a, b) => {
@@ -277,12 +288,14 @@ export default function Index({ sections, flash, school }) {
                         >
                             <Calendar className="mr-2 h-4 w-4" /> Calendar View
                         </Link>
-                        <Link
-                            href={route('sections.create', userSchool.id)}
-                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                            <Plus className="mr-2 h-4 w-4" /> Create Section
-                        </Link>
+                        {canCreateSection && (
+                            <Link
+                                href={route('sections.create', userSchool.id)}
+                                className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                                <Plus className="mr-2 h-4 w-4" /> Create Section
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -332,6 +345,23 @@ export default function Index({ sections, flash, school }) {
                             <option value="draft">Draft</option>
                         </select>
                     </div>
+
+                    {/* My Sections Filter */}
+                    {isProfessor && (
+                        <div className="flex items-center">
+                            <input
+                                id="my-sections"
+                                name="my-sections"
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                checked={showOnlyMySections}
+                                onChange={(e) => setShowOnlyMySections(e.target.checked)}
+                            />
+                            <label htmlFor="my-sections" className="ml-2 block text-sm text-gray-900">
+                                My Sections Only
+                            </label>
+                        </div>
+                    )}
 
                     {/* Clear Filters */}
                     {(searchTerm || termFilter || statusFilter) && (
@@ -410,7 +440,7 @@ export default function Index({ sections, flash, school }) {
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
                         {filteredSections.map((section) => (
-                            <tr key={section.id} className="hover:bg-gray-50">
+                            <tr key={section.id} className={`hover:bg-gray-50 ${isProfessor && section.is_teaching ? 'bg-blue-50' : ''}`}>
                                 <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
                                     <div className="flex items-center">
                                         <BookOpen className="mr-2 h-4 w-4 text-gray-400" />
@@ -522,16 +552,18 @@ export default function Index({ sections, flash, school }) {
                                         >
                                             <Eye className="h-5 w-5" />
                                         </Link>
-                                        <Link
-                                            href={route('sections.edit', [
-                                                userSchool.id,
-                                                section.id,
-                                            ])}
-                                            className="rounded p-1 text-gray-500 hover:bg-yellow-100 hover:text-yellow-600"
-                                            title="Edit section"
-                                        >
-                                            <Edit className="h-5 w-5" />
-                                        </Link>
+                                        {canUpdateSection && (
+                                            <Link
+                                                href={route('sections.edit', [
+                                                    userSchool.id,
+                                                    section.id,
+                                                ])}
+                                                className="rounded p-1 text-gray-500 hover:bg-yellow-100 hover:text-yellow-600"
+                                                title="Edit section"
+                                            >
+                                                <Edit className="h-5 w-5" />
+                                            </Link>
+                                        )}
                                         {section.schedules &&
                                         Array.isArray(section.schedules) &&
                                         section.schedules.length > 0 ? (
@@ -560,48 +592,52 @@ export default function Index({ sections, flash, school }) {
                                                 title={
                                                     section.schedules.length ===
                                                     1
-                                                        ? 'Edit schedule'
+                                                        ? canUpdateSection ? 'Edit schedule' : 'View schedule'
                                                         : 'View all schedules'
                                                 }
                                             >
                                                 <Calendar className="h-5 w-5" />
                                             </Link>
                                         ) : (
+                                            canUpdateSection && (
+                                                <Link
+                                                    href={route(
+                                                        'schedules.create',
+                                                        {
+                                                            school: userSchool.id,
+                                                            section_id: section.id,
+                                                        },
+                                                    )}
+                                                    className="rounded p-1 text-gray-500 hover:bg-green-100 hover:text-green-600"
+                                                    title="Add schedule"
+                                                >
+                                                    <CalendarPlus className="h-5 w-5" />
+                                                </Link>
+                                            )
+                                        )}
+                                        {canDeleteSection && (
                                             <Link
-                                                href={route(
-                                                    'schedules.create',
-                                                    {
-                                                        school: userSchool.id,
-                                                        section_id: section.id,
-                                                    },
-                                                )}
-                                                className="rounded p-1 text-gray-500 hover:bg-green-100 hover:text-green-600"
-                                                title="Add schedule"
+                                                href={route('sections.destroy', [
+                                                    userSchool.id,
+                                                    section.id,
+                                                ])}
+                                                method="delete"
+                                                as="button"
+                                                className="rounded p-1 text-gray-500 hover:bg-red-100 hover:text-red-600"
+                                                title="Delete section"
+                                                onClick={(e) => {
+                                                    if (
+                                                        !confirm(
+                                                            'Are you sure you want to delete this section?',
+                                                        )
+                                                    ) {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
                                             >
-                                                <CalendarPlus className="h-5 w-5" />
+                                                <Trash2 className="h-5 w-5" />
                                             </Link>
                                         )}
-                                        <Link
-                                            href={route('sections.destroy', [
-                                                userSchool.id,
-                                                section.id,
-                                            ])}
-                                            method="delete"
-                                            as="button"
-                                            className="rounded p-1 text-gray-500 hover:bg-red-100 hover:text-red-600"
-                                            title="Delete section"
-                                            onClick={(e) => {
-                                                if (
-                                                    !confirm(
-                                                        'Are you sure you want to delete this section?',
-                                                    )
-                                                ) {
-                                                    e.preventDefault();
-                                                }
-                                            }}
-                                        >
-                                            <Trash2 className="h-5 w-5" />
-                                        </Link>
                                     </div>
                                 </td>
                             </tr>

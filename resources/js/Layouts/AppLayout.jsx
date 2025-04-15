@@ -17,55 +17,47 @@ export default function AppLayout({ children, navChildren }) {
 
     const roleId = globalAuth.user.role.id;
 
-    const schoolData = globalAuth.user?.school;
-
-    // Store school in sessionStorage when available for persistence across pages
-    useEffect(() => {
-        // If school is provided directly, store it in sessionStorage
-        if (schoolData?.id) {
-            try {
-                sessionStorage.setItem(
-                    'cachedSchool',
-                    JSON.stringify(schoolData),
-                );
-            } catch (error) {
-                console.error(
-                    'Failed to cache school in session storage:',
-                    error,
-                );
-            }
+    // Get school data from auth or cached storage
+    const getSchoolData = () => {
+        if (globalAuth.user?.school?.id) {
+            return globalAuth.user.school;
         }
-    }, [schoolData]);
 
-    // Get school from various sources with fallbacks
-    const getCachedSchool = () => {
+        if (globalAuth.school?.id) {
+            return globalAuth.school;
+        }
+
         try {
             const cachedData = sessionStorage.getItem('cachedSchool');
             if (cachedData) {
                 return JSON.parse(cachedData);
             }
-        } catch (error) {
-            console.error('Error retrieving cached school:', error);
-        }
+        } catch (error) {}
+
         return null;
     };
+
+    const schoolData = getSchoolData();
+
+    // Store school in sessionStorage for persistence
+    useEffect(() => {
+        if (schoolData?.id) {
+            try {
+                sessionStorage.setItem('cachedSchool', JSON.stringify(schoolData));
+            } catch (error) {}
+        }
+    }, [schoolData]);
 
     // Handle responsive sidebar
     useEffect(() => {
         const checkScreenSize = () => {
             const mobile = window.innerWidth < 768;
             setIsMobile(mobile);
-            // Only auto-close on mobile
-            if (mobile) {
-                setSidebarOpen(false);
-            } else {
-                setSidebarOpen(true);
-            }
+            setSidebarOpen(!mobile);
         };
 
         checkScreenSize();
         window.addEventListener('resize', checkScreenSize);
-
         return () => window.removeEventListener('resize', checkScreenSize);
     }, []);
 
@@ -74,14 +66,11 @@ export default function AppLayout({ children, navChildren }) {
     };
 
     // Ensure we have the proper auth data for Navbar
-    // If we're in a context where auth data is passed differently (like in Terms/Index),
-    // we need to merge it with the global auth data to ensure all required properties are available
     const mergedAuth = {
         ...globalAuth,
         school: schoolData,
         user: {
             ...globalAuth?.user,
-            // If userRole is provided, use it to ensure role_id is available
             role_id: roleId,
         },
     };
@@ -109,14 +98,12 @@ export default function AppLayout({ children, navChildren }) {
                 >
                     {roleId === 1 && <SuperUserSideBar />}
                     {roleId === 2 && <AdminSideBar school={schoolData} />}
-                    {roleId === 3 && (
-                        <MajorCoordinatorSideBar school={schoolData} />
-                    )}
+                    {roleId === 3 && <MajorCoordinatorSideBar school={schoolData} />}
                     {roleId === 4 && <ProfessorSideBar school={schoolData} />}
                     {roleId === 5 && <StudentSideBar school={schoolData} />}
                 </aside>
 
-                {/* Sidebar toggle button (positioned in a fixed container) */}
+                {/* Sidebar toggle button */}
                 <div
                     className="fixed left-0 top-1/2 z-50 transition-transform duration-300 ease-in-out"
                     style={{
@@ -127,9 +114,7 @@ export default function AppLayout({ children, navChildren }) {
                         onClick={toggleSidebar}
                         className="hidden items-center justify-center rounded-full border border-blue-100 bg-white p-2.5 shadow-lg transition-all hover:border-blue-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:flex"
                         style={{ width: '2.5rem', height: '2.5rem' }}
-                        aria-label={
-                            sidebarOpen ? 'Hide sidebar' : 'Show sidebar'
-                        }
+                        aria-label={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
                         title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
                     >
                         {sidebarOpen ? (
