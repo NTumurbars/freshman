@@ -13,6 +13,10 @@ import {
     List,
     MapPin,
     Search,
+    Plus,
+    Eye,
+    Edit,
+    Trash2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -27,6 +31,7 @@ export default function Index({
     const canCreateSchedule = auth.can?.create_schedule || false;
     const canUpdateSchedule = auth.can?.update_schedule || false;
     const canDeleteSchedule = auth.can?.delete_schedule || false;
+    const isStudent = auth.user.role.name === 'student';
 
     const [selectedDay, setSelectedDay] = useState('All');
     const days = [
@@ -197,15 +202,18 @@ export default function Index({
                         Class Schedules
                     </h1>
                     <p className="mt-2 text-sm text-gray-700">
-                        Manage and view all class schedules
+                        {isStudent
+                            ? "View class schedules for your courses"
+                            : "Manage and view all class schedules"}
                     </p>
                 </div>
-                {canCreateSchedule && (
+                {!isStudent && canCreateSchedule && (
                     <Link
-                        href={route('schedules.create')}
-                        className="mt-4 inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0"
+                        href={route('schedules.create', { school: userSchool.id })}
+                        className="mt-4 inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0"
                     >
-                        Create New Schedule
+                        <Plus className="-ml-1 mr-2 h-5 w-5" />
+                        New Schedule
                     </Link>
                 )}
             </div>
@@ -611,26 +619,20 @@ export default function Index({
                                         <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                             <div className="flex justify-end space-x-2">
                                                 <Link
-                                                    href={route(
-                                                        'sections.show',
-                                                        [
-                                                            userSchool.id,
-                                                            schedule.section.id,
-                                                        ],
-                                                    )}
+                                                    href={route('sections.show', {
+                                                        school: userSchool.id,
+                                                        section: schedule.section.id,
+                                                    })}
                                                     className="text-blue-600 hover:text-blue-900"
                                                 >
                                                     View Section
                                                 </Link>
-                                                {canUpdateSchedule && (
+                                                {!isStudent && canUpdateSchedule && (
                                                     <Link
-                                                        href={route(
-                                                            'schedules.edit',
-                                                            [
-                                                                userSchool.id,
-                                                                schedule.id,
-                                                            ],
-                                                        )}
+                                                        href={route('schedules.edit', {
+                                                            school: userSchool.id,
+                                                            schedule: schedule.id,
+                                                        })}
                                                         className="text-blue-600 hover:text-blue-900"
                                                     >
                                                         Edit
@@ -700,43 +702,28 @@ export default function Index({
                                     </div>
                                 </div>
                                 {/* Grid view actions */}
-                                {auth.can.update_schedule && (
-                                    <div className="flex justify-between border-t bg-gray-50 px-4 py-3">
+                                <div className="flex justify-between border-t bg-gray-50 px-4 py-3">
+                                    <Link
+                                        href={route('sections.show', {
+                                            school: userSchool.id,
+                                            section: schedule.section.id,
+                                        })}
+                                        className="text-sm text-blue-600 hover:text-blue-900"
+                                    >
+                                        View Section
+                                    </Link>
+                                    {!isStudent && canUpdateSchedule && (
                                         <Link
-                                            href={route('sections.show', [
-                                                userSchool.id,
-                                                schedule.section.id,
-                                            ])}
+                                            href={route('schedules.edit', {
+                                                school: userSchool.id,
+                                                schedule: schedule.id,
+                                            })}
                                             className="text-sm text-blue-600 hover:text-blue-900"
                                         >
-                                            View Section
+                                            Edit Schedule
                                         </Link>
-                                        {canUpdateSchedule && (
-                                            <Link
-                                                href={route('schedules.edit', [
-                                                    userSchool.id,
-                                                    schedule.id,
-                                                ])}
-                                                className="text-sm text-blue-600 hover:text-blue-900"
-                                            >
-                                                Edit Schedule
-                                            </Link>
-                                        )}
-                                    </div>
-                                )}
-                                {!auth.can.update_schedule && (
-                                    <div className="flex justify-center border-t bg-gray-50 px-4 py-3">
-                                        <Link
-                                            href={route('sections.show', [
-                                                userSchool.id,
-                                                schedule.section.id,
-                                            ])}
-                                            className="text-sm text-blue-600 hover:text-blue-900"
-                                        >
-                                            View Section
-                                        </Link>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>

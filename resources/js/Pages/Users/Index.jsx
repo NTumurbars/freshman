@@ -255,7 +255,7 @@ export default function Index({ users, roles, filters }) {
                                 <div className="flex flex-1 justify-between sm:hidden">
                                     {users.links.find(
                                         (link) =>
-                                            link.label === '&laquo; Previous',
+                                            link.label === '&laquo; Previous' && link.url
                                     ) && (
                                         <Link
                                             href={users.prev_page_url}
@@ -265,7 +265,7 @@ export default function Index({ users, roles, filters }) {
                                         </Link>
                                     )}
                                     {users.links.find(
-                                        (link) => link.label === 'Next &raquo;',
+                                        (link) => link.label === 'Next &raquo;' && link.url
                                     ) && (
                                         <Link
                                             href={users.next_page_url}
@@ -303,7 +303,7 @@ export default function Index({ users, roles, filters }) {
                                                     link.label ===
                                                     '&laquo; Previous'
                                                 ) {
-                                                    return (
+                                                    return link.url ? (
                                                         <Link
                                                             key={index}
                                                             href={link.url}
@@ -317,13 +317,26 @@ export default function Index({ users, roles, filters }) {
                                                                 aria-hidden="true"
                                                             />
                                                         </Link>
+                                                    ) : (
+                                                        <span
+                                                            key={index}
+                                                            className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 cursor-not-allowed"
+                                                        >
+                                                            <span className="sr-only">
+                                                                Previous
+                                                            </span>
+                                                            <ChevronUpIcon
+                                                                className="h-5 w-5"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </span>
                                                     );
                                                 }
                                                 if (
                                                     link.label ===
                                                     'Next &raquo;'
                                                 ) {
-                                                    return (
+                                                    return link.url ? (
                                                         <Link
                                                             key={index}
                                                             href={link.url}
@@ -337,9 +350,22 @@ export default function Index({ users, roles, filters }) {
                                                                 aria-hidden="true"
                                                             />
                                                         </Link>
+                                                    ) : (
+                                                        <span
+                                                            key={index}
+                                                            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 cursor-not-allowed"
+                                                        >
+                                                            <span className="sr-only">
+                                                                Next
+                                                            </span>
+                                                            <ChevronDownIcon
+                                                                className="h-5 w-5"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </span>
                                                     );
                                                 }
-                                                return (
+                                                return link.url ? (
                                                     <Link
                                                         key={index}
                                                         href={link.url}
@@ -351,6 +377,13 @@ export default function Index({ users, roles, filters }) {
                                                     >
                                                         {link.label}
                                                     </Link>
+                                                ) : (
+                                                    <span
+                                                        key={index}
+                                                        className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-300 ring-1 ring-inset ring-gray-300 cursor-not-allowed"
+                                                    >
+                                                        {link.label}
+                                                    </span>
                                                 );
                                             })}
                                         </nav>

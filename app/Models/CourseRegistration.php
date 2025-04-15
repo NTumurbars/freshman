@@ -10,7 +10,7 @@ class CourseRegistration extends Model
 {
      protected $fillable = [
         'section_id',
-        'student_id',
+        'user_id',
     ];
 
     public function section()
@@ -20,6 +20,6 @@ class CourseRegistration extends Model
 
     public function student()
     {
-        return $this->belongsTo(User::class, 'student_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

@@ -137,7 +137,7 @@ class UserController extends Controller
     // GET /users/{id}/edit
     public function edit($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with(['role', 'school'])->findOrFail($id);
         $currentUser = Auth::user();
 
         // Check if the current user is authorized to edit this user
@@ -152,7 +152,7 @@ class UserController extends Controller
         })->get();
 
         // Get schools - only super admin can see all schools, others only see their own
-        $schools = $currentUser->role_id === 1 ? School::all() : [$currentUser->school];
+        $schools = $currentUser->role_id === 1 ? School::all() : School::where('id', $currentUser->school_id)->get();
 
         return Inertia::render('Users/Edit', [
             'user' => $user,

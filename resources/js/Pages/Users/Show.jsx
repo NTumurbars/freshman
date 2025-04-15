@@ -454,8 +454,8 @@ export default function Show() {
                                 </Text>
 
                                 <div className="flex items-center text-sm">
-                                    <EnvelopeIcon className="mr-2 h-4 w-4 text-gray-500" />
-                                    <Text>{user.email}</Text>
+                                    <EnvelopeIcon className="mr-2 h-4 w-4 flex-shrink-0 text-gray-500" />
+                                    <Text className="truncate">{user.email}</Text>
                                 </div>
 
                                 <div className="flex items-center text-sm">

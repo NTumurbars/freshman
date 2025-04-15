@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import {
     Button,
     Card,
@@ -13,11 +13,14 @@ import {
 import toast from 'react-hot-toast';
 
 export default function Edit({ user, roles, schools }) {
+    const { auth } = usePage().props;
+    const currentUserRole = auth.user.role_id;
+
     const { data, setData, put, errors, processing } = useForm({
         name: user.name,
         email: user.email,
-        role_id: user.role_id,
-        school_id: user.school_id || '',
+        role_id: user.role_id?.toString() || '',
+        school_id: user.school_id?.toString() || '',
         password: '',
         password_confirmation: '',
     });
@@ -108,27 +111,30 @@ export default function Edit({ user, roles, schools }) {
                                     <Select
                                         id="role"
                                         value={data.role_id}
-                                        onValueChange={(value) =>
-                                            handleChange('role_id', value)
-                                        }
+                                        onValueChange={(value) => {
+                                            handleChange('role_id', value);
+                                        }}
                                         placeholder="Select Role"
                                         error={!!errors.role_id}
                                         errorMessage={errors.role_id}
                                     >
-                                        {roles.map((role) => (
-                                            <SelectItem
-                                                key={role.id}
-                                                value={role.id.toString()}
-                                            >
-                                                {role.name
-                                                    .replace('_', ' ')
-                                                    .toUpperCase()}
-                                            </SelectItem>
-                                        ))}
+                                        {roles.map((role) => {
+                                            const roleValue = role.id.toString();
+                                            return (
+                                                <SelectItem
+                                                    key={role.id}
+                                                    value={roleValue}
+                                                >
+                                                    {role.name
+                                                        .replace('_', ' ')
+                                                        .toUpperCase()}
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </Select>
                                 </div>
 
-                                {userRole === 1 ? (
+                                {currentUserRole === 1 ? (
                                     <div>
                                         <label
                                             htmlFor="school"
@@ -139,21 +145,24 @@ export default function Edit({ user, roles, schools }) {
                                         <Select
                                             id="school"
                                             value={data.school_id}
-                                            onValueChange={(value) =>
-                                                handleChange('school_id', value)
-                                            }
+                                            onValueChange={(value) => {
+                                                handleChange('school_id', value);
+                                            }}
                                             placeholder="Select School"
                                             error={!!errors.school_id}
                                             errorMessage={errors.school_id}
                                         >
-                                            {schools.map((school) => (
-                                                <SelectItem
-                                                    key={school.id}
-                                                    value={school.id.toString()}
-                                                >
-                                                    {school.name}
-                                                </SelectItem>
-                                            ))}
+                                            {schools.map((school) => {
+                                                const schoolValue = school.id.toString();
+                                                return (
+                                                    <SelectItem
+                                                        key={school.id}
+                                                        value={schoolValue}
+                                                    >
+                                                        {school.name}
+                                                    </SelectItem>
+                                                );
+                                            })}
                                         </Select>
                                     </div>
                                 ) : (
@@ -166,10 +175,7 @@ export default function Edit({ user, roles, schools }) {
                                         </label>
                                         <TextInput
                                             id="school_display"
-                                            value={
-                                                user.school?.name ||
-                                                'No school assigned'
-                                            }
+                                            value={user.school?.name || 'No school assigned'}
                                             disabled
                                         />
                                     </div>
