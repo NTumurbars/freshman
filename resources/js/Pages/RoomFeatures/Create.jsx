@@ -3,7 +3,7 @@ import {
     ArrowLeftIcon,
     ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     Button,
     Card,
@@ -22,6 +22,8 @@ export default function Create({ school, categories }) {
         description: '',
         category: '',
     });
+
+    const { flash } = usePage().props;
 
     const handleSubmit = (e) => {
         e.preventDefault();

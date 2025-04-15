@@ -7,6 +7,8 @@ import { useState } from 'react';
 
 export default function Index({ courses, flash, school }) {
     const { auth } = usePage().props;
+    const userRole = auth.user.role.id;
+
     const userSchool = auth.user.school;
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -37,12 +39,14 @@ export default function Index({ courses, flash, school }) {
                         </h1>
                         <p className="text-gray-600">{userSchool.name}</p>
                     </div>
-                    <Link
-                        href={route('courses.create', userSchool.id)}
-                        className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                        <Plus className="mr-2 h-4 w-4" /> Create Course
-                    </Link>
+                    {userRole === 2 && (
+                        <Link
+                            href={route('courses.create', userSchool.id)}
+                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            <Plus className="mr-2 h-4 w-4" /> Create Course
+                        </Link>
+                    )}
                 </div>
 
                 {/* Search */}

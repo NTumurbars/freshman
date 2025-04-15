@@ -25,8 +25,12 @@ export default function Create({
     locationTypes: locationTypeOptions,
     activeTerm,
 }) {
+    console.log(courses, professorProfiles);
     // State for active tab
     const [activeTab, setActiveTab] = useState('basic-info');
+
+    // For storing the department_id
+    const [department, setDepartment] = useState(null);
 
     // Form state
     const { data, setData, post, processing, errors } = useForm({
@@ -311,9 +315,21 @@ export default function Create({
                                     <select
                                         id="course_id"
                                         value={data.course_id}
-                                        onChange={(e) =>
-                                            setData('course_id', e.target.value)
-                                        }
+                                        onChange={(e) => {
+                                            setData(
+                                                'course_id',
+                                                e.target.value,
+                                            );
+                                            const selectedCourse = courses.find(
+                                                (course) =>
+                                                    course.id.toString() ===
+                                                    e.target.value,
+                                            );
+                                            setDepartment(
+                                                selectedCourse?.department_id ||
+                                                    null,
+                                            );
+                                        }}
                                         className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
                                     >
                                         <option value="">
@@ -511,19 +527,20 @@ export default function Create({
                                     <option value="">Not Assigned</option>
                                     {professorProfiles &&
                                         Array.isArray(professorProfiles) &&
-                                        professorProfiles.map(
-                                            (profile) =>
-                                                profile.user && (
-                                                    <option
-                                                        key={profile.id}
-                                                        value={profile.id}
-                                                    >
-                                                        {profile.user.name}{' '}
-                                                        {profile.title
-                                                            ? `(${profile.title})`
-                                                            : ''}
-                                                    </option>
-                                                ),
+                                        professorProfiles.map((profile) =>
+                                            profile.user &&
+                                            profile.department_id ===
+                                                department ? (
+                                                <option
+                                                    key={profile.id}
+                                                    value={profile.id}
+                                                >
+                                                    {profile.user.name}{' '}
+                                                    {profile.title
+                                                        ? `(${profile.title})`
+                                                        : ''}
+                                                </option>
+                                            ) : null,
                                         )}
                                 </select>
                                 {errors.professor_profile_id && (

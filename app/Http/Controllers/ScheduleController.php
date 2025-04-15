@@ -34,7 +34,7 @@ class ScheduleController extends Controller
         // Base query
         $schedulesQuery = Schedule::with([
                 'section.course.department',
-                'section.professor',
+                'section.professor_profile',
                 'room.floor.building'
             ])
             ->whereIn('section_id', $sectionIds);
@@ -45,14 +45,14 @@ class ScheduleController extends Controller
 
         if ($isProfessor) {
             $schedulesQuery->whereHas('section', function($query) use ($user) {
-                $query->where('professor_id', $user->id);
+                $query->where('professor_profile_id', $user->id);
             });
         }
 
         $schedules = $schedulesQuery->get();
 
         // Get rooms for admin calendar view with their schedules and necessary relationships
-        $rooms = Room::with(['floor.building', 'schedules.section.professor', 'schedules.section.course'])
+        $rooms = Room::with(['floor.building', 'schedules.section.professor_profile', 'schedules.section.course'])
             ->whereHas('floor.building', function($query) use ($school) {
                 $query->where('school_id', $school->id);
             })

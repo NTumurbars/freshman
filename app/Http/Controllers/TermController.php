@@ -24,7 +24,7 @@ class TermController extends Controller
         // Ensure we're only getting terms for the current user's school
         if (!$school) {
             return Inertia::render('Terms/Index', [
-                'terms' => []
+                'terms' => [],
             ]);
         }
 
@@ -43,13 +43,13 @@ class TermController extends Controller
                     'start_date' => $term->start_date,
                     'end_date' => $term->end_date,
                     'sections_count' => $term->sections_count,
-                    'is_current' => $today->between($term->start_date, $term->end_date)
+                    'is_current' => $today->between($term->start_date, $term->end_date),
                 ];
             });
 
         // Don't override the entire auth data, just add the school if needed
         return Inertia::render('Terms/Index', [
-            'terms' => $terms
+            'terms' => $terms,
         ]);
     }
 
@@ -61,8 +61,8 @@ class TermController extends Controller
         return Inertia::render('Terms/Create', [
             'school' => [
                 'id' => $school->id,
-                'name' => $school->name
-            ]
+                'name' => $school->name,
+            ],
         ]);
     }
 
@@ -78,19 +78,10 @@ class TermController extends Controller
                 'max:255',
                 Rule::unique('terms')->where(function ($query) use ($school) {
                     return $query->where('school_id', $school->id);
-                })
+                }),
             ],
-            'start_date' => [
-                'required',
-                'date',
-                'after_or_equal:' . now()->format('Y-m-d')
-            ],
-            'end_date' => [
-                'required',
-                'date',
-                'after:start_date',
-                'before:' . now()->addYears(2)->format('Y-m-d')
-            ],
+            'start_date' => ['required', 'date', 'after_or_equal:' . now()->format('Y-m-d')],
+            'end_date' => ['required', 'date', 'after:start_date', 'before:' . now()->addYears(2)->format('Y-m-d')],
         ]);
 
         // Set the school_id from the route parameter
@@ -102,8 +93,9 @@ class TermController extends Controller
         Term::updateActiveTerm($school);
 
         // Add the school parameter to the redirect
-        return redirect()->route('terms.index', ['school' => $school->id])
-                         ->with('success', 'Term created successfully');
+        return redirect()
+            ->route('terms.index', ['school' => $school->id])
+            ->with('success', 'Term created successfully');
     }
 
     // GET /schools/{school}/terms/{term}/edit
@@ -121,8 +113,8 @@ class TermController extends Controller
             'term' => $term,
             'school' => [
                 'id' => $school->id,
-                'name' => $school->name
-            ]
+                'name' => $school->name,
+            ],
         ]);
     }
 
@@ -141,12 +133,14 @@ class TermController extends Controller
             'name' => [
                 'required',
                 'string',
-                Rule::unique('terms')->where(function ($query) use ($school, $term) {
-                    return $query->where('school_id', $school->id);
-                })->ignore($term)
+                Rule::unique('terms')
+                    ->where(function ($query) use ($school, $term) {
+                        return $query->where('school_id', $school->id);
+                    })
+                    ->ignore($term),
             ],
-            'start_date'=> 'required|date',
-            'end_date'  => 'required|date|after:start_date',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
         ]);
 
         // Ensure school_id remains the same
@@ -158,8 +152,9 @@ class TermController extends Controller
         Term::updateActiveTerm($school);
 
         // Also fix the redirect here
-        return redirect()->route('terms.index', ['school' => $school->id])
-                         ->with('success', 'Term updated successfully');
+        return redirect()
+            ->route('terms.index', ['school' => $school->id])
+            ->with('success', 'Term updated successfully');
     }
 
     // DELETE /schools/{school}/terms/{term}
@@ -176,15 +171,30 @@ class TermController extends Controller
         $term->delete();
 
         // Fix the redirect here too
-        return redirect()->route('terms.index', ['school' => $school->id])
-                         ->with('success', 'Term deleted successfully');
+        return redirect()
+            ->route('terms.index', ['school' => $school->id])
+            ->with('success', 'Term deleted successfully');
     }
 
     // GET schools/{school}/terms/{term}
     public function show(School $school, $term)
     {
-        $term = Term::with(['sections.course', 'sections.professor_profile', 'sections.schedules.room'])
-            ->findOrFail($term);
+        $term = Term::with(['sections.course', 'sections.professor_profile', 'sections.schedules.room'])->findOrFail($term);
+        $user = Auth::user();
+
+        if (in_array($user->role->id, [3, 4])) {
+            $departmentId = $user->professor_profile->department_id;
+
+            // Filter sections after loading
+            $term->setRelation(
+                'sections',
+                $term->sections
+                    ->filter(function ($section) use ($departmentId) {
+                        return $section->course->department_id === $departmentId;
+                    })
+                    ->values(),
+            );
+        }
         $this->authorize('view', $term);
 
         if ($term->school_id !== $school->id) {
@@ -197,26 +207,26 @@ class TermController extends Controller
                 'name' => $term->name,
                 'start_date' => $term->start_date,
                 'end_date' => $term->end_date,
-                'sections' => $term->sections->map(function($section) {
+                'sections' => $term->sections->map(function ($section) {
                     return [
                         'id' => $section->id,
                         'course_name' => $section->course->title,
                         'section_code' => $section->section_code,
                         'professor_name' => $section->professor_profile ? $section->professor_profile->user->name : 'Not assigned',
                         'number_of_students' => $section->number_of_students,
-                        'schedules' => $section->schedules->map(function($schedule) {
+                        'schedules' => $section->schedules->map(function ($schedule) {
                             return [
                                 'id' => $schedule->id,
                                 'day_of_week' => $schedule->day_of_week,
                                 'start_time' => $schedule->start_time,
                                 'end_time' => $schedule->end_time,
-                                'room_name' => $schedule->room->name
+                                'room_name' => $schedule->room->name,
                             ];
-                        })
+                        }),
                     ];
-                })
+                }),
             ],
-            'school' => $school
+            'school' => $school,
         ]);
     }
 }

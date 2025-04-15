@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Calendar, Clock, Users } from 'lucide-react';
+import { BarChart3, BookOpen, Calendar, Clock, Users } from 'lucide-react';
 
 export default function ProfessorSideBar({ school }) {
     // Helper function to generate school-specific routes
@@ -84,6 +84,9 @@ export default function ProfessorSideBar({ school }) {
             </div>
 
             <div className="space-y-6">
+                <NavItem href={route('dashboard')} icon={BarChart3}>
+                    Dashboard
+                </NavItem>
                 <NavGroup title="Teaching">
                     <NavItem
                         href={schoolRoute('courses.index')}

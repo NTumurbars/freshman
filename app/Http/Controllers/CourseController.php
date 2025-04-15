@@ -9,6 +9,7 @@ use App\Models\Major;
 use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
 
 class CourseController extends Controller
 {
@@ -25,10 +26,15 @@ class CourseController extends Controller
         $courses = Course::whereIn('department_id', $schoolDepartmentIds)
             ->with(['department', 'major', 'sections'])
             ->get();
+        if (Auth::user()->role_id == 3 || Auth::user()->role_id == 4) {
+            $courses = Course::where('department_id', Auth::user()->professor_profile->department_id)
+                ->with(['department', 'major', 'sections'])
+                ->get();
+        }
 
         return Inertia::render('Courses/Index', [
             'courses' => $courses,
-            'school' => $school
+            'school' => $school,
         ]);
     }
 
@@ -46,7 +52,7 @@ class CourseController extends Controller
         return Inertia::render('Courses/Create', [
             'departments' => $departments,
             'majors' => $majors,
-            'school' => $school
+            'school' => $school,
         ]);
     }
 
@@ -64,15 +70,17 @@ class CourseController extends Controller
 
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
-            'major_id'      => 'nullable|exists:majors,id',
-            'code'          => 'required|string|unique:courses,code',
-            'title'         => 'required|string|max:255',
-            'description'   => 'nullable|string',
-            'credits'       => 'required|integer|min:1|max:6',
+            'major_id' => 'nullable|exists:majors,id',
+            'code' => 'required|string|unique:courses,code',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'credits' => 'required|integer|min:1|max:6',
         ]);
 
         Course::create($data);
-        return redirect()->route('courses.index', ['school' => $school])->with('success', 'Course created successfully');
+        return redirect()
+            ->route('courses.index', ['school' => $school])
+            ->with('success', 'Course created successfully');
     }
 
     // GET /courses/{id}/edit
@@ -97,7 +105,7 @@ class CourseController extends Controller
             'course' => $course,
             'departments' => $departments,
             'majors' => $majors,
-            'school' => $school
+            'school' => $school,
         ]);
     }
 
@@ -120,15 +128,17 @@ class CourseController extends Controller
 
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
-            'major_id'      => 'nullable|exists:majors,id',
-            'code'          => 'required|string|unique:courses,code,' . $course->id,
-            'title'         => 'required|string|max:255',
-            'description'   => 'nullable|string',
-            'credits'       => 'required|integer|min:1|max:6',
+            'major_id' => 'nullable|exists:majors,id',
+            'code' => 'required|string|unique:courses,code,' . $course->id,
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'credits' => 'required|integer|min:1|max:6',
         ]);
 
         $course->update($data);
-        return redirect()->route('courses.index', ['school' => $school])->with('success', 'Course updated successfully');
+        return redirect()
+            ->route('courses.index', ['school' => $school])
+            ->with('success', 'Course updated successfully');
     }
 
     // DELETE /courses/{id}
@@ -144,20 +154,16 @@ class CourseController extends Controller
         }
 
         $course->delete();
-        return redirect()->route('courses.index', ['school' => $school])->with('success', 'Course deleted successfully');
+        return redirect()
+            ->route('courses.index', ['school' => $school])
+            ->with('success', 'Course deleted successfully');
     }
 
     // GET /schools/{school}/courses/{course}
     public function show(School $school, Course $course)
     {
         // Load relationships
-        $course->load([
-            'department',
-            'major',
-            'sections.term',
-            'sections.schedules.room.floor.building',
-            'sections.professor_profile.user'
-        ]);
+        $course->load(['department', 'major', 'sections.term', 'sections.schedules.room.floor.building', 'sections.professor_profile.user']);
 
         // Check if the user can view this course
         $this->authorize('view', $course);
@@ -170,8 +176,7 @@ class CourseController extends Controller
 
         return Inertia::render('Courses/Show', [
             'course' => $course,
-            'school' => $school
+            'school' => $school,
         ]);
     }
-
 }
