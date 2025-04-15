@@ -153,7 +153,11 @@ export default function Dashboard() {
     };
 
     // Only show school-specific content if we have a school
-    const canShowSchoolContent = userRole !== 1 && school?.id;
+    const canShowSchoolContent = userRole === 1 && school?.id;
+
+    const isMajorCoordinator = userRole === 3 && school?.id;
+
+    const isProfessor = userRole === 4 && school?.id;
 
     return (
         <AppLayout>
@@ -256,18 +260,58 @@ export default function Dashboard() {
                             subtitle="Requires attention"
                         />
                     </div>
-                ) : (
-                    <div className="py-12 text-center">
-                        <AlertCircle className="mx-auto h-12 w-12 text-yellow-500" />
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">
-                            No School Assigned
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                            You need to be assigned to a school to view
-                            school-specific information.
-                        </p>
+                ) : isMajorCoordinator ? (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
+                        <DashboardCard
+                            title="Total Professors"
+                            value={stats.users}
+                            icon={Users}
+                            linkTo={route('users.index')}
+                            subtitle="Active users in your school"
+                        />
+                        <DashboardCard
+                            title="Total Majors"
+                            value={stats.users}
+                            icon={Users}
+                            linkTo={route('users.index')}
+                            subtitle="Active users in your school"
+                        />
+                        <DashboardCard
+                            title="Total Sessions"
+                            value={stats.users}
+                            icon={Users}
+                            linkTo={route('users.index')}
+                            subtitle="Active users in your school"
+                        />
+                        <DashboardCard
+                            title="Current Term"
+                            value={stats.currentTerm?.name || 'None'}
+                            icon={Calendar}
+                            linkTo={schoolRoute('terms.index')}
+                            color="blue"
+                            subtitle={
+                                stats.currentTerm
+                                    ? `${new Date(stats.currentTerm.start_date).toLocaleDateString()} - ${new Date(stats.currentTerm.end_date).toLocaleDateString()}`
+                                    : 'No active term'
+                            }
+                        />
                     </div>
-                )}
+                ) : isProfessor ? (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
+                        <DashboardCard
+                            title="Current Term"
+                            value={stats.currentTerm?.name || 'None'}
+                            icon={Calendar}
+                            linkTo={schoolRoute('terms.index')}
+                            color="blue"
+                            subtitle={
+                                stats.currentTerm
+                                    ? `${new Date(stats.currentTerm.start_date).toLocaleDateString()} - ${new Date(stats.currentTerm.end_date).toLocaleDateString()}`
+                                    : 'No active term'
+                            }
+                        />
+                    </div>
+                ) : null}
 
                 {/* Quick Actions */}
                 {canShowSchoolContent && (

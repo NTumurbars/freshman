@@ -95,6 +95,11 @@ class CoursePolicy
             return $schoolDepartmentIds->contains($course->department_id);
         }
 
+        if($user->role->id === 3)
+        {
+            return Department::with('courses')->findOrFail($user->professor_profile->department_id);
+        }
+
         return false;
     }
 }

@@ -27,38 +27,32 @@ class SectionController extends Controller
 
         $user = Auth::user();
 
-        // Get departments that belong to this school
-        $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+        if ($user->role->id === 2) {
+            // Get departments that belong to this school
+            $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
 
-        // Get courses that belong to these departments
-        $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
+            // Get courses that belong to these departments
+            $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
 
-        // Get sections for these courses with necessary relationships
-        $sections = Section::whereIn('course_id', $schoolCourseIds)
-            ->with([
-                'course.department',
-                'term',
-                'professor_profile.user',
-                'schedules.room.floor.building',
-                'requiredFeatures',
-                'courseRegistrations'
-            ])
-            ->get();
+            // Get sections for these courses with necessary relationships
+            $sections = Section::whereIn('course_id', $schoolCourseIds)
+                ->with(['course.department', 'term', 'professor_profile.user', 'schedules.room.floor.building', 'requiredFeatures', 'courseRegistrations'])
+                ->get();
+        } elseif ($user->role->id === 3 || $user->role->id === 4) {
+            // Get course IDs for the specific department
+            $courseIds = Course::where('department_id', $user->professor_profile->department->id)->pluck('id');
+
+            // Get sections for those courses with all necessary relationships
+            $sections = Section::whereIn('course_id', $courseIds)
+                ->with(['course.department', 'term', 'professor_profile.user', 'schedules.room.floor.building', 'requiredFeatures', 'courseRegistrations'])
+                ->get();
+        }
 
         return Inertia::render('Sections/Index', [
             'sections' => $sections,
             'school' => $school,
-            'statuses' => [
-                Section::STATUS_ACTIVE,
-                Section::STATUS_CANCELED,
-                Section::STATUS_FULL,
-                Section::STATUS_PENDING,
-            ],
-            'deliveryMethods' => [
-                Section::DELIVERY_IN_PERSON,
-                Section::DELIVERY_ONLINE,
-                Section::DELIVERY_HYBRID,
-            ],
+            'statuses' => [Section::STATUS_ACTIVE, Section::STATUS_CANCELED, Section::STATUS_FULL, Section::STATUS_PENDING],
+            'deliveryMethods' => [Section::DELIVERY_IN_PERSON, Section::DELIVERY_ONLINE, Section::DELIVERY_HYBRID],
         ]);
     }
 
@@ -66,13 +60,19 @@ class SectionController extends Controller
     public function create(School $school)
     {
         $this->authorize('create', Section::class);
+        $user = Auth::user();
+        if ($user->role->id === 2) {
+            // Get departments that belong to this school
+            $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
 
-        // Get departments that belong to this school
-        $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+            // Get courses that belong to these departments
+            $courses = Course::whereIn('department_id', $schoolDepartmentIds)->get();
+        } elseif ($user->role->id === 3) {
+            $departmentId = $user->professor_profile->department_id;
 
-        // Get courses that belong to these departments
-        $courses = Course::whereIn('department_id', $schoolDepartmentIds)->get();
-
+            // Get courses from the user's department
+            $courses = Course::where('department_id', $departmentId)->get();
+        }
         // Get the active term for this school
         $activeTerm = Term::getActiveTerm($school);
 
@@ -80,12 +80,11 @@ class SectionController extends Controller
         $terms = Term::where('school_id', $school->id)->get();
 
         // Get professors who are in this school with role 'professor'
-        $professorProfiles = ProfessorProfile::whereHas('user', function($q) use ($school) {
-            $q->where('school_id', $school->id)
-              ->whereHas('role', function($q) {
-                  $q->where('name', 'professor');
-              });
-        })->with('user')->get();
+        $professorProfiles = ProfessorProfile::whereHas('user', function ($q) use ($school) {
+            $q->where('school_id', $school->id)->whereIn('role_id', [3, 4]);
+        })
+            ->with('user')
+            ->get();
 
         // Get room features
         $roomFeatures = RoomFeature::all();
@@ -101,17 +100,8 @@ class SectionController extends Controller
             'roomFeatures' => $roomFeatures,
             'rooms' => $rooms,
             'school' => $school,
-            'statuses' => [
-                Section::STATUS_ACTIVE,
-                Section::STATUS_CANCELED,
-                Section::STATUS_FULL,
-                Section::STATUS_PENDING,
-            ],
-            'deliveryMethods' => [
-                Section::DELIVERY_IN_PERSON,
-                Section::DELIVERY_ONLINE,
-                Section::DELIVERY_HYBRID,
-            ],
+            'statuses' => [Section::STATUS_ACTIVE, Section::STATUS_CANCELED, Section::STATUS_FULL, Section::STATUS_PENDING],
+            'deliveryMethods' => [Section::DELIVERY_IN_PERSON, Section::DELIVERY_ONLINE, Section::DELIVERY_HYBRID],
             'meetingPatterns' => [
                 'single' => 'Single Meeting',
                 'weekly' => 'Weekly',
@@ -152,14 +142,14 @@ class SectionController extends Controller
 
         try {
             $data = $request->validate([
-                'course_id'          => 'required|exists:courses,id',
-                'term_id'            => 'required|exists:terms,id',
+                'course_id' => 'required|exists:courses,id',
+                'term_id' => 'required|exists:terms,id',
                 'professor_profile_id' => 'nullable|exists:professor_profiles,id',
-                'section_code'       => 'required|string|max:10',
-                'status'             => 'required|string|in:active,canceled,full,pending',
-                'delivery_method'    => 'required|string|in:in-person,online,hybrid',
-                'notes'              => 'nullable|string',
-                'capacity'           => 'nullable|integer|min:1',
+                'section_code' => 'required|string|max:10',
+                'status' => 'required|string|in:active,canceled,full,pending',
+                'delivery_method' => 'required|string|in:in-person,online,hybrid',
+                'notes' => 'nullable|string',
+                'capacity' => 'nullable|integer|min:1',
             ]);
 
             $section = Section::create($data);
@@ -193,14 +183,7 @@ class SectionController extends Controller
     // GET /schools/{school}/sections/{section}
     public function show(School $school, $section)
     {
-        $section = Section::with([
-            'course.department',
-            'term',
-            'professor_profile.user',
-            'schedules.room.floor.building',
-            'requiredFeatures',
-            'courseRegistrations.student'
-        ])->findOrFail($section);
+        $section = Section::with(['course.department', 'term', 'professor_profile.user', 'schedules.room.floor.building', 'requiredFeatures', 'courseRegistrations.student'])->findOrFail($section);
 
         $this->authorize('view', $section);
 
@@ -217,7 +200,7 @@ class SectionController extends Controller
 
         return Inertia::render('Sections/Show', [
             'section' => $section,
-            'school' => $school
+            'school' => $school,
         ]);
     }
 
@@ -250,19 +233,20 @@ class SectionController extends Controller
         $terms = Term::where('school_id', $school->id)->get();
 
         // Get professors who are in this school with role 'professor'
-        $professorProfiles = ProfessorProfile::whereHas('user', function($q) use ($school) {
-            $q->where('school_id', $school->id)
-              ->whereHas('role', function($q) {
-                  $q->where('name', 'professor');
-              });
-        })->with('user')->get();
+        $professorProfiles = ProfessorProfile::whereHas('user', function ($q) use ($school) {
+            $q->where('school_id', $school->id)->whereHas('role', function ($q) {
+                $q->where('name', 'professor');
+            });
+        })
+            ->with('user')
+            ->get();
 
         // Get room features
         $roomFeatures = RoomFeature::all();
 
         // Get rooms
         $rooms = Room::with('floor.building')
-            ->whereHas('floor.building', function($query) use ($school) {
+            ->whereHas('floor.building', function ($query) use ($school) {
                 $query->where('school_id', $school->id);
             })
             ->get();
@@ -275,17 +259,8 @@ class SectionController extends Controller
             'roomFeatures' => $roomFeatures,
             'rooms' => $rooms,
             'school' => $school,
-            'statuses' => [
-                Section::STATUS_ACTIVE,
-                Section::STATUS_CANCELED,
-                Section::STATUS_FULL,
-                Section::STATUS_PENDING,
-            ],
-            'deliveryMethods' => [
-                Section::DELIVERY_IN_PERSON,
-                Section::DELIVERY_ONLINE,
-                Section::DELIVERY_HYBRID,
-            ],
+            'statuses' => [Section::STATUS_ACTIVE, Section::STATUS_CANCELED, Section::STATUS_FULL, Section::STATUS_PENDING],
+            'deliveryMethods' => [Section::DELIVERY_IN_PERSON, Section::DELIVERY_ONLINE, Section::DELIVERY_HYBRID],
             'meetingPatterns' => [
                 'single' => 'Single Meeting',
                 'weekly' => 'Weekly',
@@ -342,14 +317,14 @@ class SectionController extends Controller
 
         try {
             $data = $request->validate([
-                'course_id'          => 'required|exists:courses,id',
-                'term_id'            => 'required|exists:terms,id',
+                'course_id' => 'required|exists:courses,id',
+                'term_id' => 'required|exists:terms,id',
                 'professor_profile_id' => 'nullable|exists:professor_profiles,id',
-                'section_code'       => 'required|string|max:10',
-                'status'             => 'required|string|in:active,canceled,full,pending',
-                'delivery_method'    => 'required|string|in:in-person,online,hybrid',
-                'notes'              => 'nullable|string',
-                'capacity'           => 'nullable|integer|min:1',
+                'section_code' => 'required|string|max:10',
+                'status' => 'required|string|in:active,canceled,full,pending',
+                'delivery_method' => 'required|string|in:in-person,online,hybrid',
+                'notes' => 'nullable|string',
+                'capacity' => 'nullable|integer|min:1',
             ]);
 
             $section->update($data);
@@ -411,7 +386,9 @@ class SectionController extends Controller
             $section->delete();
 
             DB::commit();
-            return redirect()->route('sections.index', ['school' => $school])->with('success', 'Section deleted successfully');
+            return redirect()
+                ->route('sections.index', ['school' => $school])
+                ->with('success', 'Section deleted successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['general' => 'Error deleting section: ' . $e->getMessage()]);
@@ -477,7 +454,7 @@ class SectionController extends Controller
                             'term' => $section->term->name,
                             'status' => $section->status,
                             'delivery_method' => $section->delivery_method,
-                        ]
+                        ],
                     ];
                 }
             }
@@ -485,11 +462,11 @@ class SectionController extends Controller
 
         // Get rooms for resources
         $rooms = Room::with('floor.building')
-            ->whereHas('floor.building', function($query) use ($school) {
+            ->whereHas('floor.building', function ($query) use ($school) {
                 $query->where('school_id', $school->id);
             })
             ->get()
-            ->map(function($room) {
+            ->map(function ($room) {
                 return [
                     'id' => $room->id,
                     'title' => $room->room_number . ' (' . $room->floor->building->name . ')',
@@ -499,14 +476,17 @@ class SectionController extends Controller
             });
 
         // Add "Unassigned" resource
-        $resources = array_merge([
+        $resources = array_merge(
             [
-                'id' => 'unassigned',
-                'title' => 'Unassigned',
-                'building' => 'N/A',
-                'capacity' => 0,
-            ]
-        ], $rooms->toArray());
+                [
+                    'id' => 'unassigned',
+                    'title' => 'Unassigned',
+                    'building' => 'N/A',
+                    'capacity' => 0,
+                ],
+            ],
+            $rooms->toArray(),
+        );
 
         return Inertia::render('Sections/Calendar', [
             'calendarEvents' => $calendarEvents,

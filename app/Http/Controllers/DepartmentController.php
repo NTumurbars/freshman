@@ -23,28 +23,51 @@ class DepartmentController extends Controller
             abort(403, 'You do not have access to this school');
         }
 
-        $departments = Department::where('school_id', $school->id)
-            ->with(['school', 'majors', 'courses', 'professor_profiles'])
-            ->withCount(['majors', 'courses', 'professor_profiles'])
-            ->orderBy('name')
-            ->get()
-            ->map(function ($department) {
-                return [
-                    'id' => $department->id,
-                    'name' => $department->name,
-                    'school_id' => $department->school_id,
-                    'code' => $department->code,
-                    'stats' => [
-                        'majors' => $department->majors_count,
-                        'courses' => $department->courses_count,
-                        'professors' => $department->professor_profiles_count,
-                    ]
-                ];
-            });
+        if ($user->role->id === 3 || $user->role->id === 4) {
+            $departments = Department::where('id', $user->professor_profile->department_id)
+                ->with(['school', 'majors', 'courses', 'professor_profiles'])
+                ->withCount(['majors', 'courses', 'professor_profiles'])
+                ->orderBy('name')
+                ->get()
+                ->map(function ($department) {
+                    return [
+                        'id' => $department->id,
+                        'name' => $department->name,
+                        'school_id' => $department->school_id,
+                        'code' => $department->code,
+                        'stats' => [
+                            'majors' => $department->majors_count,
+                            'courses' => $department->courses_count,
+                            'professors' => $department->professor_profiles_count,
+                        ],
+                    ];
+                });
+        } elseif ($user->role->id === 2) {
+            $departments = Department::where('school_id', $school->id)
+                ->with(['school', 'majors', 'courses', 'professor_profiles'])
+                ->withCount(['majors', 'courses', 'professor_profiles'])
+                ->orderBy('name')
+                ->get()
+                ->map(function ($department) {
+                    return [
+                        'id' => $department->id,
+                        'name' => $department->name,
+                        'school_id' => $department->school_id,
+                        'code' => $department->code,
+                        'stats' => [
+                            'majors' => $department->majors_count,
+                            'courses' => $department->courses_count,
+                            'professors' => $department->professor_profiles_count,
+                        ],
+                    ];
+                });
+        } else {
+            $department = null;
+        }
         return Inertia::render('Departments/Index', [
             'departments' => $departments,
             'school' => $school,
-            'can_create' => Gate::allows('create', Department::class)
+            'can_create' => Gate::allows('create', Department::class),
         ]);
     }
 
@@ -64,16 +87,14 @@ class DepartmentController extends Controller
         $department->load(['majors', 'courses']);
 
         // Explicitly load the professor profiles with their users
-        $professor_profiles = ProfessorProfile::where('department_id', $department->id)
-            ->with('user')
-            ->get();
+        $professor_profiles = ProfessorProfile::where('department_id', $department->id)->with('user')->get();
 
         // Assign the profiles to the department
         $department->professor_profiles = $professor_profiles;
 
         return Inertia::render('Departments/Show', [
             'department' => $department,
-            'school' => $school
+            'school' => $school,
         ]);
     }
 
@@ -90,7 +111,7 @@ class DepartmentController extends Controller
 
         return Inertia::render('Departments/Create', [
             'school_id' => $school->id,
-            'school' => $school
+            'school' => $school,
         ]);
     }
 
@@ -121,7 +142,7 @@ class DepartmentController extends Controller
                 'email' => $validated['contact']['email'] ?? null,
                 'phone' => $validated['contact']['phone'] ?? null,
                 'office' => $validated['contact']['office'] ?? null,
-            ]
+            ],
         ]);
 
         return redirect()
@@ -143,7 +164,7 @@ class DepartmentController extends Controller
         return Inertia::render('Departments/Edit', [
             'department' => $department,
             'school_id' => $school->id,
-            'school' => $school
+            'school' => $school,
         ]);
     }
 
@@ -165,7 +186,6 @@ class DepartmentController extends Controller
             'contact.office' => 'nullable|string|max:255',
         ]);
 
-
         $department->update([
             'name' => $validated['name'],
             'code' => $validated['code'] ?? $department->code,
@@ -173,10 +193,9 @@ class DepartmentController extends Controller
                 'email' => $validated['contact']['email'] ?? null,
                 'phone' => $validated['contact']['phone'] ?? null,
                 'office' => $validated['contact']['office'] ?? null,
-            ]
+            ],
         ]);
-        return redirect(route('departments.show', [$school->id, $department->id]))
-            ->with('success', 'Department updated successfully');
+        return redirect(route('departments.show', [$school->id, $department->id]))->with('success', 'Department updated successfully');
     }
 
     // DELETE /departments/{id}
@@ -190,6 +209,8 @@ class DepartmentController extends Controller
         }
 
         $department->delete();
-        return redirect()->route('departments.index', ['school' => $school])->with('success', 'Department deleted successfully');
+        return redirect()
+            ->route('departments.index', ['school' => $school])
+            ->with('success', 'Department deleted successfully');
     }
 }

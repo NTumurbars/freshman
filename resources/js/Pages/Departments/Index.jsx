@@ -10,7 +10,7 @@ import {
     PlusIcon,
     UserGroupIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Badge,
     Button,
@@ -28,6 +28,8 @@ import {
 import { useState } from 'react';
 
 const DepartmentCard = ({ department, school }) => {
+    const { auth } = usePage().props;
+    const userRole = auth.user.role.id;
     const contactInfo = department.contact || {};
 
     return (
@@ -137,32 +139,36 @@ const DepartmentCard = ({ department, school }) => {
                             View
                         </Button>
                     </Link>
-                    <Link
-                        href={route('departments.edit', {
-                            school: department.school_id,
-                            department: department.id,
-                        })}
-                    >
-                        <Button
-                            variant="light"
-                            size="sm"
-                            className="text-blue-600"
-                        >
-                            Edit
-                        </Button>
-                    </Link>
-                    <Link
-                        href={route('departments.destroy', {
-                            school: school.id,
-                            department: department.id,
-                        })}
-                        method="delete"
-                        as="button"
-                        type="button"
-                        className="text-sm text-red-600 hover:text-red-800"
-                    >
-                        Delete
-                    </Link>
+                    {userRole === 2 && (
+                        <>
+                            <Link
+                                href={route('departments.edit', {
+                                    school: department.school_id,
+                                    department: department.id,
+                                })}
+                            >
+                                <Button
+                                    variant="light"
+                                    size="sm"
+                                    className="text-blue-600"
+                                >
+                                    Edit
+                                </Button>
+                            </Link>
+                            <Link
+                                href={route('departments.destroy', {
+                                    school: school.id,
+                                    department: department.id,
+                                })}
+                                method="delete"
+                                as="button"
+                                type="button"
+                                className="text-sm text-red-600 hover:text-red-800"
+                            >
+                                Delete
+                            </Link>
+                        </>
+                    )}
                 </div>
             </div>
         </Card>
