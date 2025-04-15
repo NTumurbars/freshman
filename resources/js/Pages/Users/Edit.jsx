@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import {
     Button,
     Card,
@@ -13,6 +13,11 @@ import {
 import toast from 'react-hot-toast';
 
 export default function Edit({ user, roles, schools }) {
+    const { auth } = usePage().props;
+    const userRole = auth.user.role_id;
+    const userID = auth.user.id;
+    const school1 = auth.user.school;
+    
     const { data, setData, put, errors, processing } = useForm({
         name: user.name,
         email: user.email,
@@ -23,7 +28,7 @@ export default function Edit({ user, roles, schools }) {
     });
 
     const handleChange = (name, value) => setData(name, value);
-
+    
     const submit = (e) => {
         e.preventDefault();
         put(route('users.update', user.id), {
@@ -167,7 +172,7 @@ export default function Edit({ user, roles, schools }) {
                                         <TextInput
                                             id="school_display"
                                             value={
-                                                user.school?.name ||
+                                                school1.name ||
                                                 'No school assigned'
                                             }
                                             disabled
@@ -177,7 +182,9 @@ export default function Edit({ user, roles, schools }) {
                             </div>
                         </div>
 
-                        <div>
+                        {
+                            userID === user.id && 
+                            <div>
                             <Text className="mb-2">Password</Text>
                             <Divider />
                             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -225,7 +232,7 @@ export default function Edit({ user, roles, schools }) {
                                     />
                                 </div>
                             </div>
-                        </div>
+                        </div>}
 
                         <div className="flex justify-end pt-4">
                             <Button type="submit" disabled={processing}>

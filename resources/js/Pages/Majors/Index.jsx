@@ -26,8 +26,19 @@ import {
     Text,
     Title,
 } from '@tremor/react';
+import { useState } from 'react';
 
 export default function Index({ majors, school, can_create }) {
+    const [selectedDepartment, setSelectedDepartment] = useState('all');
+
+    // Filter majors based on the selected department
+    const filteredMajors =
+        selectedDepartment === 'all'
+            ? majors
+            : majors.filter(
+                  (major) => major.department.name === selectedDepartment
+              );
+
     return (
         <AppLayout>
             <Head title="Academic Majors" />
@@ -63,18 +74,31 @@ export default function Index({ majors, school, can_create }) {
                             <div className="mb-2 flex items-center gap-2 sm:mb-0">
                                 <AcademicCapIcon className="h-5 w-5 text-blue-600" />
                                 <Text className="font-medium">
-                                    All Majors ({majors.length})
+                                    All Majors ({filteredMajors.length})
                                 </Text>
                             </div>
                             <div className="flex w-full gap-2 sm:w-auto">
                                 <SearchSelect
                                     className="max-w-xs"
                                     placeholder="Filter by department"
+                                    value={selectedDepartment}
+                                    onValueChange={(value) =>
+                                        setSelectedDepartment(value)
+                                    }
                                 >
-                                    {/* You can populate this dynamically if needed */}
                                     <SearchSelectItem value="all">
                                         All Departments
                                     </SearchSelectItem>
+                                    {[...new Set(majors.map((major) => major.department.name))].map(
+                                        (departmentName) => (
+                                            <SearchSelectItem
+                                                key={departmentName}
+                                                value={departmentName}
+                                            >
+                                                {departmentName}
+                                            </SearchSelectItem>
+                                        )
+                                    )}
                                 </SearchSelect>
                                 <Select
                                     className="w-40"
@@ -108,7 +132,7 @@ export default function Index({ majors, school, can_create }) {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {majors.map((major) => (
+                                {filteredMajors.map((major) => (
                                     <TableRow
                                         key={major.id}
                                         className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"

@@ -29,7 +29,8 @@ import { toast } from 'react-hot-toast';
 
 export default function Edit({ school, stats, formErrors }) {
     const [activeTab, setActiveTab] = useState(0);
-    const { flash } = usePage().props;
+    const { flash, auth } = usePage().props;
+    const userRole = auth.user.role.id;
 
     // Show success message if it exists in flash
     useEffect(() => {
@@ -73,6 +74,7 @@ export default function Edit({ school, stats, formErrors }) {
             <Head title={`Edit ${school.name}`} />
 
             <div className="px-4 py-6 sm:px-6 lg:px-8">
+                {userRole === 1 && 
                 <PageHeader
                     title={school.name}
                     subtitle="Manage school settings and configuration"
@@ -89,7 +91,7 @@ export default function Edit({ school, stats, formErrors }) {
                             {processing ? 'Saving...' : 'Up to date'}
                         </Badge>
                     }
-                />
+                />}
 
                 <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
                     <StatisticsCard

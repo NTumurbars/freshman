@@ -153,7 +153,7 @@ export default function Dashboard() {
     };
 
     // Only show school-specific content if we have a school
-    const canShowSchoolContent = userRole === 1 && school?.id;
+    const canShowSchoolContent = userRole === 2 && school?.id;
 
     const isMajorCoordinator = userRole === 3 && school?.id;
 
