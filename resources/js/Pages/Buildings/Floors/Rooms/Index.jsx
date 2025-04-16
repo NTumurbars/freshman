@@ -1,26 +1,24 @@
-import React, { useState } from 'react';
-import { Head, Link, usePage, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import {
-    Card,
-    Title,
-    Text,
-    Grid,
-    Col,
-    Metric,
-    Button,
-    Flex,
-    Divider,
-    Badge,
-} from '@tremor/react';
-import {
-    BuildingOffice2Icon,
-    PlusIcon,
     ArrowLeftIcon,
-    UsersIcon,
     ComputerDesktopIcon,
+    PlusIcon,
+    UsersIcon,
     WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
+import { Head, Link, useForm } from '@inertiajs/react';
+import {
+    Badge,
+    Button,
+    Card,
+    Col,
+    Divider,
+    Flex,
+    Grid,
+    Metric,
+    Text,
+    Title,
+} from '@tremor/react';
 import { DoorOpen, Hotel, Layers } from 'lucide-react';
 
 const RoomCard = ({ room, school, building, floor }) => {
@@ -40,7 +38,7 @@ const RoomCard = ({ room, school, building, floor }) => {
                 <div className="mt-4">
                     <Text className="font-medium">Features:</Text>
                     <div className="mt-2 flex flex-wrap gap-2">
-                        {features.map(feature => (
+                        {features.map((feature) => (
                             <Badge key={feature.id} color="blue">
                                 {feature.name}
                             </Badge>
@@ -57,15 +55,17 @@ const RoomCard = ({ room, school, building, floor }) => {
             <Divider className="my-4" />
 
             <Flex justifyContent="end">
-                <Link href={route('rooms.edit', {
-                    school: school.id,
-                    room: room.id,
-                    return_url: route('buildings.floors.rooms.index', {
+                <Link
+                    href={route('rooms.edit', {
                         school: school.id,
-                        building: building.id,
-                        floor: floor.id
-                    })
-                })}>
+                        room: room.id,
+                        return_url: route('buildings.floors.rooms.index', {
+                            school: school.id,
+                            building: building.id,
+                            floor: floor.id,
+                        }),
+                    })}
+                >
                     <Button variant="light" icon={WrenchScrewdriverIcon}>
                         Manage Room
                     </Button>
@@ -76,8 +76,6 @@ const RoomCard = ({ room, school, building, floor }) => {
 };
 
 export default function Index({ rooms, floor, building, school }) {
-    const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
     const { visit } = useForm();
 
     const handleAddRoom = () => {
@@ -88,24 +86,26 @@ export default function Index({ rooms, floor, building, school }) {
                 return_url: route('buildings.floors.rooms.index', {
                     school: school.id,
                     building: building.id,
-                    floor: floor.id
-                })
+                    floor: floor.id,
+                }),
             },
-            preserveState: false
+            preserveState: false,
         });
     };
 
     return (
-        <AppLayout userRole={userRole} school={school}>
+        <AppLayout>
             <Head title={`Rooms - ${floor.name}`} />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8">
-                <div className="sm:flex sm:items-center sm:justify-between mb-6">
+            <div className="px-4 py-6 sm:px-6 lg:px-8">
+                <div className="mb-6 sm:flex sm:items-center sm:justify-between">
                     <div className="flex items-center">
-                        <Link href={route('buildings.floors.index', {
-                            school: school.id,
-                            building: building.id
-                        })}>
+                        <Link
+                            href={route('buildings.floors.index', {
+                                school: school.id,
+                                building: building.id,
+                            })}
+                        >
                             <Button
                                 variant="light"
                                 color="gray"
@@ -116,18 +116,18 @@ export default function Index({ rooms, floor, building, school }) {
                             </Button>
                         </Link>
                         <div className="flex items-center">
-                            <Layers className="h-8 w-8 text-blue-600 mr-3" />
+                            <Layers className="mr-3 h-8 w-8 text-blue-600" />
                             <div>
                                 <Title>Floor {floor.number} Rooms</Title>
-                                <Text>Manage rooms in {building.name}, Floor {floor.number}</Text>
+                                <Text>
+                                    Manage rooms in {building.name}, Floor{' '}
+                                    {floor.number}
+                                </Text>
                             </div>
                         </div>
                     </div>
                     <div className="mt-4 sm:mt-0">
-                        <Button 
-                            icon={PlusIcon} 
-                            onClick={handleAddRoom}
-                        >
+                        <Button icon={PlusIcon} onClick={handleAddRoom}>
                             Add Room
                         </Button>
                     </div>
@@ -136,7 +136,7 @@ export default function Index({ rooms, floor, building, school }) {
                 <Card className="mb-6">
                     <Flex alignItems="center">
                         <div className="flex items-center">
-                            <Hotel className="h-6 w-6 text-blue-600 mr-2" />
+                            <Hotel className="mr-2 h-6 w-6 text-blue-600" />
                             <Title>Room Summary</Title>
                         </div>
                     </Flex>
@@ -146,25 +146,38 @@ export default function Index({ rooms, floor, building, school }) {
                     <Grid numItems={1} numItemsSm={3} className="gap-6">
                         <Card decoration="top" decorationColor="blue">
                             <Flex alignItems="center">
-                                <DoorOpen className="h-6 w-6 text-blue-600 mr-2" />
+                                <DoorOpen className="mr-2 h-6 w-6 text-blue-600" />
                                 <Text>Total Rooms</Text>
                             </Flex>
                             <Metric>{rooms.length}</Metric>
                         </Card>
                         <Card decoration="top" decorationColor="indigo">
                             <Flex alignItems="center">
-                                <UsersIcon className="h-6 w-6 text-indigo-600 mr-2" />
+                                <UsersIcon className="mr-2 h-6 w-6 text-indigo-600" />
                                 <Text>Total Capacity</Text>
                             </Flex>
-                            <Metric>{rooms.reduce((sum, room) => sum + room.capacity, 0)}</Metric>
+                            <Metric>
+                                {rooms.reduce(
+                                    (sum, room) => sum + room.capacity,
+                                    0,
+                                )}
+                            </Metric>
                         </Card>
                         <Card decoration="top" decorationColor="purple">
                             <Flex alignItems="center">
-                                <ComputerDesktopIcon className="h-6 w-6 text-purple-600 mr-2" />
+                                <ComputerDesktopIcon className="mr-2 h-6 w-6 text-purple-600" />
                                 <Text>Features Available</Text>
                             </Flex>
                             <Metric>
-                                {new Set(rooms.flatMap(room => room.features || []).map(f => f.id)).size}
+                                {
+                                    new Set(
+                                        rooms
+                                            .flatMap(
+                                                (room) => room.features || [],
+                                            )
+                                            .map((f) => f.id),
+                                    ).size
+                                }
                             </Metric>
                         </Card>
                     </Grid>
@@ -176,9 +189,11 @@ export default function Index({ rooms, floor, building, school }) {
                         <Card>
                             <div className="flex flex-col items-center justify-center py-12">
                                 <DoorOpen className="h-12 w-12 text-gray-400" />
-                                <Text className="mt-2">No rooms found in this floor</Text>
-                                <Button 
-                                    variant="light" 
+                                <Text className="mt-2">
+                                    No rooms found in this floor
+                                </Text>
+                                <Button
+                                    variant="light"
                                     icon={PlusIcon}
                                     onClick={handleAddRoom}
                                     className="mt-4"
@@ -188,10 +203,20 @@ export default function Index({ rooms, floor, building, school }) {
                             </div>
                         </Card>
                     ) : (
-                        <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
-                            {rooms.map(room => (
+                        <Grid
+                            numItems={1}
+                            numItemsSm={2}
+                            numItemsLg={3}
+                            className="gap-6"
+                        >
+                            {rooms.map((room) => (
                                 <Col key={room.id}>
-                                    <RoomCard room={room} school={school} building={building} floor={floor} />
+                                    <RoomCard
+                                        room={room}
+                                        school={school}
+                                        building={building}
+                                        floor={floor}
+                                    />
                                 </Col>
                             ))}
                         </Grid>

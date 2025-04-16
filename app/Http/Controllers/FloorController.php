@@ -42,11 +42,77 @@ class FloorController extends Controller
 
     public function show(School $school, Building $building, Floor $floor)
     {
-        $floor->load('rooms');
+        $floor->load(['rooms.schedules', 'rooms.features', 'building']);
+
+        // Calculate utilization for the floor
+        $timeBlocksPerDay = 12; // 12 hours of operation per day (8am-8pm)
+        $daysPerWeek = 5; // Monday to Friday
+        $maxPossibleSlotsPerRoom = $timeBlocksPerDay * $daysPerWeek;
+
+        $totalRooms = 0;
+        $totalUsedSlots = 0;
+        $totalPossibleSlots = 0;
+        $roomsWithUtilization = [];
+        $processedRooms = [];
+
+        // Process each room to calculate utilization
+        foreach ($floor->rooms as $room) {
+            $scheduledSlotsCount = $room->schedules->count();
+            $availableSlots = $maxPossibleSlotsPerRoom - $scheduledSlotsCount;
+
+            $roomUtilization = [
+                'used_slots' => $scheduledSlotsCount,
+                'available_slots' => $availableSlots,
+                'total_slots' => $maxPossibleSlotsPerRoom,
+                'utilization_percentage' => $maxPossibleSlotsPerRoom > 0
+                    ? round(($scheduledSlotsCount / $maxPossibleSlotsPerRoom) * 100, 1)
+                    : 0
+            ];
+
+            // Add to floor totals
+            $totalRooms++;
+            $totalUsedSlots += $scheduledSlotsCount;
+            $totalPossibleSlots += $maxPossibleSlotsPerRoom;
+
+            // Add to list of rooms for sorting
+            $roomsWithUtilization[] = [
+                'id' => $room->id,
+                'room_number' => $room->room_number,
+                'capacity' => $room->capacity,
+                'used_slots' => $scheduledSlotsCount,
+                'available_slots' => $availableSlots,
+                'utilization_percentage' => $roomUtilization['utilization_percentage']
+            ];
+
+            // Create processed room with utilization data
+            $processedRoom = $room->toArray();
+            $processedRoom['utilization'] = $roomUtilization;
+            $processedRooms[] = $processedRoom;
+        }
+
+        // Sort rooms by utilization for most/least utilized lists
+        usort($roomsWithUtilization, function($a, $b) {
+            return $b['utilization_percentage'] - $a['utilization_percentage'];
+        });
+
+        // Calculate floor utilization
+        $floorUtilization = [
+            'total_rooms' => $totalRooms,
+            'used_slots' => $totalUsedSlots,
+            'possible_slots' => $totalPossibleSlots,
+            'utilization_percentage' => $totalPossibleSlots > 0
+                ? round(($totalUsedSlots / $totalPossibleSlots) * 100, 1)
+                : 0,
+            'most_utilized_rooms' => array_slice($roomsWithUtilization, 0, 5),
+            'least_utilized_rooms' => array_slice(array_reverse($roomsWithUtilization), 0, 5)
+        ];
+
         return Inertia::render('Buildings/Floors/Show', [
             'floor' => $floor,
             'building' => $building,
-            'school' => $school
+            'school' => $school,
+            'utilization' => $floorUtilization,
+            'processed_rooms' => $processedRooms
         ]);
     }
 

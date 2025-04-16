@@ -69,31 +69,28 @@
 }
 
 /* Building Layout Styles */
-.building-layout {
+.building-container {
     display: flex;
     flex-direction: column-reverse;
     gap: 16px;
     padding: 16px 0;
 }
 
-.floor-box {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background-color: #f9fafb;
+.floor-card {
     overflow: hidden;
+    border: none !important;
     transition: all 0.2s ease-in-out;
-    cursor: pointer;
 }
 
-.floor-box:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+.floor-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
     transform: translateY(-2px);
 }
 
 .floor-header {
     background-color: #1e40af;
     color: white;
-    padding: 8px 16px;
+    padding: 12px 16px;
     font-weight: 600;
     display: flex;
     justify-content: space-between;
@@ -118,18 +115,55 @@
 
 .rooms-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.room-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+.room-link:hover {
+    transform: translateY(-2px);
 }
 
 .room-box {
     background-color: white;
     border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    padding: 8px;
+    border-radius: 6px;
+    padding: 12px;
     text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.room-link:hover .room-box {
+    border-color: #bfdbfe;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.room-number {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 8px;
+}
+
+.room-capacity {
     font-size: 14px;
-    font-weight: 500;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.room-status {
+    margin-top: auto;
 }
 
 .no-rooms {
@@ -145,4 +179,80 @@
     padding: 8px 16px;
     border-top: 1px solid #e5e7eb;
     background-color: #f3f4f6;
+}
+
+/* Floor Index and Show Page Styles */
+.floor-index-card {
+    background-color: white;
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    height: 100%;
+}
+
+.floor-icon-wrapper {
+    background-color: #eef2ff;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-btn:hover {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+.delete-btn:hover {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.room-detail-card {
+    height: 100%;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.room-icon-wrapper {
+    background-color: #eef2ff;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.room-features {
+    background-color: #f9fafb;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 12px;
+}
+
+.feature-badge {
+    transition: all 0.2s ease;
+}
+
+.feature-badge:hover {
+    transform: scale(1.05);
+}
+
+.edit-room-btn:hover {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+.empty-rooms-card {
+    background-color: #f9fafb;
+    border: 1px dashed #d1d5db;
+}
+
+.view-details-hint {
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.room-detail-card:hover .view-details-hint {
+    opacity: 1;
 }

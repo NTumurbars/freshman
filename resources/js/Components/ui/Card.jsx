@@ -1,29 +1,29 @@
-export default function Card({
-    title,
-    subtitle,
-    children,
-    footer,
-    noPadding = false,
-    className = ''
-}) {
+const Card = ({ className = "", children, ...props }) => {
     return (
-        <div className={`overflow-hidden rounded-lg bg-white shadow ${className}`}>
-            {(title || subtitle) && (
-                <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                    {title && <h2 className="text-lg font-medium text-gray-900">{title}</h2>}
-                    {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
-                </div>
-            )}
-
-            <div className={noPadding ? '' : 'px-6 py-5'}>
-                {children}
-            </div>
-
-            {footer && (
-                <div className="border-t border-gray-200 bg-gray-50 px-6 py-3">
-                    {footer}
-                </div>
-            )}
+        <div
+            className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`}
+            {...props}
+        >
+            {children}
         </div>
     );
-}
+};
+
+const CardHeader = ({ className = "", ...props }) => {
+    return (
+        <div className={`flex flex-col space-y-1.5 p-6 ${className}`} {...props} />
+    );
+};
+
+const CardTitle = ({ className = "", ...props }) => {
+    return (
+        <h3 className={`text-2xl font-semibold leading-none tracking-tight ${className}`} {...props} />
+    );
+};
+
+const CardContent = ({ className = "", ...props }) => {
+    return <div className={`p-6 pt-0 ${className}`} {...props} />;
+};
+
+export { Card, CardHeader, CardTitle, CardContent };
+export default Card;

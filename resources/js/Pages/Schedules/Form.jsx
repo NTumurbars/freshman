@@ -17,6 +17,35 @@ export default function ScheduleForm({
     const { auth } = usePage().props;
     const school = auth.user.school;
 
+    // Add debug output to understand the incoming schedule data
+    console.log('ScheduleForm received data:', {
+        hasSchedule: !!schedule,
+        scheduleId: schedule?.id,
+        section_id: schedule?.section_id,
+        room_id: schedule?.room_id,
+        sectionsCount: sections.length,
+        roomsCount: rooms.length,
+    });
+
+    // Find initial section and room - do this synchronously before state initialization
+    let initialSection = null;
+    let initialRoom = null;
+
+    if (schedule) {
+        // Find section
+        if (schedule.section_id && sections.length > 0) {
+            initialSection = sections.find(s => s.id.toString() === schedule.section_id.toString()) || null;
+            console.log('Found initial section:', initialSection);
+        }
+
+        // Find room
+        if (schedule.room_id && rooms.length > 0) {
+            initialRoom = rooms.find(r => r && r.id && r.id.toString() === schedule.room_id.toString()) || null;
+            console.log('Found initial room:', initialRoom);
+        }
+    }
+
+    // Initialize form with schedule data if available
     const { data, setData, post, put, processing, errors, delete: destroy } = useForm({
         section_id: schedule?.section_id || preselectedSectionId || '',
         room_id: schedule?.room_id || '',
@@ -30,20 +59,127 @@ export default function ScheduleForm({
     });
 
     const [isVirtual, setIsVirtual] = useState(data.location_type === 'virtual');
-    const [selectedSection, setSelectedSection] = useState(null);
+    const [selectedSection, setSelectedSection] = useState(initialSection);
     const [isEditingPattern, setIsEditingPattern] = useState(false);
     const [showCapacityPrompt, setShowCapacityPrompt] = useState(false);
-    const [selectedRoom, setSelectedRoom] = useState(null);
+    const [selectedRoom, setSelectedRoom] = useState(initialRoom);
     const [capacityMismatch, setCapacityMismatch] = useState(null);
     const [shouldUpdateCapacity, setShouldUpdateCapacity] = useState(false);
+    const [initialized, setInitialized] = useState(!!initialSection || !!initialRoom);
 
+    // Helper function for time calculations
+    const timeToMinutes = (timeStr) => {
+        if (!timeStr) return 0;
+        try {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return (hours * 60) + minutes;
+        } catch (error) {
+            console.error('Error converting time to minutes:', error);
+            return 0;
+        }
+    };
+
+    // Calculate room utilization percentage - exactly match backend logic
+    const calculateUtilization = (schedules) => {
+        // Handle various formats of schedules data
+        if (!schedules) return 0;
+
+        // Ensure we have an array of schedules
+        let schedulesArray = schedules;
+        if (!Array.isArray(schedulesArray)) {
+            // If it's an object with data property (like from an API response)
+            if (schedulesArray.data && Array.isArray(schedulesArray.data)) {
+                schedulesArray = schedulesArray.data;
+            } else {
+                console.warn('Unexpected schedules format:', schedulesArray);
+                return 0;
+            }
+        }
+
+        // Constants matching backend calculation in RoomController
+        const timeBlocksPerDay = 12; // 12 hours per day (8am-8pm)
+        const daysPerWeek = 5; // Monday to Friday
+        const maxPossibleSlots = timeBlocksPerDay * daysPerWeek;
+
+        // Count the scheduled slots (each schedule counts as one slot)
+        const scheduledSlots = schedulesArray.length;
+
+        // Calculate utilization percentage
+        return maxPossibleSlots > 0
+            ? Math.round((scheduledSlots / maxPossibleSlots) * 100 * 10) / 10 // Match backend 1 decimal place
+            : 0;
+    };
+
+    // Combined initialization effect that runs once to set both section and room
     useEffect(() => {
-        // Find the selected section in the sections array
-        if (data.section_id && sections && sections.length > 0) {
+        if (!initialized && schedule) {
+            setInitialized(true);
+            console.log('Initial schedule data for initialization:', schedule);
+
+            // Set selected section
+            if (schedule.section_id) {
+                const matchingSection = sections.find(s => s.id.toString() === schedule.section_id.toString());
+                if (matchingSection) {
+                    console.log('Found matching section:', matchingSection);
+                    setSelectedSection(matchingSection);
+                } else {
+                    console.warn(`Could not find matching section with ID ${schedule.section_id} in sections list`);
+                    // Additional debug to see what's in the sections array
+                    console.log('Available section IDs:', sections.map(s => s.id.toString()));
+                }
+            }
+
+            // Set selected room
+            if (schedule.room_id) {
+                const matchingRoom = rooms.find(r => r.id && r.id.toString() === schedule.room_id.toString());
+                if (matchingRoom) {
+                    console.log('Found matching room:', matchingRoom);
+                    setSelectedRoom(matchingRoom);
+
+                    // Force set the room_id in the form data
+                    console.log('Setting room_id in form data to:', schedule.room_id.toString());
+                    setData('room_id', schedule.room_id.toString());
+                } else {
+                    console.warn(`Could not find matching room with ID ${schedule.room_id} in rooms list`);
+                    // Additional debug to see what's in the rooms array
+                    console.log('Available room IDs:', rooms.map(r => r?.id?.toString()).filter(Boolean));
+                }
+            }
+        }
+    }, [schedule, sections, rooms, initialized]);
+
+    // Add a debug useEffect to track form data changes
+    useEffect(() => {
+        console.log('Form data changed:', {
+            section_id: data.section_id,
+            room_id: data.room_id
+        });
+    }, [data.section_id, data.room_id]);
+
+    // These effects handle changes to the form data
+    useEffect(() => {
+        if (data.section_id && sections.length > 0) {
             const section = sections.find(s => s.id.toString() === data.section_id.toString());
-            setSelectedSection(section);
+            if (section) {
+                setSelectedSection(section);
+                console.log('Section changed via data change to:', section.id);
+            }
         }
     }, [data.section_id, sections]);
+
+    useEffect(() => {
+        if (data.room_id && rooms.length > 0) {
+            const room = rooms.find(r => r && r.id && r.id.toString() === data.room_id.toString());
+            if (room) {
+                setSelectedRoom(room);
+                console.log('Room changed via data change to:', room.id);
+            } else {
+                setSelectedRoom(null);
+            }
+        } else {
+            setSelectedRoom(null);
+        }
+    }, [data.room_id, rooms]);
 
     useEffect(() => {
         if (data.location_type === 'virtual') {
@@ -87,8 +223,33 @@ export default function ScheduleForm({
         }
     }, [data.meeting_pattern, data.day_of_week, data.start_time, data.end_time, data.location_type, data.room_id, data.section_id]);
 
+    // Check capacity mismatch when either section or room changes
+    useEffect(() => {
+        if (selectedRoom && selectedSection && selectedSection.capacity) {
+            console.log('Checking capacity mismatch between section and room');
+            if (selectedRoom.capacity < selectedSection.capacity) {
+                setCapacityMismatch({
+                    type: 'warning',
+                    message: `This room's capacity (${selectedRoom.capacity}) is less than the section's capacity (${selectedSection.capacity}).`
+                });
+            } else if (selectedRoom.capacity > selectedSection.capacity) {
+                setCapacityMismatch({
+                    type: 'prompt',
+                    message: `This room's capacity (${selectedRoom.capacity}) is greater than the section's capacity (${selectedSection.capacity}).`
+                });
+            } else {
+                setCapacityMismatch(null);
+            }
+        } else {
+            setCapacityMismatch(null);
+        }
+    }, [selectedRoom, selectedSection]);
+
     // When handling meeting_pattern changes while editing:
     const handleChange = (field, value) => {
+        // Add debug logging
+        console.log(`Field ${field} changing to:`, value);
+
         // Special handling for location_type...
         if (field === 'location_type') {
             if (value === 'in_person') {
@@ -96,9 +257,103 @@ export default function ScheduleForm({
             }
         }
 
+        // When changing time or meeting pattern, check if selected room still works
+        if ((field === 'start_time' || field === 'end_time' || field === 'day_of_week' || field === 'meeting_pattern')
+            && data.room_id && value) {
+
+            // Update data first
+            setData(field, value);
+
+            // Then check if the selected room now has conflicts
+            const newData = { ...data, [field]: value };
+            const selectedRoom = rooms.find(r => r && r.id && r.id.toString() === data.room_id.toString());
+
+            if (selectedRoom && newData.start_time && newData.end_time && selectedRoom.schedules) {
+                // Get days to check based on meeting pattern
+                let daysToCheck = [newData.day_of_week || 'Monday'];
+                try {
+                    if (newData.meeting_pattern && newData.meeting_pattern !== 'single') {
+                        daysToCheck = getDaysFromPattern(newData.meeting_pattern) || daysToCheck;
+                    }
+                } catch (error) {
+                    console.error('Error getting days from pattern:', error);
+                }
+
+                // Check for conflicts
+                let hasConflict = false;
+                daysToCheck.forEach(day => {
+                    if (!day) return;
+
+                    const daySchedules = selectedRoom.schedules.filter(s => s && s.day_of_week === day) || [];
+
+                    // Skip the current schedule being edited
+                    const schedulesToCheck = schedule?.id ?
+                        daySchedules.filter(s => s && s.id !== schedule.id) :
+                        daySchedules;
+
+                    schedulesToCheck.forEach(s => {
+                        if (s && s.start_time && s.end_time &&
+                            hasTimeConflict(s.start_time, s.end_time, newData.start_time, newData.end_time)) {
+                            hasConflict = true;
+                        }
+                    });
+                });
+
+                // If there's a conflict, reset the room selection
+                if (hasConflict) {
+                    setData('room_id', '');
+                    setSelectedRoom(null);
+                    setCapacityMismatch(null);
+                    setShouldUpdateCapacity(false);
+
+                    // Show alert about the conflict
+                    alert('The previously selected room is no longer available at the selected times. Please choose a different room.');
+                }
+            }
+
+            return;
+        }
+
+        if (field === 'section_id' && value) {
+            // Find the section object
+            const section = sections.find(s => s.id.toString() === value.toString());
+            console.log('Setting selected section to:', section);
+            setSelectedSection(section);
+
+            // Update the form data
+            setData('section_id', value);
+
+            // Check for capacity mismatch if room is already selected
+            if (selectedRoom && section && section.capacity) {
+                if (selectedRoom.capacity < section.capacity) {
+                    // Room capacity is less than section capacity - show warning
+                    setCapacityMismatch({
+                        type: 'warning',
+                        message: `This room's capacity (${selectedRoom.capacity}) is less than the section's capacity (${section.capacity}).`
+                    });
+                } else if (selectedRoom.capacity > section.capacity) {
+                    // Room capacity is more than section capacity - show prompt
+                    setCapacityMismatch({
+                        type: 'prompt',
+                        message: `This room's capacity (${selectedRoom.capacity}) is greater than the section's capacity (${section.capacity}).`
+                    });
+                } else {
+                    // Capacities match
+                    setCapacityMismatch(null);
+                }
+            }
+
+            return;
+        }
+
         if (field === 'room_id' && value) {
-            const room = rooms.find(r => r.id.toString() === value.toString());
+            // Find the room object
+            const room = rooms.find(r => r && r.id && r.id.toString() === value.toString());
+            console.log('Setting selected room to:', room);
             setSelectedRoom(room);
+
+            // Update the form data
+            setData('room_id', value);
 
             // Check capacity mismatch if a section is selected and has capacity
             if (selectedSection && selectedSection.capacity && room) {
@@ -136,6 +391,17 @@ export default function ScheduleForm({
                 setData('update_section_capacity', false);
                 setData('new_capacity', null);
             }
+
+            return;
+        } else if (field === 'room_id' && !value) {
+            // If clearing room selection
+            setSelectedRoom(null);
+            setData('room_id', '');
+            setCapacityMismatch(null);
+            setShouldUpdateCapacity(false);
+            setData('update_section_capacity', false);
+            setData('new_capacity', null);
+            return;
         }
 
         if (field === 'meeting_pattern') {
@@ -161,6 +427,7 @@ export default function ScheduleForm({
             return;
         }
 
+        // For all other fields, just update the form data
         setData(field, value);
     };
 
@@ -226,6 +493,79 @@ export default function ScheduleForm({
             return;
         }
 
+        // Check if we're editing a schedule and keeping the same room
+        const isKeepingSameRoom = schedule && schedule.room_id && data.room_id.toString() === schedule.room_id.toString();
+
+        // Skip room conflict check if we're editing and keeping the same room, day and have similar times
+        const isSimilarTime = schedule && data.start_time && data.end_time &&
+            schedule.start_time && schedule.end_time &&
+            Math.abs(timeToMinutes(data.start_time) - timeToMinutes(schedule.start_time.substring(0, 5))) < 15 &&
+            Math.abs(timeToMinutes(data.end_time) - timeToMinutes(schedule.end_time.substring(0, 5))) < 15;
+
+        const isSameDay = schedule && schedule.day_of_week === data.day_of_week;
+
+        // Skip room conflict check if this is the same room, same day and similar time as the original schedule
+        const skipConflictCheck = isKeepingSameRoom && isSameDay && isSimilarTime;
+
+        console.log('Submit conflict check params:', {
+            isEditing: !!schedule,
+            isKeepingSameRoom,
+            isSameDay,
+            isSimilarTime,
+            skipConflictCheck,
+            scheduleStartTime: schedule?.start_time,
+            dataStartTime: data.start_time,
+            scheduleEndTime: schedule?.end_time,
+            dataEndTime: data.end_time
+        });
+
+        // Final check for room conflicts before submitting
+        if (!skipConflictCheck && data.room_id && data.start_time && data.end_time) {
+            const selectedRoom = rooms.find(r => r && r.id && r.id.toString() === data.room_id.toString());
+
+            if (selectedRoom && selectedRoom.schedules) {
+                // Get days to check based on meeting pattern
+                let daysToCheck = [data.day_of_week || 'Monday'];
+                try {
+                    if (data.meeting_pattern && data.meeting_pattern !== 'single') {
+                        daysToCheck = getDaysFromPattern(data.meeting_pattern) || daysToCheck;
+                    }
+                } catch (error) {
+                    console.error('Error getting days from pattern:', error);
+                }
+
+                // Check for conflicts
+                let hasConflict = false;
+                let conflictDetails = [];
+
+                daysToCheck.forEach(day => {
+                    if (!day) return;
+
+                    const daySchedules = selectedRoom.schedules.filter(s => s && s.day_of_week === day) || [];
+
+                    // Skip the current schedule being edited - ensure we're using string comparison
+                    const schedulesToCheck = schedule?.id ?
+                        daySchedules.filter(s => s && s.id && s.id.toString() !== schedule.id.toString()) :
+                        daySchedules;
+
+                    schedulesToCheck.forEach(s => {
+                        if (s && s.start_time && s.end_time &&
+                            hasTimeConflict(s.start_time, s.end_time, data.start_time, data.end_time)) {
+                            hasConflict = true;
+                            const section = s.section?.course?.title || 'Unknown course';
+                            const time = `${s.start_time}-${s.end_time}`;
+                            conflictDetails.push(`${section} on ${day} at ${time}`);
+                        }
+                    });
+                });
+
+                if (hasConflict) {
+                    alert(`Cannot save schedule due to room conflicts:\n${conflictDetails.join('\n')}`);
+                    return;
+                }
+            }
+        }
+
         // Check if there's a capacity warning to acknowledge
         if (capacityMismatch && capacityMismatch.type === 'warning' &&
             !confirm('The selected room has less capacity than the section requires. Continue anyway?')) {
@@ -279,11 +619,26 @@ export default function ScheduleForm({
                 console.log('Should update capacity:', shouldUpdateCapacity);
                 console.log('Form data update_section_capacity:', data.update_section_capacity);
 
+                // Check if we're editing a schedule with the same room
+                const isKeepingSameRoom = schedule && schedule.room_id &&
+                    finalData.room_id.toString() === schedule.room_id.toString();
+
+                console.log('Edit params:', {
+                    isKeepingSameRoom,
+                    scheduleRoomId: schedule.room_id,
+                    finalDataRoomId: finalData.room_id,
+                    scheduleDay: schedule.day_of_week,
+                    finalDataDay: finalData.day_of_week,
+                });
+
                 // Create a new object for the submission that explicitly includes all needed fields
                 const submissionData = {
                     ...data,
                     update_section_capacity: shouldUpdateCapacity, // Use the checkbox state directly
-                    new_capacity: shouldUpdateCapacity && selectedRoom ? Number(selectedRoom.capacity) : null
+                    new_capacity: shouldUpdateCapacity && selectedRoom ? Number(selectedRoom.capacity) : null,
+                    is_keeping_same_room: isKeepingSameRoom,
+                    bypass_conflict_check_for_same_room: isKeepingSameRoom,
+                    original_schedule_id: schedule.id
                 };
 
                 console.log('Final submission data:', submissionData);
@@ -315,11 +670,25 @@ export default function ScheduleForm({
                 new_capacity: formData.new_capacity
             });
 
+            // Check if we're editing a schedule with the same room, day and similar time
+            // This allows us to bypass conflict checks when appropriate
+            const isKeepingSameRoom = schedule && schedule.room_id && formData.room_id.toString() === schedule.room_id.toString();
+            const isEditingPattern = schedule && formData.meeting_pattern !== 'single';
+
+            // For editing pattern, include this info in API call
+            const apiData = {
+                ...formData,
+                is_keeping_same_room: isKeepingSameRoom,
+                is_editing_existing: !!schedule,
+                bypass_conflict_check_for_same_room: isKeepingSameRoom,
+                original_schedule_id: schedule ? schedule.id : null
+            };
+
             // For single schedule patterns
             if (formData.meeting_pattern === 'single') {
                 console.log('Creating single schedule for day:', formData.day_of_week);
                 const finalData = {
-                    ...formData,
+                    ...apiData,
                     meeting_pattern: 'single', // Ensure it's set to single
                     update_section_capacity: Boolean(formData.update_section_capacity),
                     new_capacity: formData.new_capacity ? Number(formData.new_capacity) : null
@@ -341,7 +710,7 @@ export default function ScheduleForm({
 
             // Ensure update_section_capacity is properly formatted for batch endpoint
             const batchData = {
-                ...formData,
+                ...apiData,
                 update_section_capacity: Boolean(formData.update_section_capacity),
                 new_capacity: formData.new_capacity ? Number(formData.new_capacity) : null
             };
@@ -429,6 +798,59 @@ export default function ScheduleForm({
         return pattern ? pattern.label : value;
     };
 
+    // Add this function after getDaysFromPattern
+    const hasTimeConflict = (existingStart, existingEnd, newStart, newEnd) => {
+        // Validate inputs
+        if (!existingStart || !existingEnd || !newStart || !newEnd) {
+            return false; // Can't determine conflict with missing times
+        }
+
+        try {
+            // Convert time strings to comparable values (minutes since midnight)
+            const timeToMinutes = (timeStr) => {
+                if (!timeStr || typeof timeStr !== 'string') return 0;
+                const parts = timeStr.split(':');
+                if (parts.length < 2) return 0;
+
+                const hours = parseInt(parts[0]) || 0;
+                const minutes = parseInt(parts[1]) || 0;
+                return hours * 60 + minutes;
+            };
+
+            // Convert times to minutes
+            const existingStartMins = timeToMinutes(existingStart);
+            const existingEndMins = timeToMinutes(existingEnd);
+            const newStartMins = timeToMinutes(newStart);
+            const newEndMins = timeToMinutes(newEnd);
+
+            // Check for overlap
+            return (
+                (newStartMins < existingEndMins && newEndMins > existingStartMins) ||
+                (existingStartMins < newEndMins && existingEndMins > newStartMins)
+            );
+        } catch (error) {
+            console.error('Error in hasTimeConflict:', error);
+            return false; // Assume no conflict if there's an error
+        }
+    };
+
+    // Calculate utilization percentage
+    const utilizationPercent = calculateUtilization(selectedRoom?.schedules);
+
+    // Determine color based on utilization
+    let utilizationColor;
+    if (utilizationPercent < 20) {
+        utilizationColor = 'text-green-600';
+    } else if (utilizationPercent < 60) {
+        utilizationColor = 'text-amber-600';
+    } else {
+        utilizationColor = 'text-red-600';
+    }
+
+    const buildingName = selectedRoom?.floor?.building?.name || 'Unknown Building';
+    const roomNumber = selectedRoom?.room_number || 'Unknown';
+    const capacity = selectedRoom?.capacity || 'Unknown';
+
     return (
         <div className="space-y-6">
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
@@ -444,19 +866,22 @@ export default function ScheduleForm({
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Section <span className="text-red-500">*</span>
                         </label>
-                        <select
-                            value={data.section_id}
-                            onChange={(e) => handleChange('section_id', e.target.value)}
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        <Select
+                            value={data.section_id ? data.section_id.toString() : ''}
+                            onValueChange={(value) => {
+                                console.log('Section dropdown changed to:', value);
+                                handleChange('section_id', value);
+                            }}
+                            placeholder="Select Section"
+                            className={errors.section_id ? 'border-red-500' : ''}
                             disabled={preselectedSectionId}
                         >
-                            <option value="">Select Section</option>
                             {sections.map((section) => (
-                                <option key={section.id} value={section.id}>
+                                <SelectItem key={section.id.toString()} value={section.id.toString()}>
                                     {section.course?.code} - {section.section_code} ({section.course?.title})
-                                </option>
+                                </SelectItem>
                             ))}
-                        </select>
+                        </Select>
                         {errors.section_id && (
                             <div className="mt-1 text-sm text-red-600">
                                 {errors.section_id}
@@ -476,18 +901,18 @@ export default function ScheduleForm({
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Pattern
                             </label>
-                            <select
+                            <Select
                                 value={data.meeting_pattern}
-                                onChange={(e) => handleChange('meeting_pattern', e.target.value)}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                onValueChange={(value) => handleChange('meeting_pattern', value)}
+                                placeholder="Select Pattern"
                             >
-                                <option value="single">Single Meeting</option>
-                                <option value="monday-wednesday-friday">Monday/Wednesday/Friday</option>
-                                <option value="tuesday-thursday">Tuesday/Thursday</option>
-                                <option value="monday-wednesday">Monday/Wednesday</option>
-                                <option value="tuesday-friday">Tuesday/Friday</option>
-                                <option value="weekly">Weekly (Mon-Fri)</option>
-                            </select>
+                                <SelectItem value="single">Single Meeting</SelectItem>
+                                <SelectItem value="monday-wednesday-friday">Monday/Wednesday/Friday</SelectItem>
+                                <SelectItem value="tuesday-thursday">Tuesday/Thursday</SelectItem>
+                                <SelectItem value="monday-wednesday">Monday/Wednesday</SelectItem>
+                                <SelectItem value="tuesday-friday">Tuesday/Friday</SelectItem>
+                                <SelectItem value="weekly">Weekly (Mon-Fri)</SelectItem>
+                            </Select>
                         </div>
 
                         {data.meeting_pattern === 'single' && (
@@ -495,19 +920,19 @@ export default function ScheduleForm({
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Day of Week <span className="text-red-500">*</span>
                                 </label>
-                                <select
+                                <Select
                                     value={data.day_of_week}
-                                    onChange={(e) => handleChange('day_of_week', e.target.value)}
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                    onValueChange={(value) => handleChange('day_of_week', value)}
+                                    placeholder="Select Day"
                                 >
-                                    <option value="Monday">Monday</option>
-                                    <option value="Tuesday">Tuesday</option>
-                                    <option value="Wednesday">Wednesday</option>
-                                    <option value="Thursday">Thursday</option>
-                                    <option value="Friday">Friday</option>
-                                    <option value="Saturday">Saturday</option>
-                                    <option value="Sunday">Sunday</option>
-                                </select>
+                                    <SelectItem value="Monday">Monday</SelectItem>
+                                    <SelectItem value="Tuesday">Tuesday</SelectItem>
+                                    <SelectItem value="Wednesday">Wednesday</SelectItem>
+                                    <SelectItem value="Thursday">Thursday</SelectItem>
+                                    <SelectItem value="Friday">Friday</SelectItem>
+                                    <SelectItem value="Saturday">Saturday</SelectItem>
+                                    <SelectItem value="Sunday">Sunday</SelectItem>
+                                </Select>
                                 {errors.day_of_week && (
                                     <div className="mt-1 text-sm text-red-600">
                                         {errors.day_of_week}
@@ -580,39 +1005,184 @@ export default function ScheduleForm({
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Location Type
                         </label>
-                        <select
+                        <Select
                             value={data.location_type}
-                            onChange={(e) => handleChange('location_type', e.target.value)}
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            onValueChange={(value) => handleChange('location_type', value)}
+                            placeholder="Select Location Type"
                         >
-                            <option value="in-person">In Person</option>
-                            <option value="virtual">Virtual</option>
-                            <option value="hybrid">Hybrid</option>
-                        </select>
+                            <SelectItem value="in-person">In Person</SelectItem>
+                            <SelectItem value="virtual">Virtual</SelectItem>
+                            <SelectItem value="hybrid">Hybrid</SelectItem>
+                        </Select>
                     </div>
 
                     {(data.location_type === 'in-person' || data.location_type === 'hybrid') && (
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Room
+                            <label htmlFor="room_id" className="mb-1 block font-medium text-gray-700">
+                                Room <span className="text-red-500">*</span>
                             </label>
-                            <select
-                                value={data.room_id}
-                                onChange={(e) => handleChange('room_id', e.target.value)}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            <Select
+                                id="room_id"
+                                value={data.room_id ? data.room_id.toString() : ''}
+                                onValueChange={(value) => {
+                                    console.log('Room dropdown changed to:', value);
+                                    handleChange('room_id', value);
+                                }}
+                                placeholder="Select Room"
+                                className={errors.room_id ? 'border-red-500' : ''}
                             >
-                                <option value="">Select Room</option>
-                                {rooms.map((room) => (
-                                    <option key={room.id} value={room.id}>
-                                        {room.room_number} - {room.floor?.building?.name || 'Unknown Building'} (Capacity: {room.capacity})
-                                    </option>
-                                ))}
-                            </select>
+                                {(() => {
+                                    // Create an array to hold available rooms after filtering
+                                    const availableRooms = [];
+
+                                    // Track if we've added the current room
+                                    let hasAddedCurrentRoom = false;
+
+                                    // Process all rooms for conflicts
+                                    rooms.filter(room => room && room.id).forEach(room => {
+                                        if (!room) return;
+
+                                        // Check if this is the current room in the schedule being edited
+                                        const isCurrentRoom = schedule && schedule.room_id &&
+                                            room.id.toString() === schedule.room_id.toString();
+
+                                        if (isCurrentRoom) {
+                                            console.log('Including currently assigned room in dropdown:', room.room_number);
+                                            hasAddedCurrentRoom = true;
+
+                                            // Always add the current room, regardless of conflicts
+                                            availableRooms.push({
+                                                ...room,
+                                                dayToCheck: data.day_of_week || 'Monday',
+                                                isCurrentRoom: true
+                                            });
+
+                                            // Don't skip the conflict check - we'll check anyway to log if there are conflicts
+                                        }
+
+                                        const dayToCheck = data.day_of_week || 'Monday';
+
+                                        // Get all days we need to check for conflicts based on meeting pattern
+                                        let daysToCheck = [dayToCheck];
+                                        if (data.meeting_pattern && data.meeting_pattern !== 'single') {
+                                            try {
+                                                daysToCheck = getDaysFromPattern(data.meeting_pattern) || [dayToCheck];
+                                            } catch (error) {
+                                                console.error('Error getting days from pattern:', error);
+                                                daysToCheck = [dayToCheck];
+                                            }
+                                        }
+
+                                        // Check if this room has any schedule conflicts for the selected time and days
+                                        let hasConflict = false;
+
+                                        if (data.start_time && data.end_time && room.schedules) {
+                                            // Look for conflicts on any of the relevant days
+                                            daysToCheck.forEach(day => {
+                                                if (hasConflict) return; // Skip if we already found a conflict
+
+                                                const daySchedules = room.schedules?.filter(s => s && s.day_of_week === day) || [];
+
+                                                // Skip the current schedule being edited
+                                                const schedulesToCheck = schedule?.id ?
+                                                    daySchedules.filter(s => s && s.id && s.id.toString() !== schedule.id.toString()) :
+                                                    daySchedules;
+
+                                                // Check each schedule for time conflicts
+                                                schedulesToCheck.forEach(s => {
+                                                    if (s && s.start_time && s.end_time &&
+                                                        hasTimeConflict(s.start_time, s.end_time, data.start_time, data.end_time)) {
+                                                        hasConflict = true;
+
+                                                        if (isCurrentRoom) {
+                                                            console.log('Current room has conflicts but including anyway:',
+                                                                `Schedule ID: ${s.id}, Time: ${s.start_time}-${s.end_time}`);
+                                                        }
+                                                    }
+                                                });
+                                            });
+                                        }
+
+                                        // Skip this room if it has a conflict and it's not the current room
+                                        if (hasConflict && !isCurrentRoom) return;
+
+                                        // Add to available rooms if no conflict or if it's the current room
+                                        if (!isCurrentRoom) { // Don't add the current room twice
+                                            availableRooms.push({
+                                                ...room,
+                                                dayToCheck
+                                            });
+                                        }
+                                    });
+
+                                    // Debug log for room selection troubleshooting
+                                    console.log('Schedule room_id:', schedule?.room_id);
+                                    console.log('Current room added to dropdown:', hasAddedCurrentRoom);
+                                    console.log('Available rooms:', availableRooms.map(r => ({
+                                        id: r.id,
+                                        room_number: r.room_number,
+                                        isCurrentRoom: r.isCurrentRoom || false
+                                    })));
+
+                                    // If no rooms available after filtering, show a message
+                                    if (availableRooms.length === 0) {
+                                        return (
+                                            <SelectItem value="no-rooms">
+                                                {!data.start_time || !data.end_time
+                                                    ? "Enter start and end times to see available rooms"
+                                                    : "No rooms available for selected time"}
+                                            </SelectItem>
+                                        );
+                                    }
+
+                                    // Return all available rooms
+                                    return availableRooms.map(room => {
+                                        // Calculate utilization percentage exactly like the backend
+                                        // Each schedule counts as one slot out of 60 possible slots (12 hours * 5 days)
+                                        const utilizationPercent = calculateUtilization(room.schedules);
+
+                                        console.log(`Room ${room.room_number} schedules:`, room.schedules, 'utilization:', utilizationPercent);
+
+                                        // Determine color based on utilization
+                                        let utilizationColor;
+                                        if (utilizationPercent < 20) {
+                                            utilizationColor = 'text-green-600';
+                                        } else if (utilizationPercent < 60) {
+                                            utilizationColor = 'text-amber-600';
+                                        } else {
+                                            utilizationColor = 'text-red-600';
+                                        }
+
+                                        // Format building and room info
+                                        const buildingName = room.floor?.building?.name || 'Unknown Building';
+                                        const roomNumber = room.room_number || 'Unknown';
+                                        const capacity = room.capacity || 'Unknown';
+
+                                        // Create a simple text representation with utilization percentage
+                                        return (
+                                            <SelectItem key={room.id.toString()} value={room.id.toString()}>
+                                                <div className={`flex justify-between items-center w-full ${room.isCurrentRoom ? 'font-bold' : ''}`}>
+                                                    <span>
+                                                        {room.isCurrentRoom ? '✓ ' : ''}{`${buildingName} - Room ${roomNumber} (Capacity: ${capacity})`}
+                                                        {room.isCurrentRoom ? ' (current)' : ''}
+                                                    </span>
+                                                    <span className={utilizationColor}>{utilizationPercent}% utilized</span>
+                                                </div>
+                                            </SelectItem>
+                                        );
+                                    });
+                                })()}
+                            </Select>
                             {errors.room_id && (
-                                <div className="mt-1 text-sm text-red-600">
-                                    {errors.room_id}
-                                </div>
+                                <p className="mt-1 text-sm text-red-500">{errors.room_id}</p>
                             )}
+
+                            {!data.start_time || !data.end_time ? (
+                                <div className="mt-1 text-sm text-blue-600 bg-blue-50 p-2 rounded">
+                                    <span className="font-medium">Note:</span> Enter start and end times to see available rooms.
+                                </div>
+                            ) : null}
+
                             {capacityMismatch && capacityMismatch.type === 'warning' && (
                                 <div className="mt-1 text-sm text-red-600 bg-red-50 p-2 rounded">
                                     <span className="font-medium">Warning:</span> {capacityMismatch.message}

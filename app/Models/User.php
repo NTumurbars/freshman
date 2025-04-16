@@ -50,6 +50,6 @@ class User extends Authenticatable
 
     public function courseRegistrations()
     {
-        return $this->hasMany(CourseRegistration::class, 'student_id');
+        return $this->hasMany(CourseRegistration::class, 'user_id');
     }
 }

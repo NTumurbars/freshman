@@ -62,14 +62,14 @@ class ProfessorProfileController extends Controller
     public function update(Request $request, $userId)
     {
         $user = User::findOrFail($userId);
-        
+
         // Authorization check: user can only update their own profile
         // or admins can update any profile
-        if ($request->user()->id !== $user->id && 
+        if ($request->user()->id !== $user->id &&
             !in_array($request->user()->role->name, ['super_admin', 'school_admin'])) {
             abort(403);
         }
-        
+
         $validated = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'title'         => 'nullable|string|max:255',
@@ -77,16 +77,16 @@ class ProfessorProfileController extends Controller
             'phone'         => 'nullable|string|max:30',
             'website'       => 'nullable|string|max:255',
         ]);
-        
+
         // Get or create professor profile
-        $profile = $user->professorProfile;
-        
+        $profile = $user->professor_profile;
+
         if (!$profile) {
             return response()->json(['message' => 'Professor profile not found'], 404);
         }
-        
+
         $profile->update($validated);
-        
+
         return Redirect::back()->with('success', 'Professor profile updated successfully');
     }
 
