@@ -10,7 +10,6 @@ use App\Models\School;
 
 class RouteAccessAutoTest extends TestCase
 {
-    use RefreshDatabase;
 
     protected $user;
     protected $roles = ['super_admin', 'school_admin', 'professor', 'student'];
@@ -34,9 +33,9 @@ class RouteAccessAutoTest extends TestCase
         $this->logFile = storage_path('logs/route-access-matrix.log');
 
         // Optional: clear the file on each test run
-        file_put_contents($this->logFile, "🔎 Route Access Matrix Test\n\n");
 
-        $this->seed();
+        $this->artisan('migrate:fresh');
+        $this->seed(); // If you need default roles or data
         $this->seed(\Database\Seeders\MassiveTestSeeder::class);
 
         $this->school = \App\Models\School::inRandomOrder()->first();
@@ -74,6 +73,25 @@ class RouteAccessAutoTest extends TestCase
             'professor' => \App\Models\User::where('role_id', 4)->where('school_id', $this->school->id)->first(),
             'student' => \App\Models\User::where('role_id', 5)->where('school_id', $this->school->id)->first(),
         ];
+
+        file_put_contents($this->logFile,
+        "🔎 Route Access Matrix Test\n\n" .
+        "School ID used:           " . $this->school?->id . "\n" .
+        "Building ID used:         " . $this->building?->id . "\n" .
+        "Floor ID used:            " . $this->floor?->id . "\n" .
+        "Room ID used:             " . $this->room?->id . "\n" .
+        "ProfessorProfile ID used: " . $this->professorProfile?->id . "\n" .
+        "Section ID used:          " . $this->section?->id . "\n" .
+        "Department ID used:       " . $this->department?->id . "\n" .
+        "Course ID used:           " . $this->course?->id . "\n" .
+        "Term ID used:             " . $this->term?->id . "\n" .
+        "Major ID used:            " . $this->major?->id . "\n\n" .
+
+        "Users used:\n" .
+        "Super Admin:    " . ($this->usersByRole['super_admin']?->id ?? 'N/A') . "\n" .
+        "School Admin:   " . ($this->usersByRole['school_admin']?->id ?? 'N/A') . "\n" .
+        "Professor:      " . ($this->usersByRole['professor']?->id ?? 'N/A') . "\n" .
+        "Student:        " . ($this->usersByRole['student']?->id ?? 'N/A') . "\n\n");
     }
 
 
