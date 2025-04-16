@@ -4,6 +4,8 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Department;
+use App\Models\Major;
+use App\Models\Course;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Major>
@@ -75,8 +77,29 @@ class MajorFactory extends Factory
         $major = fake()->randomElement($majors);
 
         return [
-            'department_id'=>Department::factory(),
+            'department_id'=>Department::inRandomOrder()->first()->id,
             'code'=>$major['code'],
+            'name'=>$major['name'],
+            'description'=>fake()->paragraph(),
         ];
     }
+
+    public function newMajor()
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'department_id'=>Department::factory(),
+                
+            ];
+        });
+    }
+
+
+    public function configure()
+    {
+        return $this->afterCreating(function (Major $major) {
+            Course::factory()->create(['major_id' => $major->id, 'department_id' => $major->department_id]);
+        });
+    }
+
 }

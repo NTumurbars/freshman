@@ -5,6 +5,7 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Department;
 use App\Models\Major;
+use App\Models\Course;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Course>
@@ -31,27 +32,30 @@ class CourseFactory extends Factory
     
         $levels = ['', 'I', 'II', 'III']; // optional course level suffix
 
+        $currentMajor = Major::inRandomOrder()->first();
         return [
-            'department_id' => Department::factory(),
-            'major_id' => Major::factory(),
-            'course_code' => strtoupper($this->faker->unique()->bothify('???###')),
+            'major_id' => $currentMajor->id,
+            'department_id' => $currentMajor->department_id,
+            
+            'code' => strtoupper($this->faker->unique()->bothify('???###')),
             'title' => fake()->randomElement($descriptors) . ' ' 
                     . fake()->randomElement($subjects) 
                     . ' ' 
                     . fake()->randomElement($levels),
             'description' => fake()->paragraph(),
-            'capacity' => fake()->numberBetween(5, 400)
+            'credits' => fake()->numberBetween(1, 5),
+            'level'=> fake()->numberBetween(1, 3),
+            'is_active'=>fake()->boolean(),
         ];
     }
 
     public function newCourse()
     {
-        $currentMajor = Major::inRandomOrder()->first();
-
         return $this->state(function (array $attributes) use ($currentMajor) {
             return [
-                'major_id' => $currentMajor->id,
-                'department_id' => $currentMajor->department_id,
+                'department_id' => Department::factory(),
+                'major_id' => Major::factory(),
+                
             ];
         });
     }

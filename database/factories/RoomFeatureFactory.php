@@ -143,7 +143,8 @@ class RoomFeatureFactory extends Factory
         
         return [
             'name'=> $feature['name'],
-            'description'=> $feature['description']
+            'description'=> $feature['description'],
+            'category' => 'For Testing Purposes'
         ];
     }
 }

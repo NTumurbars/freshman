@@ -4,6 +4,8 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\School;
+use App\Models\Room;
+use App\Models\Floor;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Room>
@@ -18,10 +20,18 @@ class RoomFactory extends Factory
     public function definition(): array
     {
         return [
-            'school_id'=>School::factory(),
+            'floor_id' => Floor::inRandomOrder()->first()->id,
             'room_number'=>fake()->numberBetween(100, 999),
-            'building'=>fake()=>word(),
-            'capacity'=>fake()=>numberBetween(5, 400)
+            'capacity'=>fake()->numberBetween(5, 400)
         ];
+    }
+
+    public function newRoom()
+    {
+        return $this->state(function (array $attributes) use ($schoolId, $building) {
+            return [
+                'floor_id'=>Floor::factory(),
+            ];
+        });
     }
 }

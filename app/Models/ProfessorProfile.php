@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\Department;
 
 class ProfessorProfile extends Model
 {
+    use HasFactory, Notifiable;
+
     protected $fillable =
     [
         'user_id',
