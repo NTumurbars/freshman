@@ -1,6 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { CalendarIcon, PencilIcon } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Badge, Card, Title } from '@tremor/react';
 
 export default function Show({ course, school }) {
@@ -13,6 +13,11 @@ export default function Show({ course, school }) {
         console.log('Section term data:', course.sections[0].term);
         console.log('Professor data:', course.sections[0].professor_profile);
     }
+
+    const { auth } = usePage().props;
+    const userRole = auth.user.role.id;
+
+    const canSee = userRole === 2 || userRole === 3;
 
     // Helper function to format time
     const formatTime = (timeString) => {
@@ -60,15 +65,17 @@ export default function Show({ course, school }) {
                         {course.code}: {course.title}
                     </h1>
                     <div className="flex space-x-2">
-                        <Link
-                            href={route('courses.edit', {
-                                school: school.id,
-                                course: course.id,
-                            })}
-                            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none"
-                        >
-                            Edit
-                        </Link>
+                        {canSee && (
+                            <Link
+                                href={route('courses.edit', {
+                                    school: school.id,
+                                    course: course.id,
+                                })}
+                                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none"
+                            >
+                                Edit
+                            </Link>
+                        )}
                         <Link
                             href={route('courses.index', { school: school.id })}
                             className="rounded bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400 focus:outline-none"
@@ -77,7 +84,6 @@ export default function Show({ course, school }) {
                         </Link>
                     </div>
                 </div>
-
                 <div className="mb-6">
                     <div className="rounded-lg bg-white p-6 shadow">
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -124,20 +130,20 @@ export default function Show({ course, school }) {
                         </div>
                     </div>
                 </div>
-
                 <div className="mb-4 flex items-center justify-between">
                     <Title>Sections</Title>
-                    <Link
-                        href={route('sections.create', {
-                            school: school.id,
-                            course: course.id,
-                        })}
-                        className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Add Section
-                    </Link>
+                    {canSee && (
+                        <Link
+                            href={route('sections.create', {
+                                school: school.id,
+                                course: course.id,
+                            })}
+                            className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        >
+                            Add Section
+                        </Link>
+                    )}
                 </div>
-
                 {course.sections && course.sections.length > 0 ? (
                     <Card>
                         <div className="overflow-hidden">

@@ -12,15 +12,18 @@ import {
 } from '@tremor/react';
 import toast from 'react-hot-toast';
 
-export default function Edit({ user, roles, schools }) {
+export default function Edit({ user, roles }) {
     const { auth } = usePage().props;
-    const currentUserRole = auth.user.role_id;
+    const userRole = auth.user.role_id;
+    const userID = auth.user.id;
+
+    console.log(user);
 
     const { data, setData, put, errors, processing } = useForm({
         name: user.name,
         email: user.email,
-        role_id: user.role_id?.toString() || '',
-        school_id: user.school_id?.toString() || '',
+        role_id: user.role_id,
+        school_id: user.school_id || '',
         password: '',
         password_confirmation: '',
     });
@@ -111,127 +114,96 @@ export default function Edit({ user, roles, schools }) {
                                     <Select
                                         id="role"
                                         value={data.role_id}
-                                        onValueChange={(value) => {
-                                            handleChange('role_id', value);
-                                        }}
-                                        placeholder="Select Role"
+                                        onValueChange={(value) =>
+                                            handleChange('role_id', value)
+                                        }
+                                        placeholder={user.role.name}
                                         error={!!errors.role_id}
                                         errorMessage={errors.role_id}
                                     >
-                                        {roles.map((role) => {
-                                            const roleValue = role.id.toString();
-                                            return (
-                                                <SelectItem
-                                                    key={role.id}
-                                                    value={roleValue}
-                                                >
-                                                    {role.name
-                                                        .replace('_', ' ')
-                                                        .toUpperCase()}
-                                                </SelectItem>
-                                            );
-                                        })}
+                                        {roles.map((role) => (
+                                            <SelectItem
+                                                key={role.id}
+                                                value={role.id.toString()}
+                                            >
+                                                {role.name
+                                                    .replace('_', ' ')
+                                                    .toUpperCase()}
+                                            </SelectItem>
+                                        ))}
                                     </Select>
                                 </div>
 
-                                {currentUserRole === 1 ? (
+                                <div>
+                                    <label
+                                        htmlFor="school_display"
+                                        className="mb-1 block text-sm font-medium text-gray-700"
+                                    >
+                                        School
+                                    </label>
+                                    <TextInput
+                                        id="school_display"
+                                        value={
+                                            user.school.name ||
+                                            'No school assigned'
+                                        }
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {userID === user.id && (
+                            <div>
+                                <Text className="mb-2">Password</Text>
+                                <Divider />
+                                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div>
                                         <label
-                                            htmlFor="school"
+                                            htmlFor="password"
                                             className="mb-1 block text-sm font-medium text-gray-700"
                                         >
-                                            School
-                                        </label>
-                                        <Select
-                                            id="school"
-                                            value={data.school_id}
-                                            onValueChange={(value) => {
-                                                handleChange('school_id', value);
-                                            }}
-                                            placeholder="Select School"
-                                            error={!!errors.school_id}
-                                            errorMessage={errors.school_id}
-                                        >
-                                            {schools.map((school) => {
-                                                const schoolValue = school.id.toString();
-                                                return (
-                                                    <SelectItem
-                                                        key={school.id}
-                                                        value={schoolValue}
-                                                    >
-                                                        {school.name}
-                                                    </SelectItem>
-                                                );
-                                            })}
-                                        </Select>
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <label
-                                            htmlFor="school_display"
-                                            className="mb-1 block text-sm font-medium text-gray-700"
-                                        >
-                                            School
+                                            New Password
                                         </label>
                                         <TextInput
-                                            id="school_display"
-                                            value={user.school?.name || 'No school assigned'}
-                                            disabled
+                                            id="password"
+                                            type="password"
+                                            placeholder="Leave blank to keep current"
+                                            value={data.password}
+                                            onChange={(e) =>
+                                                handleChange(
+                                                    'password',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            error={!!errors.password}
+                                            errorMessage={errors.password}
                                         />
                                     </div>
-                                )}
-                            </div>
-                        </div>
 
-                        <div>
-                            <Text className="mb-2">Password</Text>
-                            <Divider />
-                            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div>
-                                    <label
-                                        htmlFor="password"
-                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                    >
-                                        New Password
-                                    </label>
-                                    <TextInput
-                                        id="password"
-                                        type="password"
-                                        placeholder="Leave blank to keep current"
-                                        value={data.password}
-                                        onChange={(e) =>
-                                            handleChange(
-                                                'password',
-                                                e.target.value,
-                                            )
-                                        }
-                                        error={!!errors.password}
-                                        errorMessage={errors.password}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label
-                                        htmlFor="password_confirmation"
-                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                    >
-                                        Confirm Password
-                                    </label>
-                                    <TextInput
-                                        id="password_confirmation"
-                                        type="password"
-                                        placeholder="Confirm new password"
-                                        value={data.password_confirmation}
-                                        onChange={(e) =>
-                                            handleChange(
-                                                'password_confirmation',
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
+                                    <div>
+                                        <label
+                                            htmlFor="password_confirmation"
+                                            className="mb-1 block text-sm font-medium text-gray-700"
+                                        >
+                                            Confirm Password
+                                        </label>
+                                        <TextInput
+                                            id="password_confirmation"
+                                            type="password"
+                                            placeholder="Confirm new password"
+                                            value={data.password_confirmation}
+                                            onChange={(e) =>
+                                                handleChange(
+                                                    'password_confirmation',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         <div className="flex justify-end pt-4">
                             <Button type="submit" disabled={processing}>

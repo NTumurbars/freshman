@@ -66,9 +66,18 @@ class UserController extends Controller
     public function create()
     {
         $user = User::find(Auth::id());
+        if($user->role->id == 1)
+        {
+            return Inertia::render('Users/Create', [
+            'roles' => '',
+            'schools' => '',
+            'departments' => '',
+        ]);
+        }
         $roles = Role::where('id', '>', 1)->get();
         $schools = $user->school;
         $departments = $schools->departments;
+
 
         return Inertia::render('Users/Create', [
             'roles' => $roles,
@@ -137,7 +146,8 @@ class UserController extends Controller
     // GET /users/{id}/edit
     public function edit($id)
     {
-        $user = User::with(['role', 'school'])->findOrFail($id);
+        $user = User::findOrFail($id);
+        $user->load(['school', 'role']);
         $currentUser = Auth::user();
 
         // Check if the current user is authorized to edit this user
@@ -151,13 +161,9 @@ class UserController extends Controller
             return $q->where('id', '>', 1);
         })->get();
 
-        // Get schools - only super admin can see all schools, others only see their own
-        $schools = $currentUser->role_id === 1 ? School::all() : School::where('id', $currentUser->school_id)->get();
-
         return Inertia::render('Users/Edit', [
             'user' => $user,
             'roles' => $roles,
-            'schools' => $schools,
         ]);
     }
 
@@ -192,7 +198,7 @@ class UserController extends Controller
         }
 
         $user->update($data);
-        return redirect()->route('users.show', $user->id)->with('success', 'User updated successfully');
+        return redirect()->route('users.index')->with('success', 'User updated successfully');
     }
 
     // DELETE /users/{id}

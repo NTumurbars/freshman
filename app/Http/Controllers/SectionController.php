@@ -15,7 +15,6 @@ use App\Models\ProfessorProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 // We need to add the show method for this class
 // GET|HEAD show schools/{school}/sections/{section}
@@ -27,76 +26,33 @@ class SectionController extends Controller
         $this->authorize('viewAny', Section::class);
 
         $user = Auth::user();
-        $isProfessor = $user->role->name === 'professor' || $user->role->name === 'major_coordinator';
 
-        // Get departments that belong to this school
-        $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+        if ($user->role->id === 2) {
+            // Get departments that belong to this school
+            $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
 
-        // Get courses that belong to these departments
-        $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
+            // Get courses that belong to these departments
+            $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
 
-        // Base query for sections
-        $sectionsQuery = Section::whereIn('course_id', $schoolCourseIds)
-            ->with([
-                'course.department',
-                'term',
-                'professor_profile.user',
-                'schedules.room.floor.building',
-                'requiredFeatures',
-                'courseRegistrations'
-            ]);
+            // Get sections for these courses with necessary relationships
+            $sections = Section::whereIn('course_id', $schoolCourseIds)
+                ->with(['course.department', 'term', 'professor_profile.user', 'schedules.room.floor.building', 'requiredFeatures', 'courseRegistrations'])
+                ->get();
+        } elseif ($user->role->id === 3 || $user->role->id === 4) {
+            // Get course IDs for the specific department
+            $courseIds = Course::where('department_id', $user->professor_profile->department->id)->pluck('id');
 
-        // If user is a professor, include a flag to identify their own sections
-        if ($isProfessor && $user->professor_profile) {
-            $professorSections = clone $sectionsQuery;
-            $professorSections = $professorSections->where('professor_profile_id', $user->professor_profile->id)->get();
-
-            // Get all sections for context but mark the professor's own sections
-            $allSections = $sectionsQuery->get();
-
-            // Add a flag to mark sections taught by this professor
-            $allSections->map(function($section) use ($user) {
-                $section->is_teaching = $section->professor_profile_id === $user->professor_profile->id;
-                return $section;
-            });
-
-            return Inertia::render('Sections/Index', [
-                'sections' => $allSections,
-                'professorSections' => $professorSections,
-                'isProfessor' => true,
-                'school' => $school,
-                'statuses' => [
-                    Section::STATUS_ACTIVE,
-                    Section::STATUS_CANCELED,
-                    Section::STATUS_FULL,
-                    Section::STATUS_PENDING,
-                ],
-                'deliveryMethods' => [
-                    Section::DELIVERY_IN_PERSON,
-                    Section::DELIVERY_ONLINE,
-                    Section::DELIVERY_HYBRID,
-                ],
-            ]);
+            // Get sections for those courses with all necessary relationships
+            $sections = Section::whereIn('course_id', $courseIds)
+                ->with(['course.department', 'term', 'professor_profile.user', 'schedules.room.floor.building', 'requiredFeatures', 'courseRegistrations'])
+                ->get();
         }
-
-        // For non-professors, just return all sections
-        $sections = $sectionsQuery->get();
 
         return Inertia::render('Sections/Index', [
             'sections' => $sections,
-            'isProfessor' => false,
             'school' => $school,
-            'statuses' => [
-                Section::STATUS_ACTIVE,
-                Section::STATUS_CANCELED,
-                Section::STATUS_FULL,
-                Section::STATUS_PENDING,
-            ],
-            'deliveryMethods' => [
-                Section::DELIVERY_IN_PERSON,
-                Section::DELIVERY_ONLINE,
-                Section::DELIVERY_HYBRID,
-            ],
+            'statuses' => [Section::STATUS_ACTIVE, Section::STATUS_CANCELED, Section::STATUS_FULL, Section::STATUS_PENDING],
+            'deliveryMethods' => [Section::DELIVERY_IN_PERSON, Section::DELIVERY_ONLINE, Section::DELIVERY_HYBRID],
         ]);
     }
 
@@ -104,13 +60,19 @@ class SectionController extends Controller
     public function create(School $school)
     {
         $this->authorize('create', Section::class);
+        $user = Auth::user();
+        if ($user->role->id === 2) {
+            // Get departments that belong to this school
+            $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
 
-        // Get departments that belong to this school
-        $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+            // Get courses that belong to these departments
+            $courses = Course::whereIn('department_id', $schoolDepartmentIds)->get();
+        } elseif ($user->role->id === 3) {
+            $departmentId = $user->professor_profile->department_id;
 
-        // Get courses that belong to these departments
-        $courses = Course::whereIn('department_id', $schoolDepartmentIds)->get();
-
+            // Get courses from the user's department
+            $courses = Course::where('department_id', $departmentId)->get();
+        }
         // Get the active term for this school
         $activeTerm = Term::getActiveTerm($school);
 
@@ -118,12 +80,11 @@ class SectionController extends Controller
         $terms = Term::where('school_id', $school->id)->get();
 
         // Get professors who are in this school with role 'professor'
-        $professorProfiles = ProfessorProfile::whereHas('user', function($q) use ($school) {
-            $q->where('school_id', $school->id)
-              ->whereHas('role', function($q) {
-                  $q->where('name', 'professor');
-              });
-        })->with('user')->get();
+        $professorProfiles = ProfessorProfile::whereHas('user', function ($q) use ($school) {
+            $q->where('school_id', $school->id)->whereIn('role_id', [3, 4]);
+        })
+            ->with('user')
+            ->get();
 
         // Get room features
         $roomFeatures = RoomFeature::all();
@@ -139,17 +100,8 @@ class SectionController extends Controller
             'roomFeatures' => $roomFeatures,
             'rooms' => $rooms,
             'school' => $school,
-            'statuses' => [
-                Section::STATUS_ACTIVE,
-                Section::STATUS_CANCELED,
-                Section::STATUS_FULL,
-                Section::STATUS_PENDING,
-            ],
-            'deliveryMethods' => [
-                Section::DELIVERY_IN_PERSON,
-                Section::DELIVERY_ONLINE,
-                Section::DELIVERY_HYBRID,
-            ],
+            'statuses' => [Section::STATUS_ACTIVE, Section::STATUS_CANCELED, Section::STATUS_FULL, Section::STATUS_PENDING],
+            'deliveryMethods' => [Section::DELIVERY_IN_PERSON, Section::DELIVERY_ONLINE, Section::DELIVERY_HYBRID],
             'meetingPatterns' => [
                 'single' => 'Single Meeting',
                 'weekly' => 'Weekly',
@@ -190,14 +142,14 @@ class SectionController extends Controller
 
         try {
             $data = $request->validate([
-                'course_id'          => 'required|exists:courses,id',
-                'term_id'            => 'required|exists:terms,id',
+                'course_id' => 'required|exists:courses,id',
+                'term_id' => 'required|exists:terms,id',
                 'professor_profile_id' => 'nullable|exists:professor_profiles,id',
-                'section_code'       => 'required|string|max:10',
-                'status'             => 'required|string|in:active,canceled,full,pending',
-                'delivery_method'    => 'required|string|in:in-person,online,hybrid',
-                'notes'              => 'nullable|string',
-                'capacity'           => 'nullable|integer|min:1',
+                'section_code' => 'required|string|max:10',
+                'status' => 'required|string|in:active,canceled,full,pending',
+                'delivery_method' => 'required|string|in:in-person,online,hybrid',
+                'notes' => 'nullable|string',
+                'capacity' => 'nullable|integer|min:1',
             ]);
 
             $section = Section::create($data);
@@ -231,14 +183,7 @@ class SectionController extends Controller
     // GET /schools/{school}/sections/{section}
     public function show(School $school, $section)
     {
-        $section = Section::with([
-            'course.department',
-            'term',
-            'professor_profile.user',
-            'schedules.room.floor.building',
-            'requiredFeatures',
-            'courseRegistrations.student'
-        ])->findOrFail($section);
+        $section = Section::with(['course.department', 'term', 'professor_profile.user', 'schedules.room.floor.building', 'requiredFeatures', 'courseRegistrations.student'])->findOrFail($section);
 
         $this->authorize('view', $section);
 
@@ -255,7 +200,7 @@ class SectionController extends Controller
 
         return Inertia::render('Sections/Show', [
             'section' => $section,
-            'school' => $school
+            'school' => $school,
         ]);
     }
 
@@ -288,19 +233,20 @@ class SectionController extends Controller
         $terms = Term::where('school_id', $school->id)->get();
 
         // Get professors who are in this school with role 'professor'
-        $professorProfiles = ProfessorProfile::whereHas('user', function($q) use ($school) {
-            $q->where('school_id', $school->id)
-              ->whereHas('role', function($q) {
-                  $q->where('name', 'professor');
-              });
-        })->with('user')->get();
+        $professorProfiles = ProfessorProfile::whereHas('user', function ($q) use ($school) {
+            $q->where('school_id', $school->id)->whereHas('role', function ($q) {
+                $q->where('name', 'professor');
+            });
+        })
+            ->with('user')
+            ->get();
 
         // Get room features
         $roomFeatures = RoomFeature::all();
 
         // Get rooms
         $rooms = Room::with('floor.building')
-            ->whereHas('floor.building', function($query) use ($school) {
+            ->whereHas('floor.building', function ($query) use ($school) {
                 $query->where('school_id', $school->id);
             })
             ->get();
@@ -313,17 +259,8 @@ class SectionController extends Controller
             'roomFeatures' => $roomFeatures,
             'rooms' => $rooms,
             'school' => $school,
-            'statuses' => [
-                Section::STATUS_ACTIVE,
-                Section::STATUS_CANCELED,
-                Section::STATUS_FULL,
-                Section::STATUS_PENDING,
-            ],
-            'deliveryMethods' => [
-                Section::DELIVERY_IN_PERSON,
-                Section::DELIVERY_ONLINE,
-                Section::DELIVERY_HYBRID,
-            ],
+            'statuses' => [Section::STATUS_ACTIVE, Section::STATUS_CANCELED, Section::STATUS_FULL, Section::STATUS_PENDING],
+            'deliveryMethods' => [Section::DELIVERY_IN_PERSON, Section::DELIVERY_ONLINE, Section::DELIVERY_HYBRID],
             'meetingPatterns' => [
                 'single' => 'Single Meeting',
                 'weekly' => 'Weekly',
@@ -380,14 +317,14 @@ class SectionController extends Controller
 
         try {
             $data = $request->validate([
-                'course_id'          => 'required|exists:courses,id',
-                'term_id'            => 'required|exists:terms,id',
+                'course_id' => 'required|exists:courses,id',
+                'term_id' => 'required|exists:terms,id',
                 'professor_profile_id' => 'nullable|exists:professor_profiles,id',
-                'section_code'       => 'required|string|max:10',
-                'status'             => 'required|string|in:active,canceled,full,pending',
-                'delivery_method'    => 'required|string|in:in-person,online,hybrid',
-                'notes'              => 'nullable|string',
-                'capacity'           => 'nullable|integer|min:1',
+                'section_code' => 'required|string|max:10',
+                'status' => 'required|string|in:active,canceled,full,pending',
+                'delivery_method' => 'required|string|in:in-person,online,hybrid',
+                'notes' => 'nullable|string',
+                'capacity' => 'nullable|integer|min:1',
             ]);
 
             $section->update($data);
@@ -449,7 +386,9 @@ class SectionController extends Controller
             $section->delete();
 
             DB::commit();
-            return redirect()->route('sections.index', ['school' => $school])->with('success', 'Section deleted successfully');
+            return redirect()
+                ->route('sections.index', ['school' => $school])
+                ->with('success', 'Section deleted successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['general' => 'Error deleting section: ' . $e->getMessage()]);
@@ -480,17 +419,7 @@ class SectionController extends Controller
     // GET /schools/{school}/sections/calendar
     public function calendar(School $school)
     {
-        // Skip policy authorization for calendar view
-        // $this->authorize('viewAny', Section::class);
-
-        // Get the authenticated user
-        $user = Auth::user();
-        $isProfessor = $user->role->name === 'professor' || $user->role->name === 'major_coordinator';
-
-        // If user is not a professor, redirect to another page or show an error
-        if (!$isProfessor) {
-            return redirect()->route('dashboard')->with('error', 'Access denied: This view is only for professors.');
-        }
+        $this->authorize('viewAny', Section::class);
 
         // Get departments that belong to this school
         $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
@@ -498,27 +427,10 @@ class SectionController extends Controller
         // Get courses that belong to these departments
         $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
 
-        // Get professor profile
-        $professorProfileId = ProfessorProfile::where('user_id', $user->id)->value('id');
-
-        // Base query for sections - only show the professor's sections
-        $sectionsQuery = Section::whereIn('course_id', $schoolCourseIds)
-            ->with(['course', 'term', 'professor_profile.user', 'schedules.room.floor.building']);
-
-        if ($professorProfileId) {
-            $sectionsQuery = $sectionsQuery->where('professor_profile_id', $professorProfileId);
-        } else {
-            // If no professor profile, return empty data
-            return Inertia::render('Sections/Calendar', [
-                'calendarEvents' => [],
-                'school' => $school,
-                'isProfessor' => $isProfessor,
-                'user' => $user
-            ]);
-        }
-
-        // Get sections for this professor
-        $sections = $sectionsQuery->get();
+        // Get sections for these courses with their schedules
+        $sections = Section::whereIn('course_id', $schoolCourseIds)
+            ->with(['course', 'term', 'professor_profile.user', 'schedules.room.floor.building'])
+            ->get();
 
         // Format the calendar events
         $calendarEvents = [];
@@ -526,51 +438,60 @@ class SectionController extends Controller
         foreach ($sections as $section) {
             foreach ($section->schedules as $schedule) {
                 // For each schedule, create an event for each day of the week
-                $dayOfWeek = $schedule->day_of_week; // Single day of week or array of days
-
-                // Check if we have day_of_week property
-                if (!$dayOfWeek) {
-                    Log::warning('Schedule missing day_of_week', ['schedule_id' => $schedule->id]);
-                    continue;
-                }
-
-                // Check if we're dealing with an array of days via daysOfWeek property or a single day
-                $daysArray = property_exists($schedule, 'daysOfWeek') && is_array($schedule->daysOfWeek)
-                    ? $schedule->daysOfWeek
-                    : [$dayOfWeek];
-
-                foreach ($daysArray as $day) {
+                foreach ($schedule->daysOfWeek as $day) {
                     $calendarEvents[] = [
                         'id' => $schedule->id . '-' . $day,
                         'title' => $section->course->code . ' - ' . $section->section_code,
                         'description' => $section->course->title,
                         'start' => $day . ' ' . $schedule->start_time,
                         'end' => $day . ' ' . $schedule->end_time,
+                        'resourceId' => $schedule->room_id ?? 'unassigned',
                         'extendedProps' => [
                             'section_id' => $section->id,
                             'school_id' => $school->id,
-                            'professor_profile' => $section->professor_profile ? [
-                                'id' => $section->professor_profile->id,
-                                'user' => [
-                                    'id' => $section->professor_profile->user->id,
-                                    'name' => $section->professor_profile->user->name,
-                                ]
-                            ] : null,
+                            'professor' => $section->professor_profile ? $section->professor_profile->user->name : 'Unassigned',
                             'room' => $schedule->room ? $schedule->room->room_number . ' (' . $schedule->room->floor->building->name . ')' : 'Unassigned',
                             'term' => $section->term->name,
                             'status' => $section->status,
                             'delivery_method' => $section->delivery_method,
-                        ]
+                        ],
                     ];
                 }
             }
         }
 
+        // Get rooms for resources
+        $rooms = Room::with('floor.building')
+            ->whereHas('floor.building', function ($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })
+            ->get()
+            ->map(function ($room) {
+                return [
+                    'id' => $room->id,
+                    'title' => $room->room_number . ' (' . $room->floor->building->name . ')',
+                    'building' => $room->floor->building->name,
+                    'capacity' => $room->capacity,
+                ];
+            });
+
+        // Add "Unassigned" resource
+        $resources = array_merge(
+            [
+                [
+                    'id' => 'unassigned',
+                    'title' => 'Unassigned',
+                    'building' => 'N/A',
+                    'capacity' => 0,
+                ],
+            ],
+            $rooms->toArray(),
+        );
+
         return Inertia::render('Sections/Calendar', [
             'calendarEvents' => $calendarEvents,
+            'resources' => $resources,
             'school' => $school,
-            'isProfessor' => $isProfessor,
-            'user' => $user
         ]);
     }
 }

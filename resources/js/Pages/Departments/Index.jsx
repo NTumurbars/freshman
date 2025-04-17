@@ -9,11 +9,8 @@ import {
     PhoneIcon,
     PlusIcon,
     UserGroupIcon,
-    EyeIcon,
-    PencilSquareIcon,
-    TrashIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Badge,
     Button,
@@ -31,6 +28,8 @@ import {
 import { useState } from 'react';
 
 const DepartmentCard = ({ department, school }) => {
+    const { auth } = usePage().props;
+    const userRole = auth.user.role.id;
     const contactInfo = department.contact || {};
 
     return (
@@ -125,7 +124,7 @@ const DepartmentCard = ({ department, school }) => {
                     )}
                 </div>
 
-                <div className="mt-auto flex justify-end gap-4 border-t border-gray-100 pt-4">
+                <div className="mt-auto flex justify-end gap-2 border-t border-gray-100 pt-4">
                     <Link
                         href={route('departments.show', {
                             school: department.school_id,
@@ -133,50 +132,43 @@ const DepartmentCard = ({ department, school }) => {
                         })}
                     >
                         <Button
-                            icon={EyeIcon}
                             variant="light"
-                            color="blue"
-                            size="xs"
-                            tooltip="View department"
+                            size="sm"
+                            className="text-blue-600"
                         >
                             View
                         </Button>
                     </Link>
-                    <Link
-                        href={route('departments.edit', {
-                            school: department.school_id,
-                            department: department.id,
-                        })}
-                    >
-                        <Button
-                            icon={PencilSquareIcon}
-                            variant="light"
-                            color="blue"
-                            size="xs"
-                            tooltip="Edit department"
-                        >
-                            Edit
-                        </Button>
-                    </Link>
-                    <Link
-                        href={route('departments.destroy', {
-                            school: school.id,
-                            department: department.id,
-                        })}
-                        method="delete"
-                        as="button"
-                        type="button"
-                    >
-                        <Button 
-                            icon={TrashIcon}
-                            variant="light"
-                            color="red"
-                            size="xs"
-                            tooltip="Delete department"
-                        >
-                            Delete
-                        </Button>
-                    </Link>
+                    {userRole === 2 && (
+                        <>
+                            <Link
+                                href={route('departments.edit', {
+                                    school: department.school_id,
+                                    department: department.id,
+                                })}
+                            >
+                                <Button
+                                    variant="light"
+                                    size="sm"
+                                    className="text-blue-600"
+                                >
+                                    Edit
+                                </Button>
+                            </Link>
+                            <Link
+                                href={route('departments.destroy', {
+                                    school: school.id,
+                                    department: department.id,
+                                })}
+                                method="delete"
+                                as="button"
+                                type="button"
+                                className="text-sm text-red-600 hover:text-red-800"
+                            >
+                                Delete
+                            </Link>
+                        </>
+                    )}
                 </div>
             </div>
         </Card>
@@ -257,7 +249,7 @@ export default function Index({ departments, school, can_create }) {
                                 </div>
                                 <div className="flex w-full gap-2 sm:w-auto">
                                     <input
-                                        className="w-64 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm ring-gray-200 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-50"
+                                        className="max-w-xs rounded-md border border-gray-300 p-2"
                                         placeholder="Search departments"
                                         value={searchQuery}
                                         onChange={handleSearchChange}
@@ -267,7 +259,7 @@ export default function Index({ departments, school, can_create }) {
                                         icon={ArrowsUpDownIcon}
                                         placeholder="Sort By"
                                         value={sortBy}
-                                        onChange={(value) => setSortBy(value)}
+                                        onChange={(value) => setSortBy(value)} // Use the direct value passed by Select
                                     >
                                         <SelectItem value="name">
                                             Name (A-Z)

@@ -3,13 +3,8 @@ import {
     ArrowLeftIcon,
     KeyIcon,
     UserCircleIcon,
-    AcademicCapIcon,
-    BuildingOfficeIcon,
-    PhoneIcon,
-    GlobeAltIcon,
-    MapPinIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import {
     Button,
     Card,
@@ -19,38 +14,19 @@ import {
     Text,
     TextInput,
     Title,
-    Select,
-    SelectItem,
 } from '@tremor/react';
 
 export default function Edit({ user }) {
-    const { departments, professorProfile } = usePage().props;
-    const isProfessor = user.role?.id === 3 || user.role?.id === 4;
-
-    // Ensure we're using user.professor_profile consistently
-    const profile = user.professor_profile || professorProfile;
-
     const { data, setData, patch, errors, processing } = useForm({
         name: user.name || '',
         password: '',
         password_confirmation: '',
-        professorProfile: {
-            department_id: profile?.department_id || '',
-            title: profile?.title || '',
-            office: profile?.office || '',
-            phone: profile?.phone || '',
-            website: profile?.website || '',
-        }
     });
 
     const submit = (e) => {
         e.preventDefault();
         patch(route('profile.update'));
     };
-
-    console.log("Professor profile in edit form:", profile);
-    console.log("Is professor:", isProfessor);
-    console.log("Form data:", data);
 
     return (
         <AppLayout>
@@ -88,15 +64,6 @@ export default function Edit({ user }) {
                                 <Text className="text-center text-gray-500">
                                     {user.email}
                                 </Text>
-
-                                {isProfessor && (
-                                    <div className="mt-3 text-center">
-                                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
-                                            <AcademicCapIcon className="mr-1 h-3 w-3" />
-                                            Professor
-                                        </span>
-                                    </div>
-                                )}
                             </div>
                         </Card>
                     </Col>
@@ -215,173 +182,6 @@ export default function Edit({ user }) {
                                         </div>
                                     </div>
                                 </div>
-
-                                {isProfessor && (
-                                    <div className="pt-4">
-                                        <div className="flex items-center">
-                                            <AcademicCapIcon className="mr-2 h-5 w-5 text-amber-500" />
-                                            <Title className="text-lg">
-                                                Professor Information
-                                            </Title>
-                                        </div>
-                                        <Text className="mb-4 mt-1 text-gray-500">
-                                            Update your academic profile information.
-                                        </Text>
-
-                                        {departments?.length === 0 ? (
-                                            <div className="rounded-md bg-yellow-50 p-4 mb-4">
-                                                <div className="flex">
-                                                    <div className="flex-shrink-0">
-                                                        <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                                        </svg>
-                                                    </div>
-                                                    <div className="ml-3">
-                                                        <h3 className="text-sm font-medium text-yellow-800">No departments available</h3>
-                                                        <div className="mt-2 text-sm text-yellow-700">
-                                                            <p>Please contact an administrator to add departments.</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <label
-                                                        htmlFor="department_id"
-                                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                                    >
-                                                        Department <span className="text-red-500">*</span>
-                                                    </label>
-                                                    <Select
-                                                        id="department_id"
-                                                        value={data.professorProfile.department_id ? data.professorProfile.department_id.toString() : ''}
-                                                        onValueChange={(value) =>
-                                                            setData('professorProfile', {
-                                                                ...data.professorProfile,
-                                                                department_id: value
-                                                            })
-                                                        }
-                                                        placeholder="Select Department"
-                                                        error={!!errors['professorProfile.department_id']}
-                                                        errorMessage={errors['professorProfile.department_id']}
-                                                        icon={BuildingOfficeIcon}
-                                                    >
-                                                        {departments && departments.length > 0 ? (
-                                                            departments.map((department) => (
-                                                                <SelectItem
-                                                                    key={department.id}
-                                                                    value={department.id.toString()}
-                                                                >
-                                                                    {department.name}
-                                                                </SelectItem>
-                                                            ))
-                                                        ) : (
-                                                            <SelectItem value="" disabled>
-                                                                No departments available
-                                                            </SelectItem>
-                                                        )}
-                                                    </Select>
-                                                    {errors['professorProfile.department_id'] && (
-                                                        <p className="mt-1 text-sm text-red-600">{errors['professorProfile.department_id']}</p>
-                                                    )}
-                                                </div>
-
-                                                <div>
-                                                    <label
-                                                        htmlFor="title"
-                                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                                    >
-                                                        Academic Title
-                                                    </label>
-                                                    <TextInput
-                                                        id="title"
-                                                        placeholder="e.g. Associate Professor"
-                                                        value={data.professorProfile.title || ''}
-                                                        onChange={(e) =>
-                                                            setData('professorProfile', {
-                                                                ...data.professorProfile,
-                                                                title: e.target.value
-                                                            })
-                                                        }
-                                                        error={!!errors['professorProfile.title']}
-                                                        errorMessage={errors['professorProfile.title']}
-                                                        icon={AcademicCapIcon}
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <label
-                                                        htmlFor="office"
-                                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                                    >
-                                                        Office Location
-                                                    </label>
-                                                    <TextInput
-                                                        id="office"
-                                                        placeholder="e.g. Building A, Room 101"
-                                                        value={data.professorProfile.office || ''}
-                                                        onChange={(e) =>
-                                                            setData('professorProfile', {
-                                                                ...data.professorProfile,
-                                                                office: e.target.value
-                                                            })
-                                                        }
-                                                        error={!!errors['professorProfile.office']}
-                                                        errorMessage={errors['professorProfile.office']}
-                                                        icon={MapPinIcon}
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <label
-                                                        htmlFor="phone"
-                                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                                    >
-                                                        Contact Phone
-                                                    </label>
-                                                    <TextInput
-                                                        id="phone"
-                                                        placeholder="e.g. (123) 456-7890"
-                                                        value={data.professorProfile.phone || ''}
-                                                        onChange={(e) =>
-                                                            setData('professorProfile', {
-                                                                ...data.professorProfile,
-                                                                phone: e.target.value
-                                                            })
-                                                        }
-                                                        error={!!errors['professorProfile.phone']}
-                                                        errorMessage={errors['professorProfile.phone']}
-                                                        icon={PhoneIcon}
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <label
-                                                        htmlFor="website"
-                                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                                    >
-                                                        Personal Website
-                                                    </label>
-                                                    <TextInput
-                                                        id="website"
-                                                        placeholder="e.g. https://example.com"
-                                                        value={data.professorProfile.website || ''}
-                                                        onChange={(e) =>
-                                                            setData('professorProfile', {
-                                                                ...data.professorProfile,
-                                                                website: e.target.value
-                                                            })
-                                                        }
-                                                        error={!!errors['professorProfile.website']}
-                                                        errorMessage={errors['professorProfile.website']}
-                                                        icon={GlobeAltIcon}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
 
                                 <Divider />
 
