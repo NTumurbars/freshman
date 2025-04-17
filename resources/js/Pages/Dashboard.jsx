@@ -80,39 +80,40 @@ export default function Dashboard() {
         };
 
         return (
-            <div className="overflow-hidden rounded-lg bg-white shadow transition-all hover:shadow-md">
-                <Link href={linkTo || '#'}>
-                    <div className="p-5">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <div
-                                    className={`rounded-full p-3 ${colors[color]}`}
-                                >
-                                    <Icon className="h-6 w-6" />
-                                </div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-medium text-gray-500">
-                                        {title}
-                                    </p>
-                                    <p className="text-2xl font-semibold text-gray-900">
-                                        {loading ? (
-                                            <Loader className="h-6 w-6 animate-spin text-gray-400" />
-                                        ) : (
-                                            (value ?? 0)
-                                        )}
-                                    </p>
-                                    {subtitle && (
-                                        <p className="mt-1 text-sm text-gray-500">
-                                            {subtitle}
-                                        </p>
-                                    )}
-                                </div>
+            <Link
+                href={linkTo || '#'}
+                className="block overflow-hidden rounded-lg bg-white shadow transition-all hover:shadow-md"
+            >
+                <div className="p-5">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <div
+                                className={`rounded-full p-3 ${colors[color]}`}
+                            >
+                                <Icon className="h-6 w-6" />
                             </div>
-                            <ChevronRight className="h-5 w-5 text-gray-400" />
+                            <div className="ml-5">
+                                <p className="text-sm font-medium text-gray-500">
+                                    {title}
+                                </p>
+                                <p className="text-2xl font-semibold text-gray-900">
+                                    {loading ? (
+                                        <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                    ) : (
+                                        (value ?? 0)
+                                    )}
+                                </p>
+                                {subtitle && (
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        {subtitle}
+                                    </p>
+                                )}
+                            </div>
                         </div>
+                        <ChevronRight className="h-5 w-5 text-gray-400" />
                     </div>
-                </Link>
-            </div>
+                </div>
+            </Link>
         );
     };
 
