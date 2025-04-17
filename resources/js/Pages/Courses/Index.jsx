@@ -12,6 +12,8 @@ export default function Index({ courses, flash, school }) {
     const userSchool = auth.user.school;
     const [searchTerm, setSearchTerm] = useState('');
 
+    const actionsAllowed = userRole === 2 || userRole === 3;
+
     // Filter courses based on search term
     const filteredCourses = courses.filter(
         (course) =>
@@ -183,37 +185,47 @@ export default function Index({ courses, flash, school }) {
                                         >
                                             <Eye className="h-5 w-5" />
                                         </Link>
-                                        <Link
-                                            href={route('courses.edit', [
-                                                userSchool.id,
-                                                course.id,
-                                            ])}
-                                            className="rounded p-1 text-gray-500 hover:bg-yellow-100 hover:text-yellow-600"
-                                            title="Edit course"
-                                        >
-                                            <Edit className="h-5 w-5" />
-                                        </Link>
-                                        <Link
-                                            href={route('courses.destroy', [
-                                                userSchool.id,
-                                                course.id,
-                                            ])}
-                                            method="delete"
-                                            as="button"
-                                            className="rounded p-1 text-gray-500 hover:bg-red-100 hover:text-red-600"
-                                            title="Delete course"
-                                            onClick={(e) => {
-                                                if (
-                                                    !confirm(
-                                                        'Are you sure you want to delete this course?',
-                                                    )
-                                                ) {
-                                                    e.preventDefault();
-                                                }
-                                            }}
-                                        >
-                                            <Trash2 className="h-5 w-5" />
-                                        </Link>
+                                        {actionsAllowed && (
+                                            <>
+                                                <Link
+                                                    href={route(
+                                                        'courses.edit',
+                                                        [
+                                                            userSchool.id,
+                                                            course.id,
+                                                        ],
+                                                    )}
+                                                    className="rounded p-1 text-gray-500 hover:bg-yellow-100 hover:text-yellow-600"
+                                                    title="Edit course"
+                                                >
+                                                    <Edit className="h-5 w-5" />
+                                                </Link>
+                                                <Link
+                                                    href={route(
+                                                        'courses.destroy',
+                                                        [
+                                                            userSchool.id,
+                                                            course.id,
+                                                        ],
+                                                    )}
+                                                    method="delete"
+                                                    as="button"
+                                                    className="rounded p-1 text-gray-500 hover:bg-red-100 hover:text-red-600"
+                                                    title="Delete course"
+                                                    onClick={(e) => {
+                                                        if (
+                                                            !confirm(
+                                                                'Are you sure you want to delete this course?',
+                                                            )
+                                                        ) {
+                                                            e.preventDefault();
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2 className="h-5 w-5" />
+                                                </Link>
+                                            </>
+                                        )}
                                     </div>
                                 </td>
                             </tr>

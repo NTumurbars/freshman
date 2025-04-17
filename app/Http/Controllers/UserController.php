@@ -68,9 +68,8 @@ class UserController extends Controller
         $user = User::find(Auth::id());
         if($user->role->id == 1)
         {
-            $roles = Role::where('id', 1)->get();
             return Inertia::render('Users/Create', [
-            'roles' => $roles,
+            'roles' => '',
             'schools' => '',
             'departments' => '',
         ]);
@@ -148,6 +147,7 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
+        $user->load(['school', 'role']);
         $currentUser = Auth::user();
 
         // Check if the current user is authorized to edit this user
@@ -161,13 +161,9 @@ class UserController extends Controller
             return $q->where('id', '>', 1);
         })->get();
 
-        // Get schools - only super admin can see all schools, others only see their own
-        $schools = $currentUser->role_id === 1 ? School::all() : [$currentUser->school];
-
         return Inertia::render('Users/Edit', [
             'user' => $user,
             'roles' => $roles,
-            'schools' => $schools,
         ]);
     }
 

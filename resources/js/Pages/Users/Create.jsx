@@ -44,7 +44,9 @@ export default function Create({ roles, schools, departments }) {
 
     const { auth } = usePage().props;
     const userRole = auth.user.role.id;
-    const school1 = auth.user.school;
+    {
+        userRole === 1 && (data.role_id = 1);
+    }
 
     const [isProfessorRole, setIsProfessorRole] = useState(false);
 
@@ -115,11 +117,58 @@ export default function Create({ roles, schools, departments }) {
                                 </div>
                             </div>
                         </div>
+                        {userRole !== 1 ? (
+                            <div>
+                                <Text className="mb-2">Role & School</Text>
+                                <Divider />
+                                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label
+                                            htmlFor="role"
+                                            className="mb-1 block text-sm font-medium text-gray-700"
+                                        >
+                                            Role
+                                        </label>
+                                        <Select
+                                            id="role"
+                                            value={data.role_id}
+                                            onValueChange={(value) =>
+                                                handleChange('role_id', value)
+                                            }
+                                            placeholder="Select Role"
+                                            error={!!errors.role_id}
+                                            errorMessage={errors.role_id}
+                                        >
+                                            {roles.map((role) => (
+                                                <SelectItem
+                                                    key={role.id}
+                                                    value={role.id.toString()}
+                                                >
+                                                    {role.name
+                                                        .replace('_', ' ')
+                                                        .toUpperCase()}
+                                                </SelectItem>
+                                            ))}
+                                        </Select>
+                                    </div>
 
-                        <div>
-                            <Text className="mb-2">Role & School</Text>
-                            <Divider />
-                            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label
+                                            htmlFor="school"
+                                            className="mb-1 block text-sm font-medium text-gray-700"
+                                        >
+                                            School
+                                        </label>
+                                        <TextInput
+                                            value={schools?.name || ''}
+                                            disabled
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                <Text className="mb-2">Role</Text>
                                 <div>
                                     <label
                                         htmlFor="role"
@@ -127,73 +176,10 @@ export default function Create({ roles, schools, departments }) {
                                     >
                                         Role
                                     </label>
-                                    <Select
-                                        id="role"
-                                        value={data.role_id}
-                                        onValueChange={(value) =>
-                                            handleChange('role_id', value)
-                                        }
-                                        placeholder="Select Role"
-                                        error={!!errors.role_id}
-                                        errorMessage={errors.role_id}
-                                    >
-                                        {roles.map((role) => (
-                                            <SelectItem
-                                                key={role.id}
-                                                value={role.id.toString()}
-                                            >
-                                                {role.name
-                                                    .replace('_', ' ')
-                                                    .toUpperCase()}
-                                            </SelectItem>
-                                        ))}
-                                    </Select>
-                                </div>
-
-                                <div>
-                                    <label
-                                        htmlFor="school"
-                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                    >
-                                        School
-                                    </label>
-                                    {userRole === 1 ? (
-                                        <Select
-                                            id="school"
-                                            value={data.school_id}
-                                            onValueChange={(value) =>
-                                                handleChange('school_id', value)
-                                            }
-                                            placeholder="Select School"
-                                            error={!!errors.school_id}
-                                            errorMessage={errors.school_id}
-                                        >
-                                            {Array.isArray(schools) ? (
-                                                schools.map((school) => (
-                                                    <SelectItem
-                                                        key={school.id}
-                                                        value={school.id.toString()}
-                                                    >
-                                                        {school.name}
-                                                    </SelectItem>
-                                                ))
-                                            ) : (
-                                                <SelectItem
-                                                    value={schools?.id?.toString()}
-                                                >
-                                                    {schools?.name}
-                                                </SelectItem>
-                                            )}
-                                        </Select>
-                                    ) : (
-                                        <TextInput
-                                            value={school1?.name || ''}
-                                            disabled
-                                        />
-                                    )}
+                                    <TextInput value={'Super Admin'} disabled />
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         {isProfessorRole && (
                             <div>

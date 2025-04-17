@@ -12,12 +12,13 @@ import {
 } from '@tremor/react';
 import toast from 'react-hot-toast';
 
-export default function Edit({ user, roles, schools }) {
+export default function Edit({ user, roles }) {
     const { auth } = usePage().props;
     const userRole = auth.user.role_id;
     const userID = auth.user.id;
-    const school1 = auth.user.school;
-    
+
+    console.log(user);
+
     const { data, setData, put, errors, processing } = useForm({
         name: user.name,
         email: user.email,
@@ -28,7 +29,7 @@ export default function Edit({ user, roles, schools }) {
     });
 
     const handleChange = (name, value) => setData(name, value);
-    
+
     const submit = (e) => {
         e.preventDefault();
         put(route('users.update', user.id), {
@@ -116,7 +117,7 @@ export default function Edit({ user, roles, schools }) {
                                         onValueChange={(value) =>
                                             handleChange('role_id', value)
                                         }
-                                        placeholder="Select Role"
+                                        placeholder={user.role.name}
                                         error={!!errors.role_id}
                                         errorMessage={errors.role_id}
                                     >
@@ -133,106 +134,76 @@ export default function Edit({ user, roles, schools }) {
                                     </Select>
                                 </div>
 
-                                {userRole === 1 ? (
-                                    <div>
-                                        <label
-                                            htmlFor="school"
-                                            className="mb-1 block text-sm font-medium text-gray-700"
-                                        >
-                                            School
-                                        </label>
-                                        <Select
-                                            id="school"
-                                            value={data.school_id}
-                                            onValueChange={(value) =>
-                                                handleChange('school_id', value)
-                                            }
-                                            placeholder="Select School"
-                                            error={!!errors.school_id}
-                                            errorMessage={errors.school_id}
-                                        >
-                                            {schools.map((school) => (
-                                                <SelectItem
-                                                    key={school.id}
-                                                    value={school.id.toString()}
-                                                >
-                                                    {school.name}
-                                                </SelectItem>
-                                            ))}
-                                        </Select>
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <label
-                                            htmlFor="school_display"
-                                            className="mb-1 block text-sm font-medium text-gray-700"
-                                        >
-                                            School
-                                        </label>
-                                        <TextInput
-                                            id="school_display"
-                                            value={
-                                                school1.name ||
-                                                'No school assigned'
-                                            }
-                                            disabled
-                                        />
-                                    </div>
-                                )}
+                                <div>
+                                    <label
+                                        htmlFor="school_display"
+                                        className="mb-1 block text-sm font-medium text-gray-700"
+                                    >
+                                        School
+                                    </label>
+                                    <TextInput
+                                        id="school_display"
+                                        value={
+                                            user.school.name ||
+                                            'No school assigned'
+                                        }
+                                        disabled
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        {
-                            userID === user.id && 
+                        {userID === user.id && (
                             <div>
-                            <Text className="mb-2">Password</Text>
-                            <Divider />
-                            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div>
-                                    <label
-                                        htmlFor="password"
-                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                    >
-                                        New Password
-                                    </label>
-                                    <TextInput
-                                        id="password"
-                                        type="password"
-                                        placeholder="Leave blank to keep current"
-                                        value={data.password}
-                                        onChange={(e) =>
-                                            handleChange(
-                                                'password',
-                                                e.target.value,
-                                            )
-                                        }
-                                        error={!!errors.password}
-                                        errorMessage={errors.password}
-                                    />
-                                </div>
+                                <Text className="mb-2">Password</Text>
+                                <Divider />
+                                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label
+                                            htmlFor="password"
+                                            className="mb-1 block text-sm font-medium text-gray-700"
+                                        >
+                                            New Password
+                                        </label>
+                                        <TextInput
+                                            id="password"
+                                            type="password"
+                                            placeholder="Leave blank to keep current"
+                                            value={data.password}
+                                            onChange={(e) =>
+                                                handleChange(
+                                                    'password',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            error={!!errors.password}
+                                            errorMessage={errors.password}
+                                        />
+                                    </div>
 
-                                <div>
-                                    <label
-                                        htmlFor="password_confirmation"
-                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                    >
-                                        Confirm Password
-                                    </label>
-                                    <TextInput
-                                        id="password_confirmation"
-                                        type="password"
-                                        placeholder="Confirm new password"
-                                        value={data.password_confirmation}
-                                        onChange={(e) =>
-                                            handleChange(
-                                                'password_confirmation',
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
+                                    <div>
+                                        <label
+                                            htmlFor="password_confirmation"
+                                            className="mb-1 block text-sm font-medium text-gray-700"
+                                        >
+                                            Confirm Password
+                                        </label>
+                                        <TextInput
+                                            id="password_confirmation"
+                                            type="password"
+                                            placeholder="Confirm new password"
+                                            value={data.password_confirmation}
+                                            onChange={(e) =>
+                                                handleChange(
+                                                    'password_confirmation',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </div>}
+                        )}
 
                         <div className="flex justify-end pt-4">
                             <Button type="submit" disabled={processing}>
