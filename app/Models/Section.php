@@ -30,6 +30,8 @@ class Section extends Model
 
     protected $appends = ['students_count', 'effective_capacity'];
 
+    protected $with = ['courseRegistrations.student'];
+
     // Status constants
     const STATUS_ACTIVE = 'active';
     const STATUS_CANCELED = 'canceled';

@@ -215,13 +215,32 @@ class UserController extends Controller
     {
         $this->authorize('view', $user);
 
-        $user->load(['role', 'school', 'professor_profile.department']);
+        // Load basic user data
+        $user->load([
+            'role',
+            'school',
+            'professor_profile.department'
+        ]);
 
         // Get departments for the school
         $departments = $user->school->departments ?? [];
 
+        // Directly fetch course registrations with relations
+        $courseRegistrations = \App\Models\CourseRegistration::with([
+            'section.course',
+            'section.professor_profile.user',
+            'section.schedules.room'
+        ])
+        ->where('user_id', $user->id)
+        ->get();
+
+        // Convert user to array and add course registrations
+        $userData = $user->toArray();
+        $userData['courseRegistrations'] = $courseRegistrations;
+        $userData['course_registrations'] = $courseRegistrations; // For backward compatibility
+
         return Inertia::render('Users/Show', [
-            'user' => $user,
+            'user' => $userData,
             'departments' => $departments
         ]);
     }

@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
     Calendar,
@@ -35,11 +35,21 @@ const ProfessorInfo = ({ professor, school }) => (
 );
 
 export default function Show({ section, school }) {
+    const { auth } = usePage().props;
+    const isSchoolAdmin = auth.user.role.name === 'school_admin' || auth.user.role.name === 'super_admin';
+
     useEffect(() => {
+        console.log('Section full data object:', section);
         console.log('Section data:', section);
         console.log('Section schedules:', section.schedules);
         if (section.schedules && section.schedules.length > 0) {
             console.log('First schedule:', section.schedules[0]);
+        }
+        console.log('Course registrations:', section.courseRegistrations);
+        console.log('Section has courseRegistrations property:', section.hasOwnProperty('courseRegistrations'));
+        if (section.courseRegistrations && section.courseRegistrations.length > 0) {
+            console.log('First registration:', section.courseRegistrations[0]);
+            console.log('Student data:', section.courseRegistrations[0].student);
         }
     }, [section]);
 
@@ -181,18 +191,20 @@ export default function Show({ section, school }) {
                             </span>
                         </div>
                     </div>
-                    <div className="flex space-x-3">
-                        <Link
-                            href={route('sections.edit', [
-                                school.id,
-                                section.id,
-                            ])}
-                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Section
-                        </Link>
-                    </div>
+                    {isSchoolAdmin && (
+                        <div className="flex space-x-3">
+                            <Link
+                                href={route('sections.edit', [
+                                    school.id,
+                                    section.id,
+                                ])}
+                                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Section
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -204,7 +216,7 @@ export default function Show({ section, school }) {
                             <h2 className="text-lg font-medium text-gray-900">
                                 Section Information
                             </h2>
-                            {!section.schedules ||
+                            {isSchoolAdmin && (!section.schedules ||
                             section.schedules.length === 0 ? (
                                 <Link
                                     href={route('schedules.create', {
@@ -227,7 +239,7 @@ export default function Show({ section, school }) {
                                     <Calendar className="mr-1.5 h-4 w-4" />
                                     Edit Schedule
                                 </Link>
-                            )}
+                            ))}
                         </div>
                         <div className="px-6 py-4">
                             <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
@@ -451,39 +463,43 @@ export default function Show({ section, school }) {
                                                                         {schedule.day_of_week}
                                                                     </span>
                                                                 </div>
-                                                                <Link
-                                                                    href={route('schedules.edit', [school.id, schedule.id])}
-                                                                    className="rounded-md bg-white px-2 py-1 text-xs font-medium text-blue-600 shadow-sm hover:bg-blue-50 hover:text-blue-700"
-                                                                >
-                                                                    Edit
-                                                                </Link>
+                                                                {isSchoolAdmin && (
+                                                                    <Link
+                                                                        href={route('schedules.edit', [school.id, schedule.id])}
+                                                                        className="rounded-md bg-white px-2 py-1 text-xs font-medium text-blue-600 shadow-sm hover:bg-blue-50 hover:text-blue-700"
+                                                                    >
+                                                                        Edit
+                                                                    </Link>
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
                                                 </div>
                                             )}
 
-                                            <div className="mt-4 flex justify-end space-x-3">
-                                                {scheduleGroup.group.length === 1 && (
+                                            {isSchoolAdmin && (
+                                                <div className="mt-4 flex justify-end space-x-3">
+                                                    {scheduleGroup.group.length === 1 && (
+                                                        <Link
+                                                            href={route('schedules.edit', [school.id, scheduleGroup.group[0].id])}
+                                                            className="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-sm font-medium text-blue-600 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-50"
+                                                        >
+                                                            <Edit className="mr-1.5 h-3.5 w-3.5" />
+                                                            Edit
+                                                        </Link>
+                                                    )}
                                                     <Link
-                                                        href={route('schedules.edit', [school.id, scheduleGroup.group[0].id])}
-                                                        className="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-sm font-medium text-blue-600 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-50"
+                                                        href={route('schedules.create', {
+                                                            school: school.id,
+                                                            section_id: section.id,
+                                                        })}
+                                                        className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-600 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-100"
                                                     >
-                                                        <Edit className="mr-1.5 h-3.5 w-3.5" />
-                                                        Edit
+                                                        <CalendarPlus className="mr-1.5 h-3.5 w-3.5" />
+                                                        Add Schedule
                                                     </Link>
-                                                )}
-                                                <Link
-                                                    href={route('schedules.create', {
-                                                        school: school.id,
-                                                        section_id: section.id,
-                                                    })}
-                                                    className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-600 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-100"
-                                                >
-                                                    <CalendarPlus className="mr-1.5 h-3.5 w-3.5" />
-                                                    Add Schedule
-                                                </Link>
-                                            </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -499,18 +515,20 @@ export default function Show({ section, school }) {
                                 <p className="mt-1 max-w-md text-sm text-gray-500">
                                     This section doesn't have a schedule yet. Create one to assign time and location for students.
                                 </p>
-                                <div className="mt-6">
-                                    <Link
-                                        href={route('schedules.create', {
-                                            school: school.id,
-                                            section_id: section.id,
-                                        })}
-                                        className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                    >
-                                        <CalendarPlus className="mr-2 h-4 w-4" />
-                                        Create Schedule
-                                    </Link>
-                                </div>
+                                {isSchoolAdmin && (
+                                    <div className="mt-6">
+                                        <Link
+                                            href={route('schedules.create', {
+                                                school: school.id,
+                                                section_id: section.id,
+                                            })}
+                                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                        >
+                                            <CalendarPlus className="mr-2 h-4 w-4" />
+                                            Create Schedule
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -624,13 +642,12 @@ export default function Show({ section, school }) {
                                                 className="py-2"
                                             >
                                                 <p className="text-sm font-medium text-gray-900">
-                                                    {registration.student
-                                                        ?.name ||
-                                                        'Unknown Student'}
+                                                    {(registration.student && registration.student.name) ||
+                                                     'Unknown Student'}
                                                 </p>
                                                 <p className="text-xs text-gray-500">
-                                                    {registration.student
-                                                        ?.email || ''}
+                                                    {(registration.student && registration.student.email) ||
+                                                     ''}
                                                 </p>
                                             </li>
                                         ),

@@ -53,8 +53,28 @@ class HandleInertiaRequests extends Middleware
     protected function transformUser($user): array
     {
         // Eager load the relations you want.
-        // Make sure your User model has 'role()' and 'school()' relationships defined.
-        $user->load(['role', 'school']);
+        $user->load([
+            'role',
+            'school',
+            'courseRegistrations' => function($query) {
+                $query->whereHas('section.term', function($q) {
+                    $q->where('start_date', '<=', now())
+                      ->where('end_date', '>=', now());
+                });
+            },
+            'courseRegistrations.section.course',
+            'courseRegistrations.section.schedules.room.floor.building',
+            'courseRegistrations.section.professor_profile.user'
+        ]);
+
+        // Get current term for the user's school
+        $currentTerm = null;
+        if ($user->school_id) {
+            $currentTerm = Term::where('school_id', $user->school_id)
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->first();
+        }
 
         return [
             'id'       => $user->id,
@@ -72,6 +92,76 @@ class HandleInertiaRequests extends Middleware
             'role' => $user->role ? [
                 'id'   => $user->role->id,
                 'name' => $user->role->name,
+            ] : null,
+            'registrations' => $user->role && $user->role->name === 'student'
+                ? $user->courseRegistrations->map(function($registration) {
+                    if (!$registration->section) {
+                        return null;
+                    }
+
+                    // Ensure section exists and has required properties
+                    $section = $registration->section;
+                    if (!$section->course) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => $registration->id,
+                        'section' => [
+                            'id' => $section->id,
+                            'section_code' => $section->section_code,
+                            'delivery_method' => $section->delivery_method,
+                            'course' => [
+                                'id' => $section->course->id,
+                                'code' => $section->course->code,
+                                'title' => $section->course->title,
+                                'credits' => $section->course->credits ?? 0,
+                            ],
+                            'professor_profile' => $section->professor_profile
+                                ? [
+                                    'id' => $section->professor_profile->id,
+                                    'user' => $section->professor_profile->user
+                                        ? [
+                                            'id' => $section->professor_profile->user->id,
+                                            'name' => $section->professor_profile->user->name,
+                                        ]
+                                        : null,
+                                ]
+                                : null,
+                            'schedules' => $section->schedules
+                                ? $section->schedules->map(function($schedule) {
+                                    if (!$schedule) return null;
+
+                                    return [
+                                        'id' => $schedule->id,
+                                        'day_of_week' => $schedule->day_of_week,
+                                        'start_time' => $schedule->start_time,
+                                        'end_time' => $schedule->end_time,
+                                        'room' => $schedule->room
+                                            ? [
+                                                'id' => $schedule->room->id,
+                                                'room_number' => $schedule->room->room_number,
+                                                'floor' => $schedule->room->floor
+                                                    ? [
+                                                        'building' => $schedule->room->floor->building
+                                                            ? $schedule->room->floor->building->name
+                                                            : null,
+                                                    ]
+                                                    : null,
+                                            ]
+                                            : null,
+                                    ];
+                                })->filter()->values() // Remove nulls and reindex
+                                : [],
+                        ],
+                    ];
+                })->filter()->values() // Remove nulls and reindex
+                : [],
+            'current_term' => $currentTerm ? [
+                'id' => $currentTerm->id,
+                'name' => $currentTerm->name,
+                'start_date' => $currentTerm->start_date,
+                'end_date' => $currentTerm->end_date,
             ] : null,
         ];
     }

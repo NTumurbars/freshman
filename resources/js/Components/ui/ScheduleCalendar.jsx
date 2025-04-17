@@ -237,137 +237,101 @@ export default function ScheduleCalendar({
         );
     };
 
-    // Render the default week view calendar
+    // Render week calendar view (default view)
     const renderWeekCalendar = () => {
-        // Determine height based on compact mode
-        const columnHeight = compact ? "min-h-[400px]" : "min-h-[800px]";
-        const timeSlotSpacing = compact ? "space-y-[27px]" : "space-y-[55px]";
-
         return (
-            <div className="w-full overflow-x-auto">
-                <div className={`min-w-[600px] ${compact ? 'max-w-full' : ''}`}>
-                    {/* Calendar Header */}
-                    <div className="grid grid-cols-8 gap-1 mb-2">
-                        <div className="flex items-center justify-center h-10 font-medium text-xs text-gray-500">
-                            Time
-                        </div>
-                        {days.map(day => (
-                            <div
-                                key={day}
-                                className="flex items-center justify-center h-10 font-medium text-xs text-gray-700 rounded-t-md bg-gray-50"
-                            >
-                                {day}
-                            </div>
-                        ))}
+            <div className="w-full h-full">
+                {/* Calendar Header */}
+                <div className="grid grid-cols-8 gap-1">
+                    <div className="flex items-center justify-center h-12 font-medium text-sm text-gray-500">
+                        Time
                     </div>
-
-                    {/* Calendar Body */}
-                    <div className="relative grid grid-cols-8 gap-1 border rounded-lg overflow-hidden">
-                        {/* Time Labels */}
-                        <div className={`${timeSlotSpacing} pt-2`}>
-                            {timeSlots.map(time => (
-                                <div key={time} className="text-xs text-gray-500 font-medium h-4">
-                                    {time}
-                                </div>
-                            ))}
+                    {days.map(day => (
+                        <div
+                            key={day}
+                            className="flex items-center justify-center h-12 font-medium text-sm text-gray-700 bg-gray-50 rounded-t-lg"
+                        >
+                            {day}
                         </div>
-
-                        {/* Day Columns */}
-                        {days.map(day => (
-                            <div key={day} className={`relative ${columnHeight} bg-gray-50 p-1`}>
-                                {/* Hour grid lines */}
-                                {timeSlots.map((time, index) => (
-                                    <div
-                                        key={`grid-${day}-${index}`}
-                                        className="absolute left-0 right-0 border-t border-gray-100"
-                                        style={{ top: `${index * (compact ? 27 : 55)}px` }}
-                                    ></div>
-                                ))}
-
-                                {schedulesByDay[day].map((schedule, index) => {
-                                    const position = getSchedulePosition(schedule);
-                                    const colorClass = schedule.custom_color_class || getColorClass(schedule.location_type);
-                                    const professorName = schedule.section?.professor_profile?.user?.name || 'Unassigned';
-
-                                    return (
-                                        <div
-                                            key={`${day}-${index}`}
-                                            className={`schedule-item absolute left-1 right-1 px-2 py-1 rounded-md border ${colorClass} text-xs overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200`}
-                                            style={{
-                                                top: position.top,
-                                                height: position.height,
-                                            }}
-                                            onClick={() => {
-                                                if (schedule.section && schedule.section.id) {
-                                                    // Navigate to section page using window location
-                                                    // This is a fallback in case Link usage is problematic in absolute positioned elements
-                                                    const url = route('sections.show', [schedule.section.course?.department?.school_id || document.querySelector('meta[name="school-id"]')?.content, schedule.section.id]);
-                                                    window.location.href = url;
-                                                }
-                                            }}
-                                        >
-                                            <div className="font-semibold mb-1 truncate">
-                                                {schedule.section?.course?.title || 'Class'}
-                                            </div>
-                                            <div className="text-xs truncate">
-                                                {schedule.start_time?.substring(0, 5)} - {schedule.end_time?.substring(0, 5)}
-                                            </div>
-                                            <div className="text-xs truncate">
-                                                Prof. {professorName}
-                                            </div>
-                                            {schedule.room && (
-                                                <div className="text-xs truncate mt-1">
-                                                    Room {schedule.room.room_number || 'N/A'}
-                                                </div>
-                                            )}
-
-                                            {/* Tooltip */}
-                                            <div className="schedule-tooltip hidden absolute top-full left-0 mt-1 z-50 w-48 p-2 bg-white rounded-md shadow-lg border border-gray-200 text-left">
-                                                <div className="font-semibold">{schedule.section?.course?.title || 'Class'}</div>
-                                                <div>Section: {schedule.section?.section_code || 'N/A'}</div>
-                                                <div>Time: {schedule.start_time?.substring(0, 5)} - {schedule.end_time?.substring(0, 5)}</div>
-                                                <div>Professor: {professorName}</div>
-                                                {schedule.room && (
-                                                    <div>Room: {schedule.room.room_number}, {schedule.room.floor?.building?.name || 'N/A'}</div>
-                                                )}
-                                                {schedule.location_type && (
-                                                    <div>Location Type: {schedule.location_type}</div>
-                                                )}
-                                                {schedule.section && schedule.section.id && (
-                                                    <div className="mt-2 text-blue-600 hover:underline">
-                                                        Click to view section details
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))}
-                    </div>
+                    ))}
                 </div>
 
-                {/* Legend */}
-                {viewType === 'professor' ? (
-                    <div className="mt-4 text-xs text-gray-600">
-                        <p>Colors represent different courses to help distinguish between classes.</p>
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-8 gap-1 relative" style={{ height: 'calc(100% - 3rem)' }}>
+                    {/* Time Column */}
+                    <div className="space-y-0 py-2">
+                        {timeSlots.map(time => (
+                            <div key={time} className="h-[60px] text-xs text-gray-500 font-medium">
+                                {time}
+                            </div>
+                        ))}
                     </div>
-                ) : (
-                    <div className="mt-4 flex gap-4 justify-end">
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded bg-blue-100 border border-blue-400"></div>
-                            <span className="text-xs text-gray-600">In-Person</span>
+
+                    {/* Day Columns */}
+                    {days.map(day => (
+                        <div key={day} className="relative bg-gray-50 rounded-b-lg">
+                            {/* Hour Grid Lines */}
+                            <div className="absolute inset-0">
+                                {timeSlots.map((_, index) => (
+                                    <div
+                                        key={index}
+                                        className="border-t border-gray-200"
+                                        style={{ height: '60px' }}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Schedule Items */}
+                            {schedulesByDay[day]?.map((schedule, index) => {
+                                const position = getSchedulePosition(schedule);
+                                const colorClass = schedule.custom_color_class || getColorClass(schedule.location_type);
+
+                                return (
+                                    <div
+                                        key={`${day}-${index}`}
+                                        className={`schedule-item absolute left-1 right-1 px-2 py-1 rounded border ${colorClass} text-xs overflow-hidden hover:shadow-lg transition-shadow duration-200`}
+                                        style={{
+                                            top: position.top,
+                                            height: position.height,
+                                            zIndex: 10
+                                        }}
+                                    >
+                                        <div className="font-semibold truncate">
+                                            {schedule.section?.course?.code || 'Class'}
+                                        </div>
+                                        <div className="text-xs truncate">
+                                            {schedule.start_time?.substring(0, 5)} - {schedule.end_time?.substring(0, 5)}
+                                        </div>
+                                        {!compact && (
+                                            <>
+                                                <div className="text-xs truncate">
+                                                    {schedule.section?.course?.title}
+                                                </div>
+                                                <div className="text-xs truncate">
+                                                    Prof. {schedule.section?.professor_profile?.user?.name || 'TBA'}
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Tooltip */}
+                                        <div className="schedule-tooltip hidden absolute top-full left-0 mt-1 z-50 w-64 p-3 bg-white rounded-md shadow-xl border border-gray-200">
+                                            <div className="font-semibold">{schedule.section?.course?.code} - {schedule.section?.section_code}</div>
+                                            <div className="text-sm">{schedule.section?.course?.title}</div>
+                                            <div className="text-sm mt-1">Professor: {schedule.section?.professor_profile?.user?.name || 'TBA'}</div>
+                                            <div className="text-sm">Time: {schedule.start_time?.substring(0, 5)} - {schedule.end_time?.substring(0, 5)}</div>
+                                            {schedule.room && (
+                                                <div className="text-sm">Room: {schedule.room.room_number}</div>
+                                            )}
+                                            <div className="text-sm">
+                                                Delivery: {schedule.location_type}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded bg-green-100 border border-green-400"></div>
-                            <span className="text-xs text-gray-600">Virtual</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded bg-purple-100 border border-purple-400"></div>
-                            <span className="text-xs text-gray-600">Hybrid</span>
-                        </div>
-                    </div>
-                )}
+                    ))}
+                </div>
             </div>
         );
     };

@@ -42,6 +42,17 @@ export default function Show() {
     const { user, auth, departments } = usePage().props;
     const school = auth.user?.school;
     const [editingProfile, setEditingProfile] = useState(false);
+    const [activeTab, setActiveTab] = useState(0);
+
+    // Log the user data with course registrations
+    console.log("User data in Show component:", user);
+    console.log("Course registrations:", user.courseRegistrations || []);
+    console.log("Legacy course_registrations:", user.course_registrations || []);
+
+    // Helper function to get course registrations from either property
+    const getCourseRegistrations = () => {
+        return user.courseRegistrations || user.course_registrations || [];
+    };
 
     const { data, setData, post, processing, errors, reset } = useForm({
         department_id: user.professor_profile?.department_id || '',
@@ -327,38 +338,133 @@ export default function Show() {
                         </Flex>
                         <Divider />
 
-                        <div className="mt-4 space-y-5">
-                            <div className="flex items-center">
-                                <BookOpenIcon className="mr-3 h-5 w-5 text-indigo-500" />
+                        <div className="mt-4 space-y-5 p-4">
+                            <div className="flex items-center bg-indigo-50 p-4 rounded-lg">
+                                <BookOpenIcon className="mr-3 h-6 w-6 text-indigo-600" />
                                 <div>
-                                    <Text className="font-medium">
+                                    <Text className="font-medium text-lg">
                                         Enrolled Courses
                                     </Text>
-                                    <Text>
-                                        {user.course_registrations?.length || 0}
+                                    <Text className="text-indigo-700 font-bold text-xl">
+                                        {user.courseRegistrations?.length || 0}
                                     </Text>
                                 </div>
                             </div>
 
-                            {user.course_registrations &&
-                            user.course_registrations.length > 0 ? (
-                                <div className="mt-2 rounded-md bg-indigo-50 p-4">
-                                    <Text>
-                                        View details in the Courses section to
-                                        see enrollment history and current
-                                        courses.
-                                    </Text>
-                                </div>
-                            ) : (
-                                <div className="mt-2 rounded-md bg-indigo-50 p-4">
-                                    <Text>
-                                        This student is not enrolled in any
-                                        courses yet.
-                                    </Text>
-                                </div>
-                            )}
+                            {/* Course Registrations List */}
+                            <div className="mt-6 border-t pt-4">
+                                <Text className="font-medium text-lg mb-3">
+                                    Course Registrations
+                                </Text>
 
-                            {/* Additional student-specific details can be added here */}
+                                {user.courseRegistrations && user.courseRegistrations.length > 0 ? (
+                                    <div className="overflow-auto max-w-full rounded-lg shadow">
+                                        <table className="min-w-full divide-y divide-gray-200 table-fixed">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th scope="col" className="w-1/3 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Course
+                                                    </th>
+                                                    <th scope="col" className="w-1/5 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Section
+                                                    </th>
+                                                    <th scope="col" className="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Professor
+                                                    </th>
+                                                    <th scope="col" className="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Schedule
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {user.courseRegistrations.map((reg) => (
+                                                    <tr key={reg.id} className="hover:bg-gray-50">
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex flex-col">
+                                                                <div className="text-sm font-medium text-gray-900">
+                                                                    {reg.section?.course?.id ? (
+                                                                        <Link
+                                                                            href={route('courses.show', [user.school?.id, reg.section.course.id])}
+                                                                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                                        >
+                                                                            {reg.section.course.code || 'N/A'}
+                                                                        </Link>
+                                                                    ) : (
+                                                                        reg.section?.course?.code || 'N/A'
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-sm text-gray-500 truncate">
+                                                                    {reg.section?.course?.title || 'Unknown Course'}
+                                                                </div>
+                                                                {reg.section?.course?.credits && (
+                                                                    <span className="inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                                                        {reg.section.course.credits} Credits
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="text-sm text-gray-900">
+                                                                {reg.section?.id ? (
+                                                                    <Link
+                                                                        href={route('sections.show', [user.school?.id, reg.section.id])}
+                                                                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                                    >
+                                                                        {reg.section.section_code || `Section ${reg.section_id}`}
+                                                                    </Link>
+                                                                ) : (
+                                                                    reg.section?.section_code || `Section ${reg.section_id}`
+                                                                )}
+                                                            </div>
+                                                            <div className="text-xs text-gray-500">
+                                                                Registered {new Date(reg.created_at).toLocaleDateString()}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center">
+                                                                <div className="flex-shrink-0 mr-2">
+                                                                    <div className="h-7 w-7 bg-gray-100 rounded-full flex items-center justify-center">
+                                                                        <UserCircleIcon className="h-5 w-5 text-gray-500" />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-sm text-gray-900 truncate max-w-[120px]">
+                                                                    {reg.section?.professor_profile?.user?.name || 'Not assigned'}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-500">
+                                                            {reg.section?.schedules?.length > 0 ? (
+                                                                <div className="space-y-1 text-xs">
+                                                                    {reg.section.schedules.map((schedule, idx) => (
+                                                                        <div key={idx} className="flex items-center">
+                                                                            <CalendarIcon className="h-3 w-3 mr-1 text-indigo-500 flex-shrink-0" />
+                                                                            <span className="truncate">
+                                                                                {schedule.day_of_week || ''} {schedule.start_time || ''} - {schedule.end_time || ''}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                'No schedule'
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <div className="mt-2 rounded-lg bg-indigo-50 p-6 text-center">
+                                        <BookOpenIcon className="h-12 w-12 text-indigo-300 mx-auto mb-3" />
+                                        <Text className="text-lg font-medium text-indigo-900">
+                                            No Course Registrations
+                                        </Text>
+                                        <Text className="text-indigo-700 mt-1">
+                                            This student is not currently enrolled in any courses.
+                                        </Text>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </Card>
                 );
@@ -478,20 +584,13 @@ export default function Show() {
                             <TabGroup>
                                 <TabList className="mt-2">
                                     <Tab icon={UserIcon}>Profile Details</Tab>
-                                    {(user.role?.id === 3 ||
-                                        user.role?.id === 4) && (
-                                        <Tab icon={AcademicCapIcon}>
-                                            Professor Info
-                                        </Tab>
-                                    )}
-                                    {user.role?.id === 5 && (
-                                        <Tab icon={BookmarkIcon}>
-                                            Student Info
-                                        </Tab>
-                                    )}
+                                    {user.role?.id === 3 || user.role?.id === 4 ? (
+                                        <Tab icon={AcademicCapIcon}>Professor Info</Tab>
+                                    ) : null}
                                 </TabList>
 
                                 <TabPanels>
+                                    {/* Profile Details Tab - Always present */}
                                     <TabPanel>
                                         <div className="p-4">
                                             <div className="mb-6">
@@ -551,8 +650,8 @@ export default function Show() {
                                         </div>
                                     </TabPanel>
 
-                                    {(user.role?.id === 3 ||
-                                        user.role?.id === 4) && (
+                                    {/* Professor Info Tab - Only render if user is a professor */}
+                                    {user.role?.id === 3 || user.role?.id === 4 ? (
                                         <TabPanel>
                                             <div className="p-4">
                                                 <div className="mb-6">
@@ -603,68 +702,13 @@ export default function Show() {
                                                 )}
                                             </div>
                                         </TabPanel>
-                                    )}
-
-                                    {user.role?.id === 5 && (
-                                        <TabPanel>
-                                            <div className="p-4">
-                                                <div className="mb-6">
-                                                    <Title>
-                                                        Student Details
-                                                    </Title>
-                                                    <Text>
-                                                        Enrollment information
-                                                        for this student.
-                                                    </Text>
-                                                </div>
-
-                                                <div className="mt-4 space-y-5">
-                                                    <div className="flex items-center">
-                                                        <BookOpenIcon className="mr-3 h-5 w-5 text-indigo-500" />
-                                                        <div>
-                                                            <Text className="font-medium">
-                                                                Enrolled Courses
-                                                            </Text>
-                                                            <Text>
-                                                                {user
-                                                                    .course_registrations
-                                                                    ?.length ||
-                                                                    0}
-                                                            </Text>
-                                                        </div>
-                                                    </div>
-
-                                                    {user.course_registrations &&
-                                                    user.course_registrations
-                                                        .length > 0 ? (
-                                                        <div className="mt-2 rounded-md bg-indigo-50 p-4">
-                                                            <Text>
-                                                                View details in
-                                                                the Courses
-                                                                section to see
-                                                                enrollment
-                                                                history.
-                                                            </Text>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="mt-2 rounded-md bg-indigo-50 p-4">
-                                                            <Text>
-                                                                This student is
-                                                                not enrolled in
-                                                                any courses yet.
-                                                            </Text>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </TabPanel>
-                                    )}
+                                    ) : null}
                                 </TabPanels>
                             </TabGroup>
                         </Card>
 
                         {/* Keep the standalone role-specific card if preferred over the tabbed interface */}
-                        {/* <RoleSpecificDetails /> */}
+                        <RoleSpecificDetails />
                     </Col>
                 </Grid>
             </div>

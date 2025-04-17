@@ -16,11 +16,14 @@ export default function Edit({ user, roles, schools }) {
     const { data, setData, put, errors, processing } = useForm({
         name: user.name,
         email: user.email,
-        role_id: user.role_id,
-        school_id: user.school_id || '',
+        role_id: user.role_id ? user.role_id.toString() : '',
+        school_id: user.school_id ? user.school_id.toString() : '',
         password: '',
         password_confirmation: '',
     });
+
+    // Check if the logged-in user is a super admin (role_id 1)
+    const isSuperAdmin = user.role?.name === 'super_admin';
 
     const handleChange = (name, value) => setData(name, value);
 
@@ -128,7 +131,7 @@ export default function Edit({ user, roles, schools }) {
                                     </Select>
                                 </div>
 
-                                {userRole === 1 ? (
+                                {isSuperAdmin ? (
                                     <div>
                                         <label
                                             htmlFor="school"
@@ -167,7 +170,7 @@ export default function Edit({ user, roles, schools }) {
                                         <TextInput
                                             id="school_display"
                                             value={
-                                                user.school?.name ||
+                                                schools.find(s => s.id === parseInt(data.school_id))?.name ||
                                                 'No school assigned'
                                             }
                                             disabled

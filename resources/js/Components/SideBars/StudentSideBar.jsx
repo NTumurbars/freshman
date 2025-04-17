@@ -1,19 +1,36 @@
-import { Link } from '@inertiajs/react';
-import { GraduationCap, BookOpen, Clock, Calendar } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import {
+    BarChart3,
+    BookOpen,
+    User
+} from 'lucide-react';
 
 export default function StudentSideBar({ school }) {
+    const { url } = usePage();
+
     // Helper function to generate school-specific routes
     const schoolRoute = (name, params = {}) => {
         if (!school?.id) return '#';
         return route(name, { school: school.id, ...params });
     };
 
+    // Check if the current route matches the given path
+    const isActive = (path) => {
+        return url.startsWith(path);
+    };
+
     const NavItem = ({ href, icon, children }) => {
         const Icon = icon;
+        const active = isActive(href);
+
         return (
             <Link
                 href={href}
-                className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                className={`flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    active
+                        ? 'bg-blue-50 text-blue-700'
+                        : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                }`}
             >
                 <Icon className="mr-2 h-5 w-5" />
                 <span>{children}</span>
@@ -34,12 +51,13 @@ export default function StudentSideBar({ school }) {
 
     return (
         <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto scrollbar-hide">
+            {/* School Info Header */}
             <div className="mb-6 border-b border-gray-100 pb-4">
                 <div className="flex items-center space-x-3">
                     {school && school.logo_url ? (
                         <div className="h-10 w-10 flex-shrink-0 rounded-md overflow-hidden border border-gray-200 bg-white shadow-sm">
-                            <img 
-                                src={school.logo_url} 
+                            <img
+                                src={school.logo_url}
                                 alt={school?.name || 'School Logo'}
                                 className="h-full w-full object-contain"
                                 onError={(e) => {
@@ -67,25 +85,21 @@ export default function StudentSideBar({ school }) {
                 </div>
             </div>
 
+            {/* Navigation */}
             <div className="space-y-6">
+                <NavItem href={route('dashboard')} icon={BarChart3}>
+                    Dashboard
+                </NavItem>
+
                 <NavGroup title="Courses">
-                    <NavItem href={schoolRoute('courses.index')} icon={BookOpen}>
-                        Course Catalog
-                    </NavItem>
-                    <NavItem href={schoolRoute('schedules.index')} icon={Clock}>
-                        My Schedule
+                    <NavItem href={schoolRoute('student.course-registration')} icon={BookOpen}>
+                        Course Registration
                     </NavItem>
                 </NavGroup>
 
-                <NavGroup title="Academic Calendar">
-                    <NavItem href={schoolRoute('terms.index')} icon={Calendar}>
-                        Academic Terms
-                    </NavItem>
-                </NavGroup>
-
-                <NavGroup title="Program">
-                    <NavItem href={schoolRoute('program.index')} icon={GraduationCap}>
-                        My Program
+                <NavGroup title="Profile">
+                    <NavItem href={route('profile.edit')} icon={User}>
+                        My Profile
                     </NavItem>
                 </NavGroup>
             </div>

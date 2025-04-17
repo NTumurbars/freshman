@@ -180,7 +180,7 @@ export default function ProfessorSideBar({ school }) {
 
                 <NavGroup title="Students">
                     <NavItem
-                        href={schoolRoute('course-registrations.index')}
+                        href={schoolRoute('professor.students')}
                         icon={Users}
                     >
                         My Students

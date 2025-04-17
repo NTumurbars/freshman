@@ -253,8 +253,27 @@ class SectionController extends Controller
             abort(403, 'This section does not belong to your school');
         }
 
+        // Log section data for debugging
+        Log::info('Section data for frontend:', [
+            'section_id' => $section->id,
+            'has_course_registrations' => $section->courseRegistrations->count() > 0,
+            'course_registrations_count' => $section->courseRegistrations->count(),
+            'students_count' => $section->students_count,
+        ]);
+
         return Inertia::render('Sections/Show', [
-            'section' => $section,
+            'section' => array_merge($section->toArray(), [
+                'courseRegistrations' => $section->courseRegistrations->map(function($registration) {
+                    return [
+                        'id' => $registration->id,
+                        'student' => $registration->student ? [
+                            'id' => $registration->student->id,
+                            'name' => $registration->student->name,
+                            'email' => $registration->student->email
+                        ] : null
+                    ];
+                })
+            ]),
             'school' => $school
         ]);
     }

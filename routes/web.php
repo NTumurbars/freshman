@@ -29,7 +29,8 @@ use App\Http\Controllers\{
     ProfileController,
     ReportController,
     StatsController,
-    UserController
+    UserController,
+    ProgramController
 };
 
 /*
@@ -46,8 +47,9 @@ Route::get('/', function () {
 })->name('welcome');
 
 Route::get('/dashboard/all/stats', [StatsController::class, 'superUser'])->name('superuser.stats');
-Route::get('/dashboard/admin/stats', [StatsController::class, 'schoolAdmin'])->name('school.admin.stats');
-Route::get('/dashboard/professor/stats', [StatsController::class, 'professorStats'])->name('professor.stats');
+Route::get('/dashboard/admin/stats', [StatsController::class, 'schoolAdmin'])->name('dashboard.admin.stats');
+// Using the school-specific route defined below instead
+// Route::get('/dashboard/professor/stats', [StatsController::class, 'professorStats'])->name('professor.stats');
 
 require __DIR__ . '/auth.php';
 
@@ -112,21 +114,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('sections/calendar', [SectionController::class, 'calendar'])
             ->name('sections.calendar');
 
+        // Add new professor students route
+        Route::get('professor/students', [CourseRegistrationController::class, 'professorStudents'])
+            ->name('professor.students');
+
         Route::resources([
             'departments'             => DepartmentController::class,
-            'majors'                  => MajorController::class,
-            'terms'                   => TermController::class,
-            'courses'                 => CourseController::class,
-            'sections'                => SectionController::class,
-            'rooms'                   => RoomController::class,
-            'roomfeatures'            => RoomFeatureController::class,
-            'schedules'               => ScheduleController::class,
-            'professor-profiles'      => ProfessorProfileController::class,
-            'course-registrations'    => CourseRegistrationController::class,
-            'buildings'               => BuildingController::class,
-            'buildings.floors'        => FloorController::class,
-            'buildings.floors.rooms'  => RoomController::class,
+            'majors'                 => MajorController::class,
+            'terms'                  => TermController::class,
+            'courses'                => CourseController::class,
+            'sections'               => SectionController::class,
+            'rooms'                  => RoomController::class,
+            'roomfeatures'           => RoomFeatureController::class,
+            'schedules'              => ScheduleController::class,
+            'professor-profiles'     => ProfessorProfileController::class,
+            'course-registrations'   => CourseRegistrationController::class,
+            'buildings'              => BuildingController::class,
+            'buildings.floors'       => FloorController::class,
+            'buildings.floors.rooms' => RoomController::class,
         ]);
+
+        // Student course registration view
+        Route::get('student/course-registration', [CourseRegistrationController::class, 'studentIndex'])
+            ->name('student.course-registration');
 
         // Batch schedule creation routes – adding an alias for flexibility
         Route::post('schedules-batch', [ScheduleController::class, 'storeBatch'])
@@ -141,6 +151,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Direct route for creating a room associated with a floor
         Route::get('rooms/create/{floor}', [RoomController::class, 'create'])
             ->name('rooms.create.with.floor');
+
+        // Stats routes
+        Route::get('api/stats/superuser', [StatsController::class, 'superUser'])
+            ->name('superuser.stats');
+        Route::get('api/stats/school-admin', [StatsController::class, 'schoolAdmin'])
+            ->name('school.admin.stats');
+        Route::get('api/stats/professor', [StatsController::class, 'professor'])
+            ->name('professor.stats');
+        Route::get('api/stats/student', [StatsController::class, 'student'])
+            ->name('student.stats');
     });
 });
 
