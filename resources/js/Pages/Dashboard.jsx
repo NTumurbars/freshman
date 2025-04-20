@@ -239,6 +239,15 @@ export default function Dashboard() {
             indigo: 'bg-indigo-100 text-indigo-800',
             teal: 'bg-teal-100 text-teal-800',
         };
+        const simpleColors = {
+            blue: 'blue',
+            green: 'green',
+            purple: 'purple',
+            orange: 'orange',
+            red: 'red',
+            indigo: 'indigo',
+            teal: 'teal',
+        };
 
         const trendColors = {
             up: 'text-green-600',
@@ -251,7 +260,7 @@ export default function Dashboard() {
                 <Link href={linkTo || '#'}>
                     <div className="p-5 relative">
                         {/* Accent line at top of card */}
-                        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-${color}-500 to-${color}-700`}></div>
+                        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-${simpleColors[color]}-500 to-white`}></div>
 
                         <div className="flex items-center justify-between pt-1">
                             <div className="flex items-center">
