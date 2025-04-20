@@ -9,7 +9,7 @@ import {
     UserIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage, Link } from '@inertiajs/react';
 import {
     Badge,
     Button,
@@ -90,53 +90,61 @@ export default function Edit({ school, stats, formErrors }) {
                 </div>
 
                 <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
-                        <div className="flex items-center gap-4">
-                            <div className="rounded-xl bg-blue-50 p-3">
-                                <UserIcon className="h-6 w-6 text-blue-600" />
+                    <Link href={route('users.index')}>
+                        <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
+                            <div className="flex items-center gap-4">
+                                <div className="rounded-xl bg-blue-50 p-3">
+                                    <UserIcon className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <div>
+                                    <Text className="text-sm text-gray-500">Total Users</Text>
+                                    <Text className="text-2xl font-bold text-gray-900">{stats.total_users}</Text>
+                                </div>
                             </div>
-                            <div>
-                                <Text className="text-sm text-gray-500">Total Users</Text>
-                                <Text className="text-2xl font-bold text-gray-900">{stats.total_users}</Text>
-                            </div>
-                        </div>
-                    </Card>
+                        </Card>
+                    </Link>
 
-                    <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
-                        <div className="flex items-center gap-4">
-                            <div className="rounded-xl bg-purple-50 p-3">
-                                <BuildingOfficeIcon className="h-6 w-6 text-purple-600" />
+                    <Link href={route('departments.index', { school: school.id })}>
+                        <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
+                            <div className="flex items-center gap-4">
+                                <div className="rounded-xl bg-purple-50 p-3">
+                                    <BuildingOfficeIcon className="h-6 w-6 text-purple-600" />
+                                </div>
+                                <div>
+                                    <Text className="text-sm text-gray-500">Departments</Text>
+                                    <Text className="text-2xl font-bold text-gray-900">{stats.total_departments}</Text>
+                                </div>
                             </div>
-                            <div>
-                                <Text className="text-sm text-gray-500">Departments</Text>
-                                <Text className="text-2xl font-bold text-gray-900">{stats.total_departments}</Text>
-                            </div>
-                        </div>
-                    </Card>
+                        </Card>
+                    </Link>
 
-                    <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
-                        <div className="flex items-center gap-4">
-                            <div className="rounded-xl bg-emerald-50 p-3">
-                                <HomeModernIcon className="h-6 w-6 text-emerald-600" />
+                    <Link href={route('buildings.index', { school: school.id })}>
+                        <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
+                            <div className="flex items-center gap-4">
+                                <div className="rounded-xl bg-emerald-50 p-3">
+                                    <HomeModernIcon className="h-6 w-6 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <Text className="text-sm text-gray-500">Buildings</Text>
+                                    <Text className="text-2xl font-bold text-gray-900">{stats.total_buildings}</Text>
+                                </div>
                             </div>
-                            <div>
-                                <Text className="text-sm text-gray-500">Buildings</Text>
-                                <Text className="text-2xl font-bold text-gray-900">{stats.total_buildings}</Text>
-                            </div>
-                        </div>
-                    </Card>
+                        </Card>
+                    </Link>
 
-                    <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
-                        <div className="flex items-center gap-4">
-                            <div className="rounded-xl bg-amber-50 p-3">
-                                <CalendarIcon className="h-6 w-6 text-amber-600" />
+                    <Link href={route('terms.index', { school: school.id })}>
+                        <Card className="transform transition-all hover:-translate-y-1 hover:shadow-lg">
+                            <div className="flex items-center gap-4">
+                                <div className="rounded-xl bg-amber-50 p-3">
+                                    <CalendarIcon className="h-6 w-6 text-amber-600" />
+                                </div>
+                                <div>
+                                    <Text className="text-sm text-gray-500">Active Terms</Text>
+                                    <Text className="text-2xl font-bold text-gray-900">{stats.total_active_terms}</Text>
+                                </div>
                             </div>
-                            <div>
-                                <Text className="text-sm text-gray-500">Active Terms</Text>
-                                <Text className="text-2xl font-bold text-gray-900">{stats.total_active_terms}</Text>
-                            </div>
-                        </div>
-                    </Card>
+                        </Card>
+                    </Link>
                 </div>
 
                 <div className="space-y-6">
