@@ -50,9 +50,6 @@ export default function SuperUserSideBar() {
                     <NavItem href={route('schools.index')} icon={School}>
                         Manage Schools
                     </NavItem>
-                    <NavItem href={route('schools.create')} icon={Building}>
-                        Add New School
-                    </NavItem>
                 </NavGroup>
 
                 <NavGroup title="Users">
