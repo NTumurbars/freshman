@@ -239,15 +239,6 @@ export default function Dashboard() {
             indigo: 'bg-indigo-100 text-indigo-800',
             teal: 'bg-teal-100 text-teal-800',
         };
-        const simpleColors = {
-            blue: 'blue',
-            green: 'green',
-            purple: 'purple',
-            orange: 'orange',
-            red: 'red',
-            indigo: 'indigo',
-            teal: 'teal',
-        };
 
         const trendColors = {
             up: 'text-green-600',
@@ -255,12 +246,26 @@ export default function Dashboard() {
             neutral: 'text-gray-600',
         };
 
+        // Helper function to get accent line color
+        const getAccentLineColor = (color) => {
+            const colorMap = {
+                blue: 'from-blue-500 to-white',
+                green: 'from-green-500 to-white',
+                purple: 'from-purple-500 to-white',
+                orange: 'from-orange-500 to-white',
+                red: 'from-red-500 to-white',
+                indigo: 'from-indigo-500 to-white',
+                teal: 'from-teal-500 to-white',
+            };
+            return colorMap[color] || 'from-blue-500 to-white';
+        };
+
         return (
             <div className="overflow-hidden rounded-lg bg-white shadow hover:shadow-md transition-all">
                 <Link href={linkTo || '#'}>
                     <div className="p-5 relative">
                         {/* Accent line at top of card */}
-                        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-${simpleColors[color]}-500 to-white`}></div>
+                        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${getAccentLineColor(color)}`}></div>
 
                         <div className="flex items-center justify-between pt-1">
                             <div className="flex items-center">
