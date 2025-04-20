@@ -58,7 +58,7 @@ const BuildingCard = ({ building }) => (
                     building: building.id,
                 })}
             >
-                <Button variant="light" color="gray" icon={ChevronRightIcon}>
+                <Button variant="light" color="gray" icon={ChevronRightIcon} className='flex items-center pr-2'>
                     View Details
                 </Button>
             </Link>
