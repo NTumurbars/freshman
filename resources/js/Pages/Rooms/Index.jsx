@@ -91,15 +91,15 @@ const RoomCard = ({ room, school }) => {
             {features.length > 0 && (
                 <div className="mt-4">
                     <Text className="text-sm font-medium">Features:</Text>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                        {features.slice(0, 3).map((feature) => (
+                    <div className="mt-2 flex items-center gap-2">
+                        {features.slice(0, 2).map((feature) => (
                             <Badge key={feature.id} color="blue" size="sm">
                                 {feature.name}
                             </Badge>
                         ))}
-                        {features.length > 3 && (
+                        {features.length > 2 && (
                             <Badge color="gray" size="sm">
-                                +{features.length - 3} more
+                                +{features.length - 2} more
                             </Badge>
                         )}
                     </div>
