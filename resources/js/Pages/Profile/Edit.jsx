@@ -385,7 +385,7 @@ export default function Edit({ user }) {
 
                                 <Divider />
 
-                                <div className="flex justify-end space-x-3 pt-2">
+                                <div className="flex items-center justify-end space-x-3 pt-2">
                                     <Link href={route('profile.show')}>
                                         <Button variant="light" color="gray">
                                             Cancel
