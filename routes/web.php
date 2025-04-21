@@ -153,8 +153,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('rooms.create.with.floor');
 
         // Stats routes
-        Route::get('api/stats/superuser', [StatsController::class, 'superUser'])
-            ->name('superuser.stats');
         Route::get('api/stats/school-admin', [StatsController::class, 'schoolAdmin'])
             ->name('school.admin.stats');
         Route::get('api/stats/professor', [StatsController::class, 'professor'])

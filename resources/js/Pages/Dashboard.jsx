@@ -27,7 +27,8 @@ import {
     TrendingUp,
     UserCheck,
     Award,
-    Layers
+    Layers,
+    BarChart2
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import React from 'react';
@@ -62,7 +63,7 @@ export default function Dashboard() {
             try {
                 let endpoint;
                 if (userRole === 1) {
-                    endpoint = route('superuser.stats');
+                    endpoint = '/dashboard/all/stats';
                 } else if (isProfessor) {
                     endpoint = schoolRoute('professor.stats');
                 } else if (isStudent) {
@@ -437,52 +438,216 @@ export default function Dashboard() {
             })
     ) : [];
 
+    // Before rendering the dashboard content, check what type of dashboard to show
+    const renderSuperAdminDashboard = () => {
+        // Debug the data structure
+        console.log('SuperAdmin dashboard data:', stats);
+        const data = stats?.stats || {};
+
+        return (
+            <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm relative overflow-hidden">
+                        <div className="flex items-center">
+                            <div className="bg-blue-100 p-2 rounded-lg mr-4">
+                                <School className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-500">{`Total Schools`}</h3>
+                                <p className="text-2xl font-bold text-gray-900">{data.schools_count || 0}</p>
+                            </div>
+                        </div>
+                        <Link
+                            href={route('schools.index')}
+                            className="absolute inset-0 z-10"
+                            aria-label="View schools"
+                        />
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm relative overflow-hidden">
+                        <div className="flex items-center">
+                            <div className="bg-green-100 p-2 rounded-lg mr-4">
+                                <User className="h-6 w-6 text-green-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-500">{`Total Users`}</h3>
+                                <p className="text-2xl font-bold text-gray-900">{data.users_count || 0}</p>
+                            </div>
+                        </div>
+                        <Link
+                            href={route('users.index')}
+                            className="absolute inset-0 z-10"
+                            aria-label="View users"
+                        />
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm relative overflow-hidden">
+                        <div className="flex items-center">
+                            <div className="bg-purple-100 p-2 rounded-lg mr-4">
+                                <BookCopy className="h-6 w-6 text-purple-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-500">{`Total Courses`}</h3>
+                                <p className="text-2xl font-bold text-gray-900">{data.courses_count || 0}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm relative overflow-hidden">
+                        <div className="flex items-center">
+                            <div className="bg-indigo-100 p-2 rounded-lg mr-4">
+                                <TrendingUp className="h-6 w-6 text-indigo-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-medium text-gray-500">{`Avg Users/School`}</h3>
+                                <p className="text-2xl font-bold text-gray-900">{Math.round((data.users_count || 0) / (data.schools_count || 1))}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Role Distribution */}
+                {data.role_distribution && data.role_distribution.length > 0 && (
+                    <div className="space-y-4">
+                        <h2 className="text-lg font-semibold text-gray-800">User Roles Distribution</h2>
+                        <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                {data.role_distribution.map((item, index) => (
+                                    <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
+                                        <div className={`w-3 h-3 rounded-full ${
+                                            item.role === 'super_admin' ? 'bg-purple-500' :
+                                            item.role === 'admin' ? 'bg-blue-500' :
+                                            item.role === 'professor' ? 'bg-green-500' :
+                                            item.role === 'student' ? 'bg-yellow-500' :
+                                            'bg-gray-500'
+                                        }`}></div>
+                                        <div className="flex-1">
+                                            <div className="text-sm font-medium capitalize">{item.role.replace('_', ' ')}</div>
+                                            <div className="text-2xl font-semibold">{item.count}</div>
+                                        </div>
+                                        <div className="text-gray-500 text-xs">
+                                            {Math.round((item.count / data.users_count) * 100)}%
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {data.school_stats && data.school_stats.length > 0 && (
+                    <div className="space-y-4">
+                        <h2 className="text-lg font-semibold text-gray-800">Schools by Size</h2>
+                        <div className="rounded-lg border border-gray-100 bg-white shadow-sm">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-gray-50 text-gray-600">
+                                        <tr className="border-b">
+                                            <th className="whitespace-nowrap px-4 py-3 font-medium">Name</th>
+                                            <th className="whitespace-nowrap px-4 py-3 font-medium">Users</th>
+                                            <th className="whitespace-nowrap px-4 py-3 font-medium">Departments</th>
+                                            <th className="whitespace-nowrap px-4 py-3 font-medium">Courses</th>
+                                            <th className="whitespace-nowrap px-4 py-3 font-medium text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y text-gray-600">
+                                        {data.school_stats.map((school) => (
+                                            <tr key={school.id} className="hover:bg-gray-50">
+                                                <td className="whitespace-nowrap px-4 py-3 font-medium">{school.name}</td>
+                                                <td className="whitespace-nowrap px-4 py-3">{school.users_count}</td>
+                                                <td className="whitespace-nowrap px-4 py-3">{school.departments_count}</td>
+                                                <td className="whitespace-nowrap px-4 py-3">{school.courses_count}</td>
+                                                <td className="whitespace-nowrap px-4 py-3 text-right">
+                                                    <Link
+                                                        href={route('schools.show', school.id)}
+                                                        className="rounded-md bg-blue-50 px-2.5 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-100"
+                                                    >
+                                                        View
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {data.recent_users && data.recent_users.length > 0 && (
+                    <div className="space-y-4">
+                        <h2 className="text-lg font-semibold text-gray-800">Recent Users</h2>
+                        <div className="rounded-lg border border-gray-100 bg-white shadow-sm">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-gray-50 text-gray-600">
+                                        <tr className="border-b">
+                                            <th className="whitespace-nowrap px-4 py-3 font-medium">Name</th>
+                                            <th className="whitespace-nowrap px-4 py-3 font-medium">Email</th>
+                                            <th className="whitespace-nowrap px-4 py-3 font-medium">School</th>
+                                            <th className="whitespace-nowrap px-4 py-3 font-medium">Role</th>
+                                            <th className="whitespace-nowrap px-4 py-3 font-medium">Created</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y text-gray-600">
+                                        {data.recent_users.map((user) => (
+                                            <tr key={user.id} className="hover:bg-gray-50">
+                                                <td className="whitespace-nowrap px-4 py-3 font-medium">{user.name}</td>
+                                                <td className="whitespace-nowrap px-4 py-3">{user.email}</td>
+                                                <td className="whitespace-nowrap px-4 py-3">{user.school_name}</td>
+                                                <td className="whitespace-nowrap px-4 py-3">{user.role_name}</td>
+                                                <td className="whitespace-nowrap px-4 py-3">{new Date(user.created_at).toLocaleDateString()}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Quick Actions */}
+                <div className="space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-800">Quick Actions</h2>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <QuickAction
+                            title="Add New School"
+                            description="Create and configure a new educational institution"
+                            icon={Building}
+                            href={route('schools.create')}
+                            color="blue"
+                        />
+                        <QuickAction
+                            title="Manage Users"
+                            description="View and manage user accounts and permissions"
+                            icon={UserCheck}
+                            href={route('users.index')}
+                            color="green"
+                        />
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <AppLayout>
             <Head title="Dashboard" />
 
-            <div className="space-y-8 p-8">
-                {/* Header */}
-                <div className="border-b border-gray-200 pb-5">
-                    <h1 className="text-2xl font-bold text-gray-900">
+            <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+                <div>
+                    <h1 className="mb-6 text-2xl font-bold text-gray-900">
                         {userRole === 1
                             ? 'Global Dashboard'
                             : isProfessor
-                              ? 'Professor Dashboard'
-                              : `${school?.name || 'School'} Dashboard`}
+                            ? 'Professor Dashboard'
+                            : `${school?.name || 'School'} Dashboard`}
                     </h1>
-                    <p className="mt-2 text-sm text-gray-600">
-                        Welcome back! Here's what's happening in your system.
-                    </p>
                 </div>
 
                 {/* Main Stats */}
                 {userRole === 1 ? (
-                    // Super admin stats
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        <DashboardCard
-                            title="Total Users"
-                            value={stats.users}
-                            icon={Users}
-                            linkTo={route('users.index')}
-                            subtitle="Active users across all schools"
-                        />
-                        <DashboardCard
-                            title="Total Schools"
-                            value={stats.schools}
-                            icon={School}
-                            linkTo={route('schools.index')}
-                            color="green"
-                            subtitle="Registered institutions"
-                        />
-                        <DashboardCard
-                            title="Active Terms"
-                            value={stats.activeTerms}
-                            icon={Calendar}
-                            color="purple"
-                            subtitle="Current academic terms"
-                        />
-                    </div>
+                    renderSuperAdminDashboard()
                 ) : isProfessor ? (
                     // Professor dashboard - completely redesigned
                     <div className="space-y-8">

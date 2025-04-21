@@ -23,21 +23,106 @@ class StatsController extends Controller
 {
     public function superUser(): JsonResponse
     {
-        $schools = School::all()->count();
-        $departments = Department::all()->count();
-        $users = User::all()->count();
+        $schools = School::all();
+        $schoolsCount = $schools->count();
+        $departmentsCount = Department::all()->count();
+        $usersCount = User::all()->count();
+        $coursesCount = Course::all()->count();
 
-        // Get all active terms (current date falls between start_date and end_date)
-        // Use today's date at start of day to ensure proper date comparisons
-        $today = Carbon::now()->startOfDay();
-        $activeTerms = Term::where('start_date', '<=', $today)
-            ->where('end_date', '>=', $today)
-            ->count();
+        // Get roles distribution
+        $roleDistribution = User::selectRaw('role_id, count(*) as count')
+            ->groupBy('role_id')
+            ->get()
+            ->map(function ($item) {
+                $roleName = \App\Models\Role::find($item->role_id)?->name ?? 'Unknown';
+                return [
+                    'role' => $roleName,
+                    'count' => $item->count
+                ];
+            });
+
+        // Get recent users
+        $recentUsers = User::orderBy('created_at', 'desc')
+            ->take(5)
+            ->get(['id', 'name', 'email', 'created_at', 'school_id', 'role_id'])
+            ->each(function ($user) {
+                $user->school_name = $user->school ? $user->school->name : 'No School';
+                $user->role_name = $user->role ? $user->role->name : 'No Role';
+                // Remove relationship data to keep the response lean
+                unset($user->school);
+                unset($user->role);
+            });
+
+        // School stats
+        $schoolStats = $schools->map(function ($school) {
+            return [
+                'id' => $school->id,
+                'name' => $school->name,
+                'users_count' => $school->users()->count(),
+                'departments_count' => $school->departments()->count(),
+                'courses_count' => Course::whereHas('department', function($query) use ($school) {
+                    $query->where('school_id', $school->id);
+                })->count()
+            ];
+        })->sortByDesc('users_count')->values()->take(10);
+
+        // User growth - new users by last 30 days
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
+        $userGrowth = User::where('created_at', '>=', $thirtyDaysAgo)
+            ->get()
+            ->groupBy(function($user) {
+                return $user->created_at->format('Y-m-d');
+            })
+            ->map(function($users, $date) {
+                return [
+                    'date' => Carbon::createFromFormat('Y-m-d', $date)->format('M d'),
+                    'count' => $users->count(),
+                    'day' => Carbon::createFromFormat('Y-m-d', $date)->format('d'),
+                    'timestamp' => Carbon::createFromFormat('Y-m-d', $date)->timestamp
+                ];
+            })
+            ->sortBy('timestamp')
+            ->values();
+
+        // Ensure we have data for all 30 days by filling gaps
+        $filledData = [];
+        for ($i = 0; $i < 30; $i++) {
+            $date = $thirtyDaysAgo->copy()->addDays($i);
+            $dateKey = $date->format('Y-m-d');
+            $dateLabel = $date->format('M d');
+            $dayLabel = $date->format('d');
+
+            // Check if we have data for this date
+            $found = false;
+            foreach ($userGrowth as $growth) {
+                if ($growth['date'] === $dateLabel) {
+                    $filledData[] = $growth;
+                    $found = true;
+                    break;
+                }
+            }
+
+            // If no data, add a zero entry
+            if (!$found) {
+                $filledData[] = [
+                    'date' => $dateLabel,
+                    'count' => 0,
+                    'day' => $dayLabel,
+                    'timestamp' => $date->timestamp
+                ];
+            }
+        }
 
         return response()->json([
-            'schools' => $schools,
-            'users' => $users,
-            'activeTerms' => $activeTerms,
+            'stats' => [
+                'schools_count' => $schoolsCount,
+                'users_count' => $usersCount,
+                'courses_count' => $coursesCount,
+                'role_distribution' => $roleDistribution,
+                'recent_users' => $recentUsers,
+                'school_stats' => $schoolStats,
+                'user_growth' => $filledData
+            ]
         ]);
     }
 

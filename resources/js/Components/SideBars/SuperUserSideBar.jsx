@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Building, User, School, FileBarChart, Settings, ShieldCheck, BarChart3 } from 'lucide-react';
+import { Building, User, School, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function SuperUserSideBar() {
@@ -55,18 +55,6 @@ export default function SuperUserSideBar() {
                 <NavGroup title="Users">
                     <NavItem href={route('users.index')} icon={User}>
                         All Users
-                    </NavItem>
-                    <NavItem href="#" icon={ShieldCheck}>
-                        Permissions
-                    </NavItem>
-                </NavGroup>
-
-                <NavGroup title="System">
-                    <NavItem href="#" icon={Settings}>
-                        System Settings
-                    </NavItem>
-                    <NavItem href={route('reports.view')} icon={FileBarChart}>
-                        Reports
                     </NavItem>
                 </NavGroup>
             </div>
