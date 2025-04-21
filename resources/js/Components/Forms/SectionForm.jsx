@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { X } from 'lucide-react';
 
 export default function SectionForm({
@@ -12,7 +12,48 @@ export default function SectionForm({
     isSubmitting,
     onSubmit
 }) {
-    const [selectedFeatures, setSelectedFeatures] = useState(data.required_features || []);
+    // Use ref to track initial render and prevent loops
+    const initialRender = useRef(true);
+
+    // Convert feature IDs to numbers if they're not already - for initial state
+    const initialFeatures = useMemo(() => {
+        if (!Array.isArray(data.required_features)) {
+            return [];
+        }
+
+        return data.required_features.map(id =>
+            typeof id === 'string' ? parseInt(id, 10) : id
+        );
+    }, [data.required_features]); // Include data.required_features in deps
+
+    const [selectedFeatures, setSelectedFeatures] = useState(initialFeatures);
+
+    // Helper function to check if a feature is selected
+    const isFeatureSelected = (featureId) => {
+        const numericId = typeof featureId === 'string' ? parseInt(featureId, 10) : featureId;
+        return selectedFeatures.some(id => {
+            const selectedId = typeof id === 'string' ? parseInt(id, 10) : id;
+            return selectedId === numericId;
+        });
+    };
+
+    // Update selected features when props change, but only if they're different
+    useEffect(() => {
+        if (Array.isArray(data.required_features) && data.required_features.length > 0) {
+            // Only process on initial render or if data.required_features actually changes
+            if (initialRender.current) {
+                initialRender.current = false;
+
+                // Convert any string IDs to numbers for comparison
+                const newFeatureIds = data.required_features.map(id =>
+                    typeof id === 'string' ? parseInt(id, 10) : id
+                );
+
+                console.log('Initial setting of selectedFeatures:', newFeatureIds);
+                setSelectedFeatures(newFeatureIds);
+            }
+        }
+    }, [data.required_features]);
 
     // Log the professor data for debugging
     useEffect(() => {
@@ -30,18 +71,52 @@ export default function SectionForm({
 
     // Add or remove features
     const toggleFeature = (featureId) => {
+        // Ensure featureId is a number
+        const numericFeatureId = typeof featureId === 'string' ? parseInt(featureId, 10) : featureId;
+
+        // Mark that we've moved past the initial render
+        if (initialRender.current) {
+            initialRender.current = false;
+        }
+
         setSelectedFeatures(prev => {
-            if (prev.includes(featureId)) {
-                return prev.filter(id => id !== featureId);
+            // Check directly in the update function to avoid stale closures
+            const isSelected = prev.some(id => {
+                const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+                return numId === numericFeatureId;
+            });
+
+            if (isSelected) {
+                // Remove the feature
+                return prev.filter(id => {
+                    const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+                    return numId !== numericFeatureId;
+                });
             } else {
-                return [...prev, featureId];
+                // Add the feature
+                return [...prev, numericFeatureId];
             }
         });
     };
 
     // Update parent form data when selected features change
     useEffect(() => {
-        setData('required_features', selectedFeatures);
+        // Skip on initial render
+        if (initialRender.current) {
+            return;
+        }
+
+        // Update parent form with a small delay to avoid rapid changes
+        const timer = setTimeout(() => {
+            // Ensure selectedFeatures is always an array of numbers
+            const featureIds = selectedFeatures.map(id =>
+                typeof id === 'string' ? parseInt(id, 10) : id
+            );
+            console.log('Updating form data required_features:', featureIds);
+            setData('required_features', featureIds);
+        }, 100);
+
+        return () => clearTimeout(timer);
     }, [selectedFeatures]);
 
     const handleChange = (e) => {
@@ -278,13 +353,13 @@ export default function SectionForm({
                                             type="button"
                                             onClick={() => toggleFeature(feature.id)}
                                             className={`inline-flex items-center rounded-md px-3 py-1 text-sm ${
-                                                selectedFeatures.includes(feature.id)
+                                                isFeatureSelected(feature.id)
                                                     ? 'bg-blue-100 text-blue-800'
                                                     : 'bg-gray-100 text-gray-800'
                                             }`}
                                         >
                                             {feature.name}
-                                            {selectedFeatures.includes(feature.id) && (
+                                            {isFeatureSelected(feature.id) && (
                                                 <X className="ml-1 h-3 w-3" />
                                             )}
                                         </button>

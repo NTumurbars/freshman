@@ -159,7 +159,7 @@ export default function Show({ section, school }) {
         }, {});
     };
 
-    const featuresGrouped = groupFeaturesByCategory(section.requiredFeatures);
+    const featuresGrouped = groupFeaturesByCategory(section.required_features);
 
     // Calculate which students to display based on pagination
     const displayedStudents = showAllStudents
@@ -636,8 +636,10 @@ export default function Show({ section, school }) {
                                                         key={feature.id}
                                                         className="flex items-center text-sm"
                                                     >
-                                                        <span className="mr-2 h-2 w-2 rounded-full bg-green-500"></span>
-                                                        {feature.name}
+                                                        <span className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-green-100">
+                                                            <span className="h-2.5 w-2.5 rounded-full bg-green-500"></span>
+                                                        </span>
+                                                        <span className="font-medium text-gray-700">{feature.name}</span>
                                                     </li>
                                                 ))}
                                             </ul>

@@ -14,7 +14,7 @@ export default function Edit({
 }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Log professor data for debugging
+    // Log initial section data
     useEffect(() => {
         console.log(
             'Professor profiles data in Edit component:',
@@ -23,17 +23,29 @@ export default function Edit({
         console.log('Section object:', section);
         console.log('Section capacity type:', typeof section.capacity);
         console.log('Section capacity value:', section.capacity);
+        console.log('Section required features:', section.requiredFeatures || section.required_features);
     }, [professorProfiles, section]);
 
-    // Extract feature IDs from section.requiredFeatures array
+    // Extract feature IDs from section.required_features array (the property coming from backend)
     const getRequiredFeatureIds = () => {
-        if (
-            !section.requiredFeatures ||
-            !Array.isArray(section.requiredFeatures)
-        ) {
+        // Logs show the property is 'required_features' (with underscore)
+        const features = section.required_features || [];
+        console.log('Feature array found:', features);
+
+        if (!Array.isArray(features)) {
+            console.log('Features is not an array');
             return [];
         }
-        return section.requiredFeatures.map((feature) => feature.id);
+
+        // Make sure all feature IDs are numbers
+        const featureIds = features.map((feature) => {
+            // Features are objects with id property
+            const id = typeof feature.id === 'string' ? parseInt(feature.id, 10) : feature.id;
+            return id;
+        });
+
+        console.log('Extracted feature IDs:', featureIds);
+        return featureIds;
     };
 
     // Map "open" status to "active" to match backend validation
@@ -60,6 +72,8 @@ export default function Edit({
         setIsSubmitting(true);
 
         console.log('Submitting form with data:', data);
+        console.log('Required features:', data.required_features, typeof data.required_features);
+        console.log('Required features is array:', Array.isArray(data.required_features));
         console.log('Capacity before submission:', data.capacity, typeof data.capacity);
 
         // Convert empty capacity string to null
@@ -67,6 +81,26 @@ export default function Edit({
         if (submissionData.capacity === '') {
             submissionData.capacity = null;
         }
+
+        // Ensure required_features is an array of numbers
+        if (submissionData.required_features) {
+            // Make sure it's an array
+            const featuresArray = Array.isArray(submissionData.required_features)
+                ? submissionData.required_features
+                : [];
+
+            // Convert all values to numbers and filter out any non-numeric
+            submissionData.required_features = featuresArray
+                .map(id => typeof id === 'string' ? parseInt(id, 10) : id)
+                .filter(id => !isNaN(id));
+
+            console.log('Final required_features for submission:', submissionData.required_features);
+        } else {
+            console.log('No required_features found for submission');
+            submissionData.required_features = [];
+        }
+
+        console.log('Final submission data:', submissionData);
 
         put(route('sections.update', [school.id, section.id]), submissionData, {
             onSuccess: () => {

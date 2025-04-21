@@ -197,7 +197,24 @@ class SectionController extends Controller
             $section = Section::create($data);
 
             if ($request->has('required_features')) {
-                $section->requiredFeatures()->sync($request->required_features);
+                // Ensure all feature IDs are integers
+                $featureIds = collect($request->required_features)
+                    ->map(function($id) {
+                        // Convert any string IDs to integers
+                        return is_numeric($id) ? (int)$id : $id;
+                    })
+                    ->filter(function($id) {
+                        // Filter out any non-numeric values
+                        return is_numeric($id);
+                    })
+                    ->toArray();
+
+                Log::info('Section creation - Syncing features:', [
+                    'original_features' => $request->required_features,
+                    'processed_features' => $featureIds
+                ]);
+
+                $section->requiredFeatures()->sync($featureIds);
             }
 
             // Handle schedules if they were submitted (optional)
@@ -437,6 +454,9 @@ class SectionController extends Controller
             Log::info('Section update - Request data:', [
                 'capacity_in_request' => $request->has('capacity') ? $request->capacity : 'not present',
                 'capacity_type' => $request->has('capacity') ? gettype($request->capacity) : 'N/A',
+                'required_features' => $request->has('required_features') ? $request->required_features : 'not present',
+                'required_features_type' => $request->has('required_features') ? gettype($request->required_features) : 'N/A',
+                'is_array' => $request->has('required_features') ? is_array($request->required_features) : 'N/A',
                 'raw_request' => $request->all()
             ]);
 
@@ -466,7 +486,28 @@ class SectionController extends Controller
             $section->update($data);
 
             if ($request->has('required_features')) {
-                $section->requiredFeatures()->sync($request->required_features);
+                // Ensure all feature IDs are integers
+                $featureIds = collect($request->required_features)
+                    ->map(function($id) {
+                        // Convert any string IDs to integers
+                        return is_numeric($id) ? (int)$id : $id;
+                    })
+                    ->filter(function($id) {
+                        // Filter out any non-numeric values
+                        return is_numeric($id);
+                    })
+                    ->toArray();
+
+                Log::info('Section update - Syncing features:', [
+                    'original_features' => $request->required_features,
+                    'processed_features' => $featureIds
+                ]);
+
+                $section->requiredFeatures()->sync($featureIds);
+            } else {
+                // If no required_features were sent, clear all features
+                Log::info('Section update - No features sent, detaching all');
+                $section->requiredFeatures()->detach();
             }
 
             // Handle schedules if they were submitted
