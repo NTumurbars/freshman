@@ -189,18 +189,6 @@ export default function ProfessorSideBar({ school }) {
 
                 <NavGroup title="Academic Resources">
                     <NavItem
-                        href={schoolRoute('departments.index')}
-                        icon={Briefcase}
-                    >
-                        Departments
-                    </NavItem>
-                    <NavItem
-                        href={schoolRoute('courses.index')}
-                        icon={BookOpen}
-                    >
-                        Course Catalog
-                    </NavItem>
-                    <NavItem
                         href={schoolRoute('terms.index')}
                         icon={Calendar}
                     >

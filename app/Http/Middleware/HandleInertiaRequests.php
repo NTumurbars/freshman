@@ -185,6 +185,16 @@ class HandleInertiaRequests extends Middleware
         $permissions['update_school'] = $user->role->name === 'super_admin'
             || ($user->role->name === 'school_admin' && $user->school_id);
 
+        // Schedule permissions
+        $permissions['create_schedule'] = $user->can('create', \App\Models\Schedule::class);
+        $permissions['update_schedule'] = in_array($user->role->name, ['super_admin', 'school_admin', 'major_coordinator']);
+        $permissions['delete_schedule'] = in_array($user->role->name, ['super_admin', 'school_admin', 'major_coordinator']);
+
+        // Section permissions
+        $permissions['create_section'] = $user->can('create', \App\Models\Section::class);
+        $permissions['update_section'] = in_array($user->role->name, ['super_admin', 'school_admin', 'major_coordinator']);
+        $permissions['delete_section'] = in_array($user->role->name, ['super_admin', 'school_admin', 'major_coordinator']);
+
         return $permissions;
     }
 }

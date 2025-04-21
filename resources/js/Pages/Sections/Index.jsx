@@ -18,8 +18,7 @@ import { useMemo, useState } from 'react';
 export default function Index({ sections, professorSections, isProfessor, flash, school }) {
     const { auth } = usePage().props;
     const userSchool = auth.user.school;
-    const isSchoolAdmin = auth.user.role.name === 'school_admin' || auth.user.role.name === 'super_admin';
-    const canCreateSection = auth.can?.create_section || isSchoolAdmin || false;
+    const canCreateSection = auth.can?.create_section || false;
     const canUpdateSection = auth.can?.update_section || false;
     const canDeleteSection = auth.can?.delete_section || false;
 
