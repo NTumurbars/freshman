@@ -44,16 +44,13 @@ export default function Index({ majors, school, can_create }) {
                         </Text>
                     </div>
                     {can_create && (
-                        <Link href={route('majors.create', school.id)}>
-                            <Button
-                                icon={PlusIcon}
-                                color="blue"
-                                size="md"
-                                className="shadow-sm transition-all hover:shadow-md"
-                            >
-                                Add Major
-                            </Button>
-                        </Link>
+                        <a
+                            href={route('majors.create', school.id)}
+                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            <PlusIcon className="mr-2 h-4 w-4" />
+                            Add Major
+                        </a>
                     )}
                 </div>
 
@@ -184,51 +181,34 @@ export default function Index({ majors, school, can_create }) {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center justify-end gap-4">
-                                                <Link
+                                                <a
                                                     href={route('majors.edit', {
                                                         school: school.id,
                                                         major: major.id,
                                                     })}
-                                                    onClick={(e) =>
-                                                        e.stopPropagation()
-                                                    }
+                                                    className="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                                    onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    <Button
-                                                        icon={PencilSquareIcon}
-                                                        variant="light"
-                                                        color="blue"
-                                                        size="xs"
-                                                        tooltip="Edit major"
-                                                    >
-                                                        Edit
-                                                    </Button>
-                                                </Link>
+                                                    <PencilSquareIcon className="mr-1 h-3.5 w-3.5" />
+                                                    Edit
+                                                </a>
 
-                                                <Link
-                                                    href={route(
-                                                        'majors.destroy',
-                                                        {
-                                                            school: school.id,
-                                                            major: major.id,
-                                                        },
-                                                    )}
-                                                    method="delete"
-                                                    as="button"
+                                                <button
                                                     type="button"
-                                                    onClick={(e) =>
-                                                        e.stopPropagation()
-                                                    }
+                                                    className="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (confirm('Are you sure you want to delete this major?')) {
+                                                            router.delete(route('majors.destroy', {
+                                                                school: school.id,
+                                                                major: major.id,
+                                                            }));
+                                                        }
+                                                    }}
                                                 >
-                                                    <Button 
-                                                        icon={TrashIcon}
-                                                        variant="light"
-                                                        color="red"
-                                                        size="xs"
-                                                        tooltip="Delete major"
-                                                    >
-                                                        Delete
-                                                    </Button>
-                                                </Link>
+                                                    <TrashIcon className="mr-1 h-3.5 w-3.5" />
+                                                    Delete
+                                                </button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -248,16 +228,13 @@ export default function Index({ majors, school, can_create }) {
                                 to this school.
                             </Text>
                             {can_create && (
-                                <Link href={route('majors.create', school.id)}>
-                                    <Button
-                                        variant="primary"
-                                        color="blue"
-                                        icon={PlusIcon}
-                                        className="shadow-sm transition-all hover:shadow-md"
-                                    >
-                                        Create your first major
-                                    </Button>
-                                </Link>
+                                <a
+                                    href={route('majors.create', school.id)}
+                                    className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                >
+                                    <PlusIcon className="mr-2 h-4 w-4" />
+                                    Create your first major
+                                </a>
                             )}
                         </div>
                     </Card>

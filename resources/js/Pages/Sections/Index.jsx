@@ -18,7 +18,8 @@ import { useMemo, useState } from 'react';
 export default function Index({ sections, professorSections, isProfessor, flash, school }) {
     const { auth } = usePage().props;
     const userSchool = auth.user.school;
-    const canCreateSection = auth.can?.create_section || false;
+    const isSchoolAdmin = auth.user.role.name === 'school_admin' || auth.user.role.name === 'super_admin';
+    const canCreateSection = auth.can?.create_section || isSchoolAdmin || false;
     const canUpdateSection = auth.can?.update_section || false;
     const canDeleteSection = auth.can?.delete_section || false;
 
@@ -267,12 +268,6 @@ export default function Index({ sections, professorSections, isProfessor, flash,
                         <p className="text-gray-600">{userSchool.name}</p>
                     </div>
                     <div className="flex space-x-2">
-                        <Link
-                            href={route('sections.calendar', userSchool.id)}
-                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                            <Calendar className="mr-2 h-4 w-4" /> Calendar View
-                        </Link>
                         {canCreateSection && (
                             <Link
                                 href={route('sections.create', userSchool.id)}
