@@ -10,8 +10,10 @@ import {
     MapPin,
     User,
     Users,
+    ChevronDown,
+    ChevronUp,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Helper component to render professor info
 const ProfessorInfo = ({ professor, school }) => (
@@ -37,6 +39,12 @@ const ProfessorInfo = ({ professor, school }) => (
 export default function Show({ section, school }) {
     const { auth } = usePage().props;
     const isSchoolAdmin = auth.user.role.name === 'school_admin' || auth.user.role.name === 'super_admin';
+
+    // Add state for student pagination
+    const [studentsPerPage, setStudentsPerPage] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showAllStudents, setShowAllStudents] = useState(false);
+    const [expanded, setExpanded] = useState(false);
 
     useEffect(() => {
         console.log('Section full data object:', section);
@@ -152,6 +160,29 @@ export default function Show({ section, school }) {
     };
 
     const featuresGrouped = groupFeaturesByCategory(section.requiredFeatures);
+
+    // Calculate which students to display based on pagination
+    const displayedStudents = showAllStudents
+        ? section.courseRegistrations || []
+        : (section.courseRegistrations || []).slice(
+            (currentPage - 1) * studentsPerPage,
+            currentPage * studentsPerPage
+        );
+
+    const totalPages = Math.ceil(
+        (section.courseRegistrations?.length || 0) / studentsPerPage
+    );
+
+    // Function to handle changing page
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    // Toggle between showing all students and paginated view
+    const toggleShowAll = () => {
+        setShowAllStudents(!showAllStudents);
+        setExpanded(!expanded);
+    };
 
     return (
         <AppLayout>
@@ -627,32 +658,98 @@ export default function Show({ section, school }) {
                             <h2 className="text-lg font-medium text-gray-900">
                                 Enrolled Students
                             </h2>
-                            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                                {section.courseRegistrations?.length || 0}
-                            </span>
+                            <div className="flex items-center">
+                                <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 mr-2">
+                                    {section.courseRegistrations?.length || 0}
+                                </span>
+                                {section.courseRegistrations && section.courseRegistrations.length > studentsPerPage && (
+                                    <button
+                                        onClick={toggleShowAll}
+                                        className="flex items-center text-xs text-blue-600 hover:text-blue-800"
+                                    >
+                                        {expanded ? (
+                                            <>
+                                                <ChevronUp className="h-3 w-3 mr-1" />
+                                                Show Less
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ChevronDown className="h-3 w-3 mr-1" />
+                                                Show All
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <div className="px-6 py-4">
                             {section.courseRegistrations &&
                             section.courseRegistrations.length > 0 ? (
-                                <ul className="divide-y divide-gray-200">
-                                    {section.courseRegistrations.map(
-                                        (registration) => (
-                                            <li
-                                                key={registration.id}
-                                                className="py-2"
+                                <>
+                                    <ul className="divide-y divide-gray-200">
+                                        {displayedStudents.map(
+                                            (registration) => (
+                                                <li
+                                                    key={registration.id}
+                                                    className="py-2"
+                                                >
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {(registration.student && registration.student.name) ||
+                                                        'Unknown Student'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {(registration.student && registration.student.email) ||
+                                                        ''}
+                                                    </p>
+                                                </li>
+                                            ),
+                                        )}
+                                    </ul>
+
+                                    {!showAllStudents && totalPages > 1 && (
+                                        <div className="flex items-center justify-center space-x-2 mt-4">
+                                            <button
+                                                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                                                disabled={currentPage === 1}
+                                                className={`inline-flex items-center justify-center w-8 h-8 rounded-md ${
+                                                    currentPage === 1
+                                                        ? 'text-gray-400 cursor-not-allowed'
+                                                        : 'text-blue-600 hover:bg-blue-50'
+                                                }`}
                                             >
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {(registration.student && registration.student.name) ||
-                                                     'Unknown Student'}
-                                                </p>
-                                                <p className="text-xs text-gray-500">
-                                                    {(registration.student && registration.student.email) ||
-                                                     ''}
-                                                </p>
-                                            </li>
-                                        ),
+                                                <span className="sr-only">Previous</span>
+                                                <ChevronLeft className="h-4 w-4" />
+                                            </button>
+
+                                            {[...Array(totalPages)].map((_, i) => (
+                                                <button
+                                                    key={i + 1}
+                                                    onClick={() => handlePageChange(i + 1)}
+                                                    className={`inline-flex items-center justify-center w-8 h-8 rounded-md ${
+                                                        currentPage === i + 1
+                                                            ? 'bg-blue-600 text-white'
+                                                            : 'text-gray-700 hover:bg-blue-50'
+                                                    }`}
+                                                >
+                                                    {i + 1}
+                                                </button>
+                                            ))}
+
+                                            <button
+                                                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                                                disabled={currentPage === totalPages}
+                                                className={`inline-flex items-center justify-center w-8 h-8 rounded-md ${
+                                                    currentPage === totalPages
+                                                        ? 'text-gray-400 cursor-not-allowed'
+                                                        : 'text-blue-600 hover:bg-blue-50'
+                                                }`}
+                                            >
+                                                <span className="sr-only">Next</span>
+                                                <ChevronLeft className="h-4 w-4 transform rotate-180" />
+                                            </button>
+                                        </div>
                                     )}
-                                </ul>
+                                </>
                             ) : (
                                 <p className="text-sm text-gray-500">
                                     No students enrolled
