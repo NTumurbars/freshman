@@ -68,7 +68,7 @@ class UserController extends Controller
         $user = User::find(Auth::id());
         $roles = Role::where('id', '>', 1)->get();
         $schools = $user->school;
-        $departments = $schools->departments;
+        $departments = $schools ? $schools->departments : [];
 
         return Inertia::render('Users/Create', [
             'roles' => $roles,
