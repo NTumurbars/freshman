@@ -152,7 +152,7 @@ export default function Index({ floors, building }) {
     const navigateToRooms = (floorId) => {
         if (!editMode) {
             router.get(
-                route('buildings.floors.rooms.index', {
+                route('buildings.floors.show', {
                     school: school.id,
                     building: building.id,
                     floor: floorId,

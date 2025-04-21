@@ -5,6 +5,7 @@ import {
     PencilIcon,
     TrashIcon,
     UsersIcon,
+    PlusIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
@@ -88,6 +89,23 @@ export default function Show({ room }) {
                         </div>
                     </div>
                     <div className="mt-4 flex space-x-3 sm:mt-0">
+                        <Button
+                            variant="primary"
+                            icon={CalendarIcon}
+                            className="bg-indigo-600 hover:bg-indigo-700"
+                            onClick={() => {
+                                // Use the useForm visit method with data to pre-fill values
+                                const url = route('schedules.create', { school: school.id });
+                                window.location.href = `${url}?room_id=${room.id}&location_type=in-person&return_url=${encodeURIComponent(
+                                    route('rooms.show', {
+                                        school: school.id,
+                                        room: room.id
+                                    })
+                                )}`;
+                            }}
+                        >
+                            Create Schedule
+                        </Button>
                         <Link
                             href={route('rooms.edit', {
                                 school: school.id,
@@ -95,17 +113,17 @@ export default function Show({ room }) {
                             })}
                         >
                             <Button
-                                variant="light"
-                                color="yellow"
+                                variant="secondary"
                                 icon={PencilIcon}
+                                className="border-blue-500 text-blue-600 hover:bg-blue-50"
                             >
                                 Edit Room
                             </Button>
                         </Link>
                         <Button
-                            variant="light"
-                            color="red"
+                            variant="secondary"
                             icon={TrashIcon}
+                            className="border-red-500 text-red-600 hover:bg-red-50"
                             onClick={() => {
                                 if (
                                     confirm(
@@ -287,7 +305,7 @@ export default function Show({ room }) {
                     </div>
                     <Divider className="my-4" />
 
-                    <RoomCalendar schedules={schedules} room={room} />
+                    <RoomCalendar schedules={schedules} room={room} school={school} />
                 </Card>
             </div>
         </AppLayout>

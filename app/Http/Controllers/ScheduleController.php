@@ -109,11 +109,25 @@ class ScheduleController extends Controller
             })
             ->get();
 
+        // Get room_id and location_type from query params if provided
+        $preselectedRoomId = $request->query('room_id');
+        $preselectedLocationType = $request->query('location_type');
+        $preselectedDayOfWeek = $request->query('day_of_week');
+        $preselectedStartTime = $request->query('start_time');
+        $preselectedEndTime = $request->query('end_time');
+        $returnUrl = $request->query('return_url');
+
         return Inertia::render('Schedules/Create', [
             'sections' => $sections,
             'rooms' => $rooms,
             'school' => $school,
-            'preselectedSectionId' => $selectedSectionId
+            'preselectedSectionId' => $selectedSectionId,
+            'preselectedRoomId' => $preselectedRoomId,
+            'preselectedLocationType' => $preselectedLocationType,
+            'preselectedDayOfWeek' => $preselectedDayOfWeek,
+            'preselectedStartTime' => $preselectedStartTime,
+            'preselectedEndTime' => $preselectedEndTime,
+            'returnUrl' => $returnUrl
         ]);
     }
 
