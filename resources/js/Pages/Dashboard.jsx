@@ -533,7 +533,7 @@ export default function Dashboard() {
                                                     stats?.stats?.current_term_students || 0
                                                 )}
                                             </p>
-                                            <Link href={schoolRoute('course-registrations.index')} className="ml-2 text-xs text-blue-600 hover:text-blue-800">
+                                            <Link href={schoolRoute('professor.students')} className="ml-2 text-xs text-blue-600 hover:text-blue-800">
                                                 View →
                                             </Link>
                                         </div>
@@ -775,7 +775,7 @@ export default function Dashboard() {
                                                 </div>
                                             </div>
                                             <Link
-                                                href={schoolRoute('course-registrations.index')}
+                                                href={schoolRoute('professor.students')}
                                                 className="text-sm font-medium text-blue-600 hover:text-blue-800"
                                             >
                                                 View all
@@ -825,7 +825,7 @@ export default function Dashboard() {
                                     title="Manage Students"
                                     description="View and manage student enrollments in your courses."
                             icon={Users}
-                                    href={schoolRoute('course-registrations.index')}
+                                    href={schoolRoute('professor.students')}
                             color="green"
                                 />
                                 <QuickAction
