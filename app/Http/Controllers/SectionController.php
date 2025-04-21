@@ -67,9 +67,7 @@ class SectionController extends Controller
                 'school' => $school,
                 'statuses' => [
                     Section::STATUS_ACTIVE,
-                    Section::STATUS_CANCELED,
-                    Section::STATUS_FULL,
-                    Section::STATUS_PENDING,
+                    Section::STATUS_CANCELLED,
                 ],
                 'deliveryMethods' => [
                     Section::DELIVERY_IN_PERSON,
@@ -88,9 +86,7 @@ class SectionController extends Controller
             'school' => $school,
             'statuses' => [
                 Section::STATUS_ACTIVE,
-                Section::STATUS_CANCELED,
-                Section::STATUS_FULL,
-                Section::STATUS_PENDING,
+                Section::STATUS_CANCELLED,
             ],
             'deliveryMethods' => [
                 Section::DELIVERY_IN_PERSON,
@@ -141,9 +137,7 @@ class SectionController extends Controller
             'school' => $school,
             'statuses' => [
                 Section::STATUS_ACTIVE,
-                Section::STATUS_CANCELED,
-                Section::STATUS_FULL,
-                Section::STATUS_PENDING,
+                Section::STATUS_CANCELLED,
             ],
             'deliveryMethods' => [
                 Section::DELIVERY_IN_PERSON,
@@ -194,7 +188,7 @@ class SectionController extends Controller
                 'term_id'            => 'required|exists:terms,id',
                 'professor_profile_id' => 'nullable|exists:professor_profiles,id',
                 'section_code'       => 'required|string|max:10',
-                'status'             => 'required|string|in:active,canceled,full,pending',
+                'status'             => 'required|string|in:active,cancelled',
                 'delivery_method'    => 'required|string|in:in-person,online,hybrid',
                 'notes'              => 'nullable|string',
                 'capacity'           => 'nullable|integer|min:1',
@@ -332,6 +326,13 @@ class SectionController extends Controller
             abort(403, 'This section does not belong to your school');
         }
 
+        // Log the section data for debugging
+        Log::info('Section data for edit:', [
+            'section_id' => $section->id,
+            'capacity' => $section->capacity,
+            'capacity_type' => gettype($section->capacity),
+        ]);
+
         $section->load(['course', 'term', 'professor_profile.user', 'schedules.room', 'requiredFeatures']);
 
         // Get departments that belong to this school
@@ -371,9 +372,7 @@ class SectionController extends Controller
             'school' => $school,
             'statuses' => [
                 Section::STATUS_ACTIVE,
-                Section::STATUS_CANCELED,
-                Section::STATUS_FULL,
-                Section::STATUS_PENDING,
+                Section::STATUS_CANCELLED,
             ],
             'deliveryMethods' => [
                 Section::DELIVERY_IN_PERSON,
@@ -435,15 +434,33 @@ class SectionController extends Controller
         DB::beginTransaction();
 
         try {
+            Log::info('Section update - Request data:', [
+                'capacity_in_request' => $request->has('capacity') ? $request->capacity : 'not present',
+                'capacity_type' => $request->has('capacity') ? gettype($request->capacity) : 'N/A',
+                'raw_request' => $request->all()
+            ]);
+
             $data = $request->validate([
                 'course_id'          => 'required|exists:courses,id',
                 'term_id'            => 'required|exists:terms,id',
                 'professor_profile_id' => 'nullable|exists:professor_profiles,id',
                 'section_code'       => 'required|string|max:10',
-                'status'             => 'required|string|in:active,canceled,full,pending',
+                'status'             => 'required|string|in:active,cancelled',
                 'delivery_method'    => 'required|string|in:in-person,online,hybrid',
                 'notes'              => 'nullable|string',
                 'capacity'           => 'nullable|integer|min:1',
+            ]);
+
+            // Handle special case for capacity - empty string or 0 should become null
+            if (isset($data['capacity'])) {
+                if ($data['capacity'] === '' || $data['capacity'] === 0) {
+                    $data['capacity'] = null;
+                }
+            }
+
+            Log::info('Section update - Data before update:', [
+                'capacity' => isset($data['capacity']) ? $data['capacity'] : 'not set',
+                'capacity_type' => isset($data['capacity']) ? gettype($data['capacity']) : 'N/A',
             ]);
 
             $section->update($data);

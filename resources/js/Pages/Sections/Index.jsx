@@ -40,11 +40,13 @@ export default function Index({ sections, professorSections, isProfessor, flash,
 
     // Determine the status of a section.
     const getSectionStatus = (section) => {
-        if (!section.term) return 'draft';
-        if (section.students_count >= (section.course?.capacity || 0))
+        // Check if full
+        if (section.effective_capacity && section.students_count >= section.effective_capacity) {
             return 'full';
-        if (section.schedules?.length > 0) return 'scheduled';
-        return 'unscheduled';
+        }
+
+        // Return the actual status from the section or default to 'active'
+        return section.status || 'active';
     };
 
     // Filter sections based on search term, term, status filters, and professor's sections.
@@ -60,7 +62,13 @@ export default function Index({ sections, professorSections, isProfessor, flash,
             if (termFilter && section.term?.id !== parseInt(termFilter))
                 return false;
 
-            if (statusFilter && getSectionStatus(section) !== statusFilter)
+            // Special handling for "full" status filter
+            if (statusFilter === 'full') {
+                return section.effective_capacity &&
+                    section.students_count >= section.effective_capacity;
+            }
+
+            if (statusFilter && section.status !== statusFilter)
                 return false;
 
             if (!searchTerm) return true;
@@ -199,10 +207,10 @@ export default function Index({ sections, professorSections, isProfessor, flash,
     const SectionStatusBadge = ({ section }) => {
         const badgeProps = { size: 'xs' };
 
+        // Show full when the section is full
         if (
-            section.status === 'full' ||
-            (section.effective_capacity &&
-                section.students_count >= section.effective_capacity)
+            section.effective_capacity &&
+            section.students_count >= section.effective_capacity
         ) {
             return (
                 <Badge color="red" {...badgeProps}>
@@ -222,49 +230,26 @@ export default function Index({ sections, professorSections, isProfessor, flash,
             );
         }
 
-        if (section.status === 'active' || section.status === 'open') {
+        if (section.status === 'active') {
             return (
                 <Badge color="green" {...badgeProps}>
-                    Open
+                    Active
                 </Badge>
             );
         }
 
-        if (section.status === 'canceled' || section.status === 'cancelled') {
+        if (section.status === 'cancelled') {
             return (
                 <Badge color="red" {...badgeProps}>
-                    Canceled
+                    Cancelled
                 </Badge>
             );
         }
 
-        if (section.status === 'pending') {
-            return (
-                <Badge color="yellow" {...badgeProps}>
-                    Pending
-                </Badge>
-            );
-        }
-
-        if (section.status === 'waitlist') {
-            return (
-                <Badge color="blue" {...badgeProps}>
-                    Waitlist
-                </Badge>
-            );
-        }
-
-        if (!section.schedules || section.schedules.length === 0) {
-            return (
-                <Badge color="amber" {...badgeProps}>
-                    Unscheduled
-                </Badge>
-            );
-        }
-
+        // Default badge if status is not recognized
         return (
             <Badge color="gray" {...badgeProps}>
-                {section.status}
+                {section.status || 'Unknown'}
             </Badge>
         );
     };
@@ -339,10 +324,9 @@ export default function Index({ sections, professorSections, isProfessor, flash,
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >
                             <option value="">All Statuses</option>
-                            <option value="scheduled">Scheduled</option>
-                            <option value="unscheduled">Unscheduled</option>
+                            <option value="active">Active</option>
+                            <option value="cancelled">Cancelled</option>
                             <option value="full">Full</option>
-                            <option value="draft">Draft</option>
                         </select>
                     </div>
 

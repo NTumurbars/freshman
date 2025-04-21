@@ -185,8 +185,14 @@ class CourseController extends Controller
             'major',
             'sections.term',
             'sections.schedules.room.floor.building',
-            'sections.professor_profile.user'
+            'sections.professor_profile.user',
+            'sections.courseRegistrations'
         ]);
+
+        // Make sure effective_capacity is calculated for each section
+        $course->sections->each(function($section) {
+            $section->append('effective_capacity');
+        });
 
         // Check if the user can view this course
         $this->authorize('view', $course);

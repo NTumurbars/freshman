@@ -34,9 +34,7 @@ class Section extends Model
 
     // Status constants
     const STATUS_ACTIVE = 'active';
-    const STATUS_CANCELED = 'canceled';
-    const STATUS_FULL = 'full';
-    const STATUS_PENDING = 'pending';
+    const STATUS_CANCELLED = 'cancelled';
 
     // Delivery method constants
     const DELIVERY_IN_PERSON = 'in-person';

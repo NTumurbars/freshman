@@ -41,6 +41,7 @@ export default function Create({
         status: 'active',
         delivery_method: 'in-person',
         notes: '',
+        capacity: '',
         required_features: [],
         schedules: [],
         students_count: 0,

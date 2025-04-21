@@ -21,7 +21,9 @@ export default function Edit({
             professorProfiles,
         );
         console.log('Section object:', section);
-    }, [professorProfiles]);
+        console.log('Section capacity type:', typeof section.capacity);
+        console.log('Section capacity value:', section.capacity);
+    }, [professorProfiles, section]);
 
     // Extract feature IDs from section.requiredFeatures array
     const getRequiredFeatureIds = () => {
@@ -34,16 +36,22 @@ export default function Edit({
         return section.requiredFeatures.map((feature) => feature.id);
     };
 
+    // Map "open" status to "active" to match backend validation
+    const mapStatus = (status) => {
+        if (status === 'open') return 'active';
+        return status || 'active';
+    };
+
     const { data, setData, put, processing, errors } = useForm({
         course_id: section.course_id || '',
         term_id: section.term_id || '',
         professor_profile_id: section.professor_profile_id || '',
         section_code: section.section_code || '',
         required_features: getRequiredFeatureIds(),
-        status: section.status || 'active',
+        status: mapStatus(section.status),
         delivery_method: section.delivery_method || 'in-person',
         notes: section.notes || '',
-        capacity: section.capacity || '',
+        capacity: !section.capacity || section.capacity === 0 ? '' : section.capacity,
         students_count: section.students_count || 0,
     });
 
@@ -51,11 +59,21 @@ export default function Edit({
         e.preventDefault();
         setIsSubmitting(true);
 
-        put(route('sections.update', [school.id, section.id]), {
+        console.log('Submitting form with data:', data);
+        console.log('Capacity before submission:', data.capacity, typeof data.capacity);
+
+        // Convert empty capacity string to null
+        const submissionData = { ...data };
+        if (submissionData.capacity === '') {
+            submissionData.capacity = null;
+        }
+
+        put(route('sections.update', [school.id, section.id]), submissionData, {
             onSuccess: () => {
                 setIsSubmitting(false);
             },
-            onError: () => {
+            onError: (errors) => {
+                console.error('Submission errors:', errors);
                 setIsSubmitting(false);
             },
         });

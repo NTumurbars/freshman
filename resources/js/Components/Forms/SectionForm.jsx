@@ -45,8 +45,17 @@ export default function SectionForm({
     }, [selectedFeatures]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setData(name, value);
+        const { name, value, type } = e.target;
+
+        // Special handling for number inputs
+        if (type === 'number') {
+            // If the field is empty, pass empty string; otherwise convert to number
+            const numValue = value === '' ? '' : parseInt(value, 10);
+            console.log(`Setting ${name} from ${value} (${typeof value}) to ${numValue} (${typeof numValue})`);
+            setData(name, numValue);
+        } else {
+            setData(name, value);
+        }
     };
 
     return (
@@ -171,7 +180,7 @@ export default function SectionForm({
                     id="capacity"
                     name="capacity"
                     className={`mt-1 block w-full rounded-md border ${errors.capacity ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
-                    value={data.capacity || ''}
+                    value={data.capacity === null || data.capacity === undefined ? '' : data.capacity}
                     onChange={handleChange}
                     min="1"
                     placeholder="Maximum enrollment capacity"
@@ -200,9 +209,7 @@ export default function SectionForm({
                     required
                 >
                     <option value="active">Active</option>
-                    <option value="canceled">Canceled</option>
-                    <option value="full">Full</option>
-                    <option value="pending">Pending</option>
+                    <option value="cancelled">Cancelled</option>
                 </select>
                 {errors.status && (
                     <p className="mt-1 text-sm text-red-600">{errors.status}</p>
