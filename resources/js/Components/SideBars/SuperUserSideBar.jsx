@@ -28,7 +28,7 @@ export default function SuperUserSideBar() {
     );
 
     return (
-        <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto scrollbar-hide">
+        <aside className="fixed h-screen w-64 border-r border-gray-200 bg-white p-4">
             <div className="mb-6 border-b border-gray-100 pb-4">
                 <div className="flex items-center space-x-3">
                     <div className="h-10 w-10 flex items-center justify-center bg-blue-100 text-blue-700 rounded-md flex-shrink-0 border border-blue-200">

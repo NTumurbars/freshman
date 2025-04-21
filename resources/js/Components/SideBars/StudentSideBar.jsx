@@ -50,7 +50,7 @@ export default function StudentSideBar({ school }) {
     );
 
     return (
-        <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto scrollbar-hide">
+        <aside className="fixed h-screen w-64 border-r border-gray-200 bg-white p-4">
             {/* School Info Header */}
             <div className="mb-6 border-b border-gray-100 pb-4">
                 <div className="flex items-center space-x-3">

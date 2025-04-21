@@ -113,7 +113,7 @@ export default function AdminSideBar({ school }) {
     // If no school is assigned, show limited navigation
     if (!school?.id) {
         return (
-            <aside className="h-full min-h-screen w-64 border-r border-blue-100 bg-white p-4 overflow-y-auto scrollbar-hide">
+            <aside className="fixed h-screen w-64 border-r border-blue-100 bg-white p-4">
                 <div className="mb-6 border-b border-blue-100 pb-4">
                     <div className="flex items-center space-x-3">
                         <div className="h-10 w-10 flex items-center justify-center bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-600 rounded-md flex-shrink-0 border border-blue-200">
@@ -150,7 +150,7 @@ export default function AdminSideBar({ school }) {
     };
 
     return (
-        <aside className="h-full min-h-screen w-64 border-r border-blue-100 bg-white p-4 overflow-y-auto scrollbar-hide">
+        <aside className="fixed h-screen w-64 border-r border-blue-100 bg-white p-4">
             <div className="mb-6 border-b border-blue-100 pb-4">
                 <div className="flex items-center space-x-3">
                     {school?.logo_url ? (
