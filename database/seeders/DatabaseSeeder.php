@@ -46,9 +46,13 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Seeding schedules for sections...');
         $this->call(ScheduleSeeder::class);
 
-        // Seed students
+        // Seed students (improved version with more data)
         $this->command->info('Seeding students...');
-        $this->seedStudents($roles);
+        $this->call(StudentSeeder::class);
+
+        // Seed course registrations to connect students with sections
+        $this->command->info('Registering students for courses...');
+        $this->call(CourseRegistrationSeeder::class);
 
         // ======================== SUMMARY ========================
         $this->command->info('Database seeding completed successfully!');
@@ -372,81 +376,5 @@ class DatabaseSeeder extends Seeder
         }
 
         return $templeJapan;
-    }
-
-    /**
-     * Seed students for each school
-     */
-    private function seedStudents($roles)
-    {
-        // Temple Main Campus Students
-        $templeSchool = School::where('name', 'Temple University')->first();
-        $csDepartment = Department::where('name', 'Computer Science')
-            ->where('school_id', $templeSchool->id)
-            ->first();
-
-        $csMajor = Major::where('department_id', $csDepartment->id)
-            ->where('code', 'CS')
-            ->first();
-
-        $studentRole = $roles['student'];
-
-        // Create 20 students for Temple Main Campus
-        $templeStudents = [
-            ['name' => 'John Smith', 'email' => 'john.smith@temple.edu'],
-            ['name' => 'Emma Johnson', 'email' => 'emma.johnson@temple.edu'],
-            ['name' => 'Michael Brown', 'email' => 'michael.brown@temple.edu'],
-            ['name' => 'Sarah Davis', 'email' => 'sarah.davis@temple.edu'],
-            ['name' => 'James Wilson', 'email' => 'james.wilson@temple.edu'],
-            // Add more students as needed
-        ];
-
-        foreach ($templeStudents as $studentData) {
-            User::updateOrCreate(
-                ['email' => $studentData['email']],
-                [
-                    'name' => $studentData['name'],
-                    'password' => Hash::make('password'),
-                    'role_id' => $studentRole->id,
-                    'school_id' => $templeSchool->id,
-                    'email_verified_at' => now(),
-                    'remember_token' => Str::random(10),
-                ]
-            );
-        }
-
-        // Temple Japan Students
-        $tujSchool = School::where('name', 'Temple University Japan')->first();
-        $asianStudiesDept = Department::where('name', 'Asian Studies')
-            ->where('school_id', $tujSchool->id)
-            ->first();
-
-        $japaneseStudiesMajor = Major::where('department_id', $asianStudiesDept->id)
-            ->where('code', 'JST')
-            ->first();
-
-        // Create students for Temple Japan
-        $tujStudents = [
-            ['name' => 'Yuki Tanaka', 'email' => 'yuki.tanaka@tuj.temple.edu'],
-            ['name' => 'Sakura Yamamoto', 'email' => 'sakura.yamamoto@tuj.temple.edu'],
-            ['name' => 'Hiroshi Sato', 'email' => 'hiroshi.sato@tuj.temple.edu'],
-            ['name' => 'Akiko Suzuki', 'email' => 'akiko.suzuki@tuj.temple.edu'],
-            ['name' => 'Kenji Nakamura', 'email' => 'kenji.nakamura@tuj.temple.edu'],
-            // Add more students as needed
-        ];
-
-        foreach ($tujStudents as $studentData) {
-            User::updateOrCreate(
-                ['email' => $studentData['email']],
-                [
-                    'name' => $studentData['name'],
-                    'password' => Hash::make('password'),
-                    'role_id' => $studentRole->id,
-                    'school_id' => $tujSchool->id,
-                    'email_verified_at' => now(),
-                    'remember_token' => Str::random(10),
-                ]
-            );
-        }
     }
 }
