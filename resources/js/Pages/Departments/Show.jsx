@@ -202,6 +202,7 @@ export default function Show({ department, school }) {
                                         <Link
                                             href={route('majors.create', {
                                                 school: school.id,
+                                                department_id: department.id
                                             })}
                                         >
                                             <Button
@@ -283,6 +284,7 @@ export default function Show({ department, school }) {
                                         <Link
                                             href={route('majors.create', {
                                                 school: school.id,
+                                                department_id: department.id
                                             })}
                                         >
                                             <Button icon={PlusIcon}>
@@ -340,6 +342,7 @@ export default function Show({ department, school }) {
                                             <Link
                                                 href={route('majors.create', {
                                                     school: school.id,
+                                                    department_id: department.id
                                                 })}
                                                 className="mt-4 inline-block"
                                             >
@@ -363,6 +366,7 @@ export default function Show({ department, school }) {
                                         <Link
                                             href={route('courses.create', {
                                                 school: school.id,
+                                                department_id: department.id
                                             })}
                                         >
                                             <Button icon={PlusIcon}>
@@ -438,6 +442,7 @@ export default function Show({ department, school }) {
                                             <Link
                                                 href={route('courses.create', {
                                                     school: school.id,
+                                                    department_id: department.id
                                                 })}
                                             >
                                                 <Button

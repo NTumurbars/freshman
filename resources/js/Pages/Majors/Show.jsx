@@ -180,6 +180,8 @@ export default function Show({ major, school }) {
                                         <Link
                                             href={route('courses.create', {
                                                 school: school.id,
+                                                major_id: major.id,
+                                                department_id: major.department.id
                                             })}
                                         >
                                             <Button icon={PlusIcon}>
@@ -245,6 +247,8 @@ export default function Show({ major, school }) {
                                             <Link
                                                 href={route('courses.create', {
                                                     school: school.id,
+                                                    major_id: major.id,
+                                                    department_id: major.department.id
                                                 })}
                                                 className="mt-4 inline-block"
                                             >

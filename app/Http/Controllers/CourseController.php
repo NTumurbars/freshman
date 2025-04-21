@@ -65,7 +65,20 @@ class CourseController extends Controller
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'major_id'      => 'nullable|exists:majors,id',
-            'code'          => 'required|string|unique:courses,code',
+            'code'          => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) use ($school) {
+                    // Check if this code is unique within this school
+                    $exists = Course::whereHas('department', function ($query) use ($school) {
+                        $query->where('school_id', $school->id);
+                    })->where('code', $value)->exists();
+
+                    if ($exists) {
+                        $fail('The course code has already been taken within this school.');
+                    }
+                }
+            ],
             'title'         => 'required|string|max:255',
             'description'   => 'nullable|string',
             'credits'       => 'required|integer|min:1|max:6',
@@ -121,7 +134,23 @@ class CourseController extends Controller
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'major_id'      => 'nullable|exists:majors,id',
-            'code'          => 'required|string|unique:courses,code,' . $course->id,
+            'code'          => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) use ($school, $course) {
+                    // Check if this code is unique within this school, excluding this course
+                    $exists = Course::whereHas('department', function ($query) use ($school) {
+                        $query->where('school_id', $school->id);
+                    })
+                    ->where('code', $value)
+                    ->where('id', '!=', $course->id)
+                    ->exists();
+
+                    if ($exists) {
+                        $fail('The course code has already been taken within this school.');
+                    }
+                }
+            ],
             'title'         => 'required|string|max:255',
             'description'   => 'nullable|string',
             'credits'       => 'required|integer|min:1|max:6',

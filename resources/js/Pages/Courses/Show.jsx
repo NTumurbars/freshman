@@ -130,7 +130,7 @@ export default function Show({ course, school }) {
                     <Link
                         href={route('sections.create', {
                             school: school.id,
-                            course: course.id,
+                            course_id: course.id,
                         })}
                         className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
@@ -383,7 +383,7 @@ export default function Show({ course, school }) {
                             <Link
                                 href={route('sections.create', {
                                     school: school.id,
-                                    course: course.id,
+                                    course_id: course.id,
                                 })}
                                 className="mt-4 inline-flex items-center rounded-md border border-transparent bg-indigo-100 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >

@@ -25,12 +25,16 @@ export default function Create({
     locationTypes: locationTypeOptions,
     activeTerm,
 }) {
+    // Get course_id from URL if available
+    const params = new URLSearchParams(window.location.search);
+    const course_id_param = params.get('course_id');
+
     // State for active tab
     const [activeTab, setActiveTab] = useState('basic-info');
 
     // Form state
     const { data, setData, post, processing, errors } = useForm({
-        course_id: '',
+        course_id: course_id_param || '',
         term_id: activeTerm?.id || '',
         professor_profile_id: '',
         section_code: '',
@@ -130,12 +134,28 @@ export default function Create({
             }));
         }
 
-        // Log for debugging
-        console.log('Adding schedules:', schedulesToAdd);
-        console.log('Location type:', schedulesToAdd[0]?.location_type);
+        // ADDED DEBUG LOGS
+        console.log('BEFORE ADDING SCHEDULE - Current schedules:', data.schedules);
+        console.log('ADDING SCHEDULES:', schedulesToAdd);
+        console.log('Schedule 0 details:', schedulesToAdd[0]);
+
+        // Compare with what the backend expects
+        console.log('SCHEDULE VALIDATION CHECK:', {
+            day_of_week_check: schedulesToAdd[0]?.day_of_week ? 'OK' : 'MISSING',
+            room_id_check: schedulesToAdd[0]?.room_id ? 'OK' : 'MISSING',
+            start_time_check: schedulesToAdd[0]?.start_time ? 'OK' : 'MISSING',
+            end_time_check: schedulesToAdd[0]?.end_time ? 'OK' : 'MISSING',
+            meeting_pattern_check: schedulesToAdd[0]?.meeting_pattern ? 'OK' : 'MISSING',
+            location_type_check: schedulesToAdd[0]?.location_type ? 'OK' : 'MISSING'
+        });
 
         // Add the new schedules to the existing ones
         setData('schedules', [...data.schedules, ...schedulesToAdd]);
+
+        // Log after adding
+        setTimeout(() => {
+            console.log('AFTER ADDING SCHEDULE - Current schedules:', data.schedules);
+        }, 100);
 
         // Reset the form
         setNewSchedule({
@@ -173,6 +193,36 @@ export default function Create({
     // Function to handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Debug logging for schedules data
+        console.log('SUBMITTING SECTION WITH SCHEDULES:', {
+            schedulesCount: data.schedules.length,
+            schedulesData: data.schedules,
+            allFormData: data
+        });
+
+        // Validate schedules data
+        if (data.schedules && data.schedules.length > 0) {
+            data.schedules.forEach((schedule, index) => {
+                console.log(`Schedule #${index + 1} validation:`, {
+                    hasRoomId: !!schedule.room_id,
+                    hasDayOfWeek: !!schedule.day_of_week,
+                    hasStartTime: !!schedule.start_time,
+                    hasEndTime: !!schedule.end_time,
+                    hasLocationtype: !!schedule.location_type,
+                    hasMeetingPattern: !!schedule.meeting_pattern,
+                    hasVirtualUrl: !!schedule.virtual_meeting_url,
+                    roomId: schedule.room_id,
+                    dayOfWeek: schedule.day_of_week,
+                    startTime: schedule.start_time,
+                    endTime: schedule.end_time,
+                    locationType: schedule.location_type,
+                    meetingPattern: schedule.meeting_pattern,
+                    virtualMeetingUrl: schedule.virtual_meeting_url
+                });
+            });
+        }
+
         post(route('sections.store', school.id));
     };
 

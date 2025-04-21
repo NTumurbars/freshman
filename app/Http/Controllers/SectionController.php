@@ -208,12 +208,49 @@ class SectionController extends Controller
 
             // Handle schedules if they were submitted (optional)
             if ($request->has('schedules') && is_array($request->schedules) && count($request->schedules) > 0) {
-                foreach ($request->schedules as $scheduleData) {
-                    // Validate schedule data
-                    $validatedSchedule = $this->validateScheduleData($scheduleData);
+                // Log the schedule data for debugging
+                Log::info('Section creation - SCHEDULES DATA RECEIVED:', [
+                    'schedules_count' => count($request->schedules),
+                    'schedules_data' => $request->schedules
+                ]);
 
-                    // Create schedule
-                    $section->schedules()->create($validatedSchedule);
+                foreach ($request->schedules as $index => $scheduleData) {
+                    // Log each schedule data
+                    Log::info("Processing schedule #{$index}:", [
+                        'has_room_id' => isset($scheduleData['room_id']),
+                        'has_day_of_week' => isset($scheduleData['day_of_week']),
+                        'has_start_time' => isset($scheduleData['start_time']),
+                        'has_end_time' => isset($scheduleData['end_time']),
+                        'has_meeting_pattern' => isset($scheduleData['meeting_pattern']),
+                        'has_location_type' => isset($scheduleData['location_type']),
+                        'has_virtual_meeting_url' => isset($scheduleData['virtual_meeting_url']),
+                        'room_id' => $scheduleData['room_id'] ?? null,
+                        'day_of_week' => $scheduleData['day_of_week'] ?? null,
+                        'start_time' => $scheduleData['start_time'] ?? null,
+                        'end_time' => $scheduleData['end_time'] ?? null,
+                        'meeting_pattern' => $scheduleData['meeting_pattern'] ?? null,
+                        'location_type' => $scheduleData['location_type'] ?? null,
+                        'virtual_meeting_url' => $scheduleData['virtual_meeting_url'] ?? null,
+                    ]);
+
+                    try {
+                        // Validate schedule data
+                        $validatedSchedule = $this->validateScheduleData($scheduleData);
+
+                        // Log successful validation
+                        Log::info("Schedule #{$index} validation successful", $validatedSchedule);
+
+                        // Create schedule
+                        $section->schedules()->create($validatedSchedule);
+
+                        Log::info("Schedule #{$index} created successfully");
+                    } catch (\Exception $e) {
+                        // Log validation failure
+                        Log::error("Schedule #{$index} validation failed:", [
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                    }
                 }
             }
 
@@ -483,7 +520,11 @@ class SectionController extends Controller
      */
     private function validateScheduleData($scheduleData)
     {
-        $validatedData = validator($scheduleData, [
+        Log::info('Validating schedule data:', [
+            'received_data' => $scheduleData
+        ]);
+
+        $validator = validator($scheduleData, [
             'room_id' => 'nullable|exists:rooms,id',
             'day_of_week' => 'required|string',
             'start_time' => 'required|date_format:H:i:s,H:i',
@@ -491,9 +532,16 @@ class SectionController extends Controller
             'meeting_pattern' => 'nullable|string',
             'location_type' => 'nullable|string',
             'virtual_meeting_url' => 'nullable|url',
-        ])->validate();
+        ]);
 
-        return $validatedData;
+        if ($validator->fails()) {
+            Log::error('Schedule validation failed:', [
+                'errors' => $validator->errors()->toArray()
+            ]);
+            throw new \Exception('Schedule validation failed: ' . json_encode($validator->errors()->toArray()));
+        }
+
+        return $validator->validate();
     }
 
     // GET /schools/{school}/sections/calendar

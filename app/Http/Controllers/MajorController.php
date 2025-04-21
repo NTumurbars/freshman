@@ -16,10 +16,10 @@ class MajorController extends Controller
     public function index(School $school)
     {
         $this->authorize('viewAny', Major::class);
-        
+
         // Get departments in this school
         $departmentIds = Department::where('school_id', $school->id)->pluck('id');
-        
+
         // Get majors for these departments
         $majors = Major::whereIn('department_id', $departmentIds)
             ->with('department')
@@ -29,7 +29,7 @@ class MajorController extends Controller
                 $major->student_count = 0;
                 return $major;
             });
-            
+
         return Inertia::render('Majors/Index', [
             'majors' => $majors,
             'school' => $school,
@@ -41,10 +41,10 @@ class MajorController extends Controller
     public function create(School $school)
     {
         $this->authorize('create', Major::class);
-        
+
         // Get departments in this school
         $departments = Department::where('school_id', $school->id)->get();
-        
+
         return Inertia::render('Majors/Create', [
             'departments' => $departments,
             'school' => $school
@@ -55,10 +55,23 @@ class MajorController extends Controller
     public function store(Request $request, School $school)
     {
         $this->authorize('create', Major::class);
-        
+
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
-            'code' => 'required|string|unique:majors,code',
+            'code' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) use ($school) {
+                    // Check if this code is unique within this school
+                    $exists = Major::whereHas('department', function ($query) use ($school) {
+                        $query->where('school_id', $school->id);
+                    })->where('code', $value)->exists();
+
+                    if ($exists) {
+                        $fail('The major code has already been taken within this school.');
+                    }
+                }
+            ],
             'name' => 'nullable|string|max:255',
             'description' => 'nullable|string'
         ]);
@@ -70,7 +83,7 @@ class MajorController extends Controller
         }
 
         $major = Major::create($data);
-        
+
         return redirect()
             ->route('majors.index', ['school' => $school->id])
             ->with('success', 'Major created successfully');
@@ -81,16 +94,16 @@ class MajorController extends Controller
     {
         $major = Major::findOrFail($id);
         $this->authorize('update', $major);
-        
+
         // Verify major's department belongs to this school
         $department = Department::findOrFail($major->department_id);
         if ($department->school_id !== $school->id) {
             abort(404, 'Major not found in this school');
         }
-        
+
         // Get departments in this school
         $departments = Department::where('school_id', $school->id)->get();
-        
+
         return Inertia::render('Majors/Edit', [
             'major' => $major,
             'departments' => $departments,
@@ -103,16 +116,32 @@ class MajorController extends Controller
     {
         $major = Major::findOrFail($id);
         $this->authorize('update', $major);
-        
+
         // Verify major's department belongs to this school
         $currentDepartment = Department::findOrFail($major->department_id);
         if ($currentDepartment->school_id !== $school->id) {
             abort(404, 'Major not found in this school');
         }
-        
+
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
-            'code' => 'required|string|unique:majors,code,' . $major->id,
+            'code' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) use ($school, $major) {
+                    // Check if this code is unique within this school, excluding this major
+                    $exists = Major::whereHas('department', function ($query) use ($school) {
+                        $query->where('school_id', $school->id);
+                    })
+                    ->where('code', $value)
+                    ->where('id', '!=', $major->id)
+                    ->exists();
+
+                    if ($exists) {
+                        $fail('The major code has already been taken within this school.');
+                    }
+                }
+            ],
             'name' => 'nullable|string|max:255',
             'description' => 'nullable|string'
         ]);
@@ -126,7 +155,7 @@ class MajorController extends Controller
         }
 
         $major->update($data);
-        
+
         return redirect()
             ->route('majors.index', ['school' => $school->id])
             ->with('success', 'Major updated successfully');
@@ -137,15 +166,15 @@ class MajorController extends Controller
     {
         $major = Major::findOrFail($id);
         $this->authorize('delete', $major);
-        
+
         // Verify major's department belongs to this school
         $department = Department::findOrFail($major->department_id);
         if ($department->school_id !== $school->id) {
             abort(404, 'Major not found in this school');
         }
-        
+
         $major->delete();
-        
+
         return redirect()
             ->route('majors.index', ['school' => $school->id])
             ->with('success', 'Major deleted successfully');
@@ -156,13 +185,13 @@ class MajorController extends Controller
     {
         $major = Major::with(['department', 'courses'])->findOrFail($id);
         $this->authorize('view', $major);
-        
+
         // Verify major's department belongs to this school
         $department = Department::findOrFail($major->department_id);
         if ($department->school_id !== $school->id) {
             abort(404, 'Major not found in this school');
         }
-        
+
         return Inertia::render('Majors/Show', [
             'major' => $major,
             'school' => $school
