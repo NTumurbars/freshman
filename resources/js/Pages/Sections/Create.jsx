@@ -483,37 +483,6 @@ export default function Create({
                                 </div>
                             </div>
 
-                            <div>
-                                <label
-                                    htmlFor="capacity"
-                                    className="mb-1 block text-sm font-medium text-gray-700"
-                                >
-                                    Section Capacity
-                                </label>
-                                <input
-                                    type="number"
-                                    id="capacity"
-                                    min="1"
-                                    value={data.capacity}
-                                    onChange={(e) =>
-                                        setData('capacity', e.target.value)
-                                    }
-                                    placeholder="Maximum number of students allowed"
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-                                />
-                                <p className="mt-1 text-xs text-gray-500">
-                                    {data.delivery_method === 'in-person' ||
-                                    data.delivery_method === 'hybrid'
-                                        ? 'For in-person or hybrid sections, capacity will be limited by room size.'
-                                        : 'For online sections, this sets the maximum enrollment limit.'}
-                                </p>
-                                {errors.capacity && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.capacity}
-                                    </p>
-                                )}
-                            </div>
-
                             <div className="flex justify-end space-x-2 pt-4">
                                 <button
                                     type="button"
