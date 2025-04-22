@@ -9,6 +9,7 @@ use App\Models\Major;
 use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
 
 class CourseController extends Controller
 {
@@ -22,9 +23,15 @@ class CourseController extends Controller
 
         // Filter courses based on departments that belong to the school
         $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+        $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
         $courses = Course::whereIn('department_id', $schoolDepartmentIds)
             ->with(['department', 'major', 'sections'])
             ->get();
+        if (Auth::user()->role_id == 3) {
+            $courses = Course::where('department_id', Auth::user()->professor_profile->department_id)
+                ->with(['department', 'major', 'sections'])
+                ->get();
+        }
 
         return Inertia::render('Courses/Index', [
             'courses' => $courses,

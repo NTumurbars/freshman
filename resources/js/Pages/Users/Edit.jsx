@@ -170,8 +170,13 @@ export default function Edit({ user, roles, schools }) {
                                         <TextInput
                                             id="school_display"
                                             value={
-                                                schools.find(s => s.id === parseInt(data.school_id))?.name ||
-                                                'No school assigned'
+                                                schools.find(
+                                                    (s) =>
+                                                        s.id ===
+                                                        parseInt(
+                                                            data.school_id,
+                                                        ),
+                                                )?.name || 'No school assigned'
                                             }
                                             disabled
                                         />
@@ -180,7 +185,7 @@ export default function Edit({ user, roles, schools }) {
                             </div>
                         </div>
 
-                        <div>
+                        {/* <div>
                             <Text className="mb-2">Password</Text>
                             <Divider />
                             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -228,7 +233,7 @@ export default function Edit({ user, roles, schools }) {
                                     />
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
 
                         <div className="flex justify-end pt-4">
                             <Button type="submit" disabled={processing}>

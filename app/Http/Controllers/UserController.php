@@ -20,16 +20,15 @@ class UserController extends Controller
     {
         $user = User::find(Auth::id());
         $query = User::with(['role', 'professor_profile', 'school'])
-            ->when($user->role_id != 1, function($q) use ($user) {
-                return $q->where('school_id', $user->school_id)
-                        ->whereNot('id', $user->id);
+            ->whereNot('id', $user->id)
+            ->when($user->role_id != 1, function ($q) use ($user) {
+                return $q->where('school_id', $user->school_id);
             });
 
         // Search and filters
         if ($request->search) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('email', 'like', "%{$request->search}%");
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->search}%")->orWhere('email', 'like', "%{$request->search}%");
             });
         }
 
@@ -45,7 +44,7 @@ class UserController extends Controller
         // Pagination
         $users = $query->paginate(10)->withQueryString();
 
-        $roles = Role::when($user->role_id != 1, function($q) {
+        $roles = Role::when($user->role_id != 1, function ($q) {
             return $q->where('id', '>', 1);
         })->get();
 
@@ -56,11 +55,10 @@ class UserController extends Controller
                 'search' => $request->search,
                 'role' => $request->role,
                 'sort_by' => $sortField,
-                'sort_direction' => $sortDirection
-            ]
+                'sort_direction' => $sortDirection,
+            ],
         ]);
     }
-
 
     // GET /users/create
     public function create()
@@ -77,7 +75,6 @@ class UserController extends Controller
         ]);
     }
 
-
     // POST /users
     public function store(Request $request)
     {
@@ -85,9 +82,9 @@ class UserController extends Controller
 
         // Base validation rules
         $rules = [
-            'name'      => 'required|string',
-            'email'     => 'required|email|unique:users,email',
-            'role_id'   => 'required|exists:roles,id',
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users,email',
+            'role_id' => 'required|exists:roles,id',
             'department_id' => 'nullable|exists:departments,id',
             'office_location' => 'nullable|string',
             'phone_number' => 'nullable|string',
@@ -109,16 +106,16 @@ class UserController extends Controller
 
         $tempPassword = Str::random(12);
         $user = User::create([
-            'name'      => $data['name'],
-            'email'     => $data['email'],
-            'password'  => Hash::make($tempPassword),
-            'role_id'   => $data['role_id'],
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($tempPassword),
+            'role_id' => $data['role_id'],
             'school_id' => $data['school_id'],
         ]);
 
         // Check if this is a professor role (IDs 3 or 4) and create professor profile
         $professorRoleIds = [3, 4]; // professor and major_coordinator
-        if (in_array((int)$data['role_id'], $professorRoleIds) && $request->department_id) {
+        if (in_array((int) $data['role_id'], $professorRoleIds) && $request->department_id) {
             $user->professor_profile()->create([
                 'department_id' => $data['department_id'],
                 'office' => $data['office_location'] ?? null,
@@ -147,7 +144,7 @@ class UserController extends Controller
         }
 
         // Get roles - super admin can see all roles, others have restrictions
-        $roles = Role::when($currentUser->role_id != 1, function($q) {
+        $roles = Role::when($currentUser->role_id != 1, function ($q) {
             return $q->where('id', '>', 1);
         })->get();
 
@@ -169,9 +166,9 @@ class UserController extends Controller
 
         // Prepare validation rules
         $rules = [
-            'name'      => 'required|string',
-            'email'     => 'required|email|unique:users,email,' . $user->id,
-            'role_id'   => 'required|exists:roles,id',
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'role_id' => 'required|exists:roles,id',
         ];
 
         // Only allow super admins to change school
@@ -216,23 +213,15 @@ class UserController extends Controller
         $this->authorize('view', $user);
 
         // Load basic user data
-        $user->load([
-            'role',
-            'school',
-            'professor_profile.department'
-        ]);
+        $user->load(['role', 'school', 'professor_profile.department']);
 
         // Get departments for the school
         $departments = $user->school->departments ?? [];
 
         // Directly fetch course registrations with relations
-        $courseRegistrations = \App\Models\CourseRegistration::with([
-            'section.course',
-            'section.professor_profile.user',
-            'section.schedules.room'
-        ])
-        ->where('user_id', $user->id)
-        ->get();
+        $courseRegistrations = \App\Models\CourseRegistration::with(['section.course', 'section.professor_profile.user', 'section.schedules.room'])
+            ->where('user_id', $user->id)
+            ->get();
 
         // Convert user to array and add course registrations
         $userData = $user->toArray();
@@ -241,7 +230,7 @@ class UserController extends Controller
 
         return Inertia::render('Users/Show', [
             'user' => $userData,
-            'departments' => $departments
+            'departments' => $departments,
         ]);
     }
 }

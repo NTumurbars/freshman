@@ -27,13 +27,34 @@ class SectionController extends Controller
         $this->authorize('viewAny', Section::class);
 
         $user = Auth::user();
+
+        if ($user->role->id === 2) {
+            // Get departments that belong to this school
+            $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+
+            // Get courses that belong to these departments
+            $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
+
+            // // Get sections for these courses with necessary relationships
+            // $sections = Section::whereIn('course_id', $schoolCourseIds)
+            //     ->with(['course.department', 'term', 'professor_profile.user', 'schedules.room.floor.building', 'requiredFeatures', 'courseRegistrations'])
+            //     ->get();
+        } elseif ($user->role->id === 3 || $user->role->id === 4) {
+            // Get course IDs for the specific department
+            $schoolCourseIds = Course::where('department_id', $user->professor_profile->department->id)->pluck('id');
+
+            // // Get sections for those courses with all necessary relationships
+            // $sections = Section::whereIn('course_id', $courseIds)
+            //     ->with(['course.department', 'term', 'professor_profile.user', 'schedules.room.floor.building', 'requiredFeatures', 'courseRegistrations'])
+            //     ->get();
+        }
         $isProfessor = $user->role->name === 'professor' || $user->role->name === 'major_coordinator';
 
-        // Get departments that belong to this school
-        $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+        // // Get departments that belong to this school
+        // $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
 
-        // Get courses that belong to these departments
-        $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
+        // // Get courses that belong to these departments
+        // $schoolCourseIds = Course::whereIn('department_id', $schoolDepartmentIds)->pluck('id');
 
         // Base query for sections
         $sectionsQuery = Section::whereIn('course_id', $schoolCourseIds)

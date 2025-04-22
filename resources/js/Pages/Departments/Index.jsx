@@ -5,15 +5,15 @@ import {
     BookOpenIcon,
     BuildingOfficeIcon,
     EnvelopeIcon,
+    EyeIcon,
     MapPinIcon,
+    PencilSquareIcon,
     PhoneIcon,
     PlusIcon,
-    UserGroupIcon,
-    EyeIcon,
-    PencilSquareIcon,
     TrashIcon,
+    UserGroupIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Badge,
     Button,
@@ -32,6 +32,9 @@ import { useState } from 'react';
 
 const DepartmentCard = ({ department, school }) => {
     const contactInfo = department.contact || {};
+    const { auth } = usePage().props;
+
+    const isAdmin = auth.user.role.id === 2;
 
     return (
         <Card className="h-full border border-gray-200 transition-all hover:shadow-md">
@@ -142,41 +145,45 @@ const DepartmentCard = ({ department, school }) => {
                             View
                         </Button>
                     </Link>
-                    <Link
-                        href={route('departments.edit', {
-                            school: department.school_id,
-                            department: department.id,
-                        })}
-                    >
-                        <Button
-                            icon={PencilSquareIcon}
-                            variant="light"
-                            color="blue"
-                            size="xs"
-                            tooltip="Edit department"
-                        >
-                            Edit
-                        </Button>
-                    </Link>
-                    <Link
-                        href={route('departments.destroy', {
-                            school: school.id,
-                            department: department.id,
-                        })}
-                        method="delete"
-                        as="button"
-                        type="button"
-                    >
-                        <Button 
-                            icon={TrashIcon}
-                            variant="light"
-                            color="red"
-                            size="xs"
-                            tooltip="Delete department"
-                        >
-                            Delete
-                        </Button>
-                    </Link>
+                    {isAdmin && (
+                        <>
+                            <Link
+                                href={route('departments.edit', {
+                                    school: department.school_id,
+                                    department: department.id,
+                                })}
+                            >
+                                <Button
+                                    icon={PencilSquareIcon}
+                                    variant="light"
+                                    color="blue"
+                                    size="xs"
+                                    tooltip="Edit department"
+                                >
+                                    Edit
+                                </Button>
+                            </Link>
+                            <Link
+                                href={route('departments.destroy', {
+                                    school: school.id,
+                                    department: department.id,
+                                })}
+                                method="delete"
+                                as="button"
+                                type="button"
+                            >
+                                <Button
+                                    icon={TrashIcon}
+                                    variant="light"
+                                    color="red"
+                                    size="xs"
+                                    tooltip="Delete department"
+                                >
+                                    Delete
+                                </Button>
+                            </Link>
+                        </>
+                    )}
                 </div>
             </div>
         </Card>
