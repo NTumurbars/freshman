@@ -1223,103 +1223,112 @@ export default function Dashboard() {
                             </div>
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
                                 {/* Total Users Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-blue-100 rounded-full p-3">
-                                        <Users className="h-6 w-6 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Total Users</p>
-                                        <div className="flex items-baseline">
-                                            <p className="text-2xl font-semibold text-gray-900">
-                                                {loading ? (
-                                                    <Loader className="h-6 w-6 animate-spin text-gray-400" />
-                                                ) : (
-                                                    stats?.stats?.users || 0
-                                                )}
-                                            </p>
-                                            <Link href={route('users.index')} className="ml-2 text-xs text-blue-600 hover:text-blue-800">
-                                                View →
-                                            </Link>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={route('users.index')} className="absolute inset-0 z-10" aria-label="View users" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                            <Users className="h-6 w-6" />
                                         </div>
-                                        <p className="text-xs text-gray-500">Active users in your school</p>
+                                        <p className="text-sm font-medium text-gray-500">Total Users</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.users || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Active users in your school</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-blue-600">
+                                            <span>View Details</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 {/* Departments Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-purple-100 rounded-full p-3">
-                                        <LayoutList className="h-6 w-6 text-purple-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Departments</p>
-                                        <div className="flex items-baseline">
-                                            <p className="text-2xl font-semibold text-gray-900">
-                                                {loading ? (
-                                                    <Loader className="h-6 w-6 animate-spin text-gray-400" />
-                                                ) : (
-                                                    stats?.stats?.departments || 0
-                                                )}
-                                            </p>
-                                            <Link href={schoolRoute('departments.index')} className="ml-2 text-xs text-purple-600 hover:text-purple-800">
-                                                View →
-                                            </Link>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('departments.index')} className="absolute inset-0 z-10" aria-label="View departments" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 transition duration-200 group-hover:scale-110">
+                                            <LayoutList className="h-6 w-6" />
                                         </div>
-                                        <p className="text-xs text-gray-500">Academic departments</p>
+                                        <p className="text-sm font-medium text-gray-500">Departments</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.departments || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Academic departments</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-purple-600">
+                                            <span>View Details</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-400 to-purple-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 {/* Buildings Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-orange-100 rounded-full p-3">
-                                        <Building className="h-6 w-6 text-orange-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Buildings</p>
-                                        <div className="flex items-baseline">
-                                            <p className="text-2xl font-semibold text-gray-900">
-                                                {loading ? (
-                                                    <Loader className="h-6 w-6 animate-spin text-gray-400" />
-                                                ) : (
-                                                    stats?.stats?.buildings || 0
-                                                )}
-                                            </p>
-                                            <Link href={schoolRoute('buildings.index')} className="ml-2 text-xs text-orange-600 hover:text-orange-800">
-                                                View →
-                                            </Link>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('buildings.index')} className="absolute inset-0 z-10" aria-label="View buildings" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600 transition duration-200 group-hover:scale-110">
+                                            <Building className="h-6 w-6" />
                                         </div>
-                                        <p className="text-xs text-gray-500">Campus facilities</p>
+                                        <p className="text-sm font-medium text-gray-500">Buildings</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.buildings || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Campus facilities</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-orange-600">
+                                            <span>View Details</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-orange-400 to-orange-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 {/* Active Courses Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-green-100 rounded-full p-3">
-                                        <BookOpen className="h-6 w-6 text-green-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Active Courses</p>
-                                        <div className="flex items-baseline">
-                                            <p className="text-2xl font-semibold text-gray-900">
-                                                {loading ? (
-                                                    <Loader className="h-6 w-6 animate-spin text-gray-400" />
-                                                ) : (
-                                                    stats?.stats?.activeCourses || 0
-                                                )}
-                                            </p>
-                                            <Link href={schoolRoute('courses.index')} className="ml-2 text-xs text-green-600 hover:text-green-800">
-                                                View →
-                                            </Link>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('courses.index')} className="absolute inset-0 z-10" aria-label="View courses" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                            <BookOpen className="h-6 w-6" />
                                         </div>
-                                        <p className="text-xs text-gray-500">Currently running courses</p>
+                                        <p className="text-sm font-medium text-gray-500">Active Courses</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.activeCourses || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Currently running courses</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-green-600">
+                                            <span>View Details</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 {/* Current Term Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-indigo-100 rounded-full p-3">
-                                        <Calendar className="h-6 w-6 text-indigo-600" />
-                                    </div>
-                                    <div>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('terms.index')} className="absolute inset-0 z-10" aria-label="View terms" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition duration-200 group-hover:scale-110">
+                                            <Calendar className="h-6 w-6" />
+                                        </div>
                                         <p className="text-sm font-medium text-gray-500">Current Term</p>
                                         <p className="text-xl font-semibold text-gray-900 truncate max-w-[180px]">
                                             {loading ? (
@@ -1328,12 +1337,18 @@ export default function Dashboard() {
                                                 stats?.stats?.currentTerm?.name || 'None'
                                             )}
                                         </p>
-                                        <p className="text-xs text-gray-500 truncate max-w-[180px]">
+                                        <p className="text-xs text-gray-500 mt-1 truncate max-w-[180px]">
                                             {stats?.stats?.currentTerm
                                                 ? `${new Date(stats.stats.currentTerm.start_date).toLocaleDateString()} - ${new Date(stats.stats.currentTerm.end_date).toLocaleDateString()}`
                                                 : 'No active term'}
                                         </p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-indigo-600">
+                                            <span>View Details</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-indigo-400 to-indigo-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
                             </div>
                         </div>
@@ -1359,7 +1374,7 @@ export default function Dashboard() {
                                         Manage Users
                                         <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
                                     </Link>
-                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-200 transform origin-left scale-x-0 group-hover:scale-x-100"></div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
@@ -1377,7 +1392,7 @@ export default function Dashboard() {
                                         Manage Courses
                                         <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
                                     </Link>
-                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-200 transform origin-left scale-x-0 group-hover:scale-x-100"></div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
@@ -1395,7 +1410,7 @@ export default function Dashboard() {
                                         View Schedules
                                         <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
                                     </Link>
-                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-400 to-purple-600 transition-all duration-200 transform origin-left scale-x-0 group-hover:scale-x-100"></div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-400 to-purple-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
                             </div>
                         </div>
