@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import {
     Button,
     Card,
@@ -24,8 +24,11 @@ export default function Edit({ user, roles, schools }) {
 
     // Check if the logged-in user is a super admin (role_id 1)
     const isSuperAdmin = user.role?.name === 'super_admin';
+    console.log('user:', user);
 
-    const isAdmin = user.role?.id === 2;
+    const { auth } = usePage().props;
+
+    const isAdmin = auth.user.role.id === 2;
 
     const handleChange = (name, value) => setData(name, value);
 
