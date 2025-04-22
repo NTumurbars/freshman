@@ -505,6 +505,48 @@ export default function Dashboard() {
                         </div>
                     </div>
                 </div>
+                
+                {/* Quick Actions - Moved directly after summary stats */}
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                <Building className="h-6 w-6" />
+                            </div>
+                            <h3 className="mb-1 text-lg font-semibold text-gray-900">Add New School</h3>
+                            <p className="mb-4 text-sm text-gray-600">
+                                Create and configure a new educational institution
+                            </p>
+                            <Link
+                                href={route('schools.create')}
+                                className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+                            >
+                                Get Started
+                                <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                            </Link>
+                            <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                        </div>
+                        
+                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                <UserCheck className="h-6 w-6" />
+                            </div>
+                            <h3 className="mb-1 text-lg font-semibold text-gray-900">Manage Users</h3>
+                            <p className="mb-4 text-sm text-gray-600">
+                                View and manage user accounts and permissions
+                            </p>
+                            <Link
+                                href={route('users.index')}
+                                className="mt-2 inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800"
+                            >
+                                View Users
+                                <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                            </Link>
+                            <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Role Distribution */}
                 {data.role_distribution && data.role_distribution.length > 0 && (
@@ -605,27 +647,6 @@ export default function Dashboard() {
                         </div>
                     </div>
                 )}
-
-                {/* Quick Actions */}
-                <div className="space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-800">Quick Actions</h2>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <QuickAction
-                            title="Add New School"
-                            description="Create and configure a new educational institution"
-                            icon={Building}
-                            href={route('schools.create')}
-                            color="blue"
-                        />
-                        <QuickAction
-                            title="Manage Users"
-                            description="View and manage user accounts and permissions"
-                            icon={UserCheck}
-                            href={route('users.index')}
-                            color="green"
-                        />
-                    </div>
-                </div>
             </div>
         )
     }
@@ -659,87 +680,161 @@ export default function Dashboard() {
                             </div>
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                                 {/* Course Count Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-blue-100 rounded-full p-3">
-                                        <BookCopy className="h-6 w-6 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Current Courses</p>
-                                        <div className="flex items-baseline">
-                                            <p className="text-2xl font-semibold text-gray-900">
-                                                {loading ? (
-                                                    <Loader className="h-6 w-6 animate-spin text-gray-400" />
-                                                ) : (
-                                                    stats?.stats?.current_term_sections || 0
-                                                )}
-                                            </p>
-                                            <Link href={schoolRoute('sections.index')} className="ml-2 text-xs text-blue-600 hover:text-blue-800">
-                                                View →
-                                            </Link>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('sections.index')} className="absolute inset-0 z-10" aria-label="View courses" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                            <BookCopy className="h-6 w-6" />
                                         </div>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-sm font-medium text-gray-500">Current Courses</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.current_term_sections || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">
                                             {stats?.stats?.current_term ? `For ${stats?.stats?.current_term.name}` : 'No active term'}
                                         </p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-blue-600">
+                                            <span>View Courses</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 {/* Total Students Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-green-100 rounded-full p-3">
-                                        <Users className="h-6 w-6 text-green-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Total Students</p>
-                                        <div className="flex items-baseline">
-                                            <p className="text-2xl font-semibold text-gray-900">
-                                                {loading ? (
-                                                    <Loader className="h-6 w-6 animate-spin text-gray-400" />
-                                                ) : (
-                                                    stats?.stats?.current_term_students || 0
-                                                )}
-                                            </p>
-                                            <Link href={schoolRoute('professor.students')} className="ml-2 text-xs text-blue-600 hover:text-blue-800">
-                                                View →
-                                            </Link>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('professor.students')} className="absolute inset-0 z-10" aria-label="View students" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                            <Users className="h-6 w-6" />
                                         </div>
-                                        <p className="text-xs text-gray-500">Students in your courses</p>
+                                        <p className="text-sm font-medium text-gray-500">Total Students</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.current_term_students || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Students in your courses</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-green-600">
+                                            <span>View Students</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 {/* Department Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-purple-100 rounded-full p-3">
-                                        <Building className="h-6 w-6 text-purple-600" />
-                                    </div>
-                                    <div>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 transition duration-200 group-hover:scale-110">
+                                            <Building className="h-6 w-6" />
+                                        </div>
                                         <p className="text-sm font-medium text-gray-500">Department</p>
-                                        <p className="text-xl font-semibold text-gray-900 truncate max-w-[150px]">
+                                        <p className="text-xl font-semibold text-gray-900 truncate max-w-[180px]">
                                             {loading ? (
                                                 <Loader className="h-6 w-6 animate-spin text-gray-400" />
                                             ) : (
                                                 stats?.stats?.department?.name || 'Not Assigned'
                                             )}
                                         </p>
-                                        <p className="text-xs text-gray-500">Your academic department</p>
+                                        <p className="text-xs text-gray-500 mt-1">Your academic department</p>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-400 to-purple-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 {/* Term Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-indigo-100 rounded-full p-3">
-                                        <Calendar className="h-6 w-6 text-indigo-600" />
-                                    </div>
-                                    <div>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('terms.index')} className="absolute inset-0 z-10" aria-label="View terms" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition duration-200 group-hover:scale-110">
+                                            <Calendar className="h-6 w-6" />
+                                        </div>
                                         <p className="text-sm font-medium text-gray-500">Current Term</p>
-                                        <p className="text-xl font-semibold text-gray-900">
+                                        <p className="text-xl font-semibold text-gray-900 truncate max-w-[180px]">
                                             {loading ? (
                                                 <Loader className="h-6 w-6 animate-spin text-gray-400" />
                                             ) : (
                                                 stats?.stats?.current_term?.name || 'N/A'
                                             )}
                                         </p>
-                                        <p className="text-xs text-gray-500">Active academic term</p>
+                                        <p className="text-xs text-gray-500 mt-1">Active academic term</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-indigo-600">
+                                            <span>View Terms</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-indigo-400 to-indigo-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Actions - Moved directly under Teaching Summary */}
+                        <div className="bg-white rounded-xl shadow-sm p-6">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                                Quick Actions
+                            </h2>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                        <Calendar className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">View My Schedule</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        See your complete teaching schedule for the current term.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('sections.calendar')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+                                    >
+                                        Open Calendar
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                        <Users className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Manage Students</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        View and manage student enrollments in your courses.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('professor.students')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800"
+                                    >
+                                        Manage Students
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 transition duration-200 group-hover:scale-110">
+                                        <BookOpen className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Course Materials</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        Access and update your course materials and resources.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('sections.index')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-800"
+                                    >
+                                        View Courses
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-400 to-purple-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
                             </div>
                         </div>
@@ -972,36 +1067,6 @@ export default function Dashboard() {
                                 </Card>
                             )}
                         </div>
-
-                        {/* Quick Actions */}
-                        <div className="space-y-4">
-                            <h2 className="text-lg font-semibold text-gray-900">
-                                Quick Actions
-                            </h2>
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                <QuickAction
-                                    title="View My Schedule"
-                                    description="See your complete teaching schedule for the current term."
-                                    icon={Calendar}
-                                    href={schoolRoute('sections.calendar')}
-                            color="blue"
-                                />
-                                <QuickAction
-                                    title="Manage Students"
-                                    description="View and manage student enrollments in your courses."
-                            icon={Users}
-                                    href={schoolRoute('professor.students')}
-                            color="green"
-                                />
-                                <QuickAction
-                                    title="Course Materials"
-                                    description="Access and update your course materials and resources."
-                                    icon={BookOpen}
-                                    href={schoolRoute('sections.index')}
-                            color="purple"
-                        />
-                            </div>
-                        </div>
                     </div>
                 ) : isStudent ? (
                     // Student stats
@@ -1070,9 +1135,53 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </div>
+                        
+                        {/* Quick Actions - Added for students */}
+                        <div className="bg-white rounded-xl shadow-sm p-6">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                                Quick Actions
+                            </h2>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                        <BookOpen className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Course Registration</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        Browse and register for available courses this term.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('student.course-registration')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+                                    >
+                                        Register Now
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                        <Calendar className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">View Schedule</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        View your complete class schedule for this term.
+                                    </p>
+                                    <Link
+                                        href="#schedule-section"
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800"
+                                    >
+                                        Go to Schedule
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Schedule Calendar with improved design */}
-                        <Card className="overflow-hidden">
+                        <Card className="overflow-hidden" id="schedule-section">
                             <div className="border-b pb-4 mb-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center">
@@ -1361,17 +1470,17 @@ export default function Dashboard() {
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                                 <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
-                                        <Users className="h-6 w-6" />
+                                        <Calendar className="h-6 w-6" />
                                     </div>
-                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Manage Users</h3>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">View My Schedule</h3>
                                     <p className="mb-4 text-sm text-gray-600">
-                                        Add, edit, or remove users from your school.
+                                        See your complete teaching schedule for the current term.
                                     </p>
                                     <Link
-                                        href={route('users.index')}
+                                        href={schoolRoute('sections.calendar')}
                                         className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
                                     >
-                                        Manage Users
+                                        Open Calendar
                                         <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
                                     </Link>
                                     <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
@@ -1379,17 +1488,17 @@ export default function Dashboard() {
 
                                 <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
-                                        <BookOpen className="h-6 w-6" />
+                                        <Users className="h-6 w-6" />
                                     </div>
-                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Course Planning</h3>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Manage Students</h3>
                                     <p className="mb-4 text-sm text-gray-600">
-                                        Plan and organize courses for upcoming terms.
+                                        View and manage student enrollments in your courses.
                                     </p>
                                     <Link
-                                        href={schoolRoute('courses.index')}
+                                        href={schoolRoute('professor.students')}
                                         className="mt-2 inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800"
                                     >
-                                        Manage Courses
+                                        Manage Students
                                         <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
                                     </Link>
                                     <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
@@ -1397,17 +1506,17 @@ export default function Dashboard() {
 
                                 <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 transition duration-200 group-hover:scale-110">
-                                        <Calendar className="h-6 w-6" />
+                                        <BookOpen className="h-6 w-6" />
                                     </div>
-                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Manage Schedule</h3>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Course Materials</h3>
                                     <p className="mb-4 text-sm text-gray-600">
-                                        View and modify class schedules and room assignments.
+                                        Access and update your course materials and resources.
                                     </p>
                                     <Link
-                                        href={schoolRoute('schedules.index')}
+                                        href={schoolRoute('sections.index')}
                                         className="mt-2 inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-800"
                                     >
-                                        View Schedules
+                                        View Courses
                                         <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
                                     </Link>
                                     <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-400 to-purple-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
