@@ -7,7 +7,7 @@ import {
     TrashIcon,
     UserPlusIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     Badge,
     Button,
@@ -64,6 +64,9 @@ export default function Index({ users, roles, filters }) {
         userId: null,
     });
     const { get, delete: destroy, processing } = useForm();
+
+    const { auth } = usePage().props;
+    const isAdmin = auth.user.role.id === 2;
 
     const debouncedSearch = debounce((value) => {
         get(
@@ -129,9 +132,11 @@ export default function Index({ users, roles, filters }) {
             <div className="px-4 py-6 sm:px-6 lg:px-8">
                 <div className="sm:flex sm:items-center sm:justify-between">
                     <Title>User Management</Title>
-                    <Link href={route('users.create')}>
-                        <Button icon={UserPlusIcon}>Add User</Button>
-                    </Link>
+                    {isAdmin && (
+                        <Link href={route('users.create')}>
+                            <Button icon={UserPlusIcon}>Add User</Button>
+                        </Link>
+                    )}
                 </div>
 
                 <Card className="mt-6">
@@ -180,7 +185,11 @@ export default function Index({ users, roles, filters }) {
                                     </TableHeaderCell>
                                     <TableHeaderCell>Role</TableHeaderCell>
                                     <TableHeaderCell>School</TableHeaderCell>
-                                    <TableHeaderCell>Actions</TableHeaderCell>
+                                    {isAdmin && (
+                                        <TableHeaderCell>
+                                            Actions
+                                        </TableHeaderCell>
+                                    )}
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -204,47 +213,51 @@ export default function Index({ users, roles, filters }) {
                                         <TableCell>
                                             {user.school?.name || 'N/A'}
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-2">
-                                                <Link
-                                                    href={route(
-                                                        'users.show',
-                                                        user.id,
-                                                    )}
-                                                >
+                                        {isAdmin && (
+                                            <TableCell>
+                                                <div className="flex gap-2">
+                                                    <Link
+                                                        href={route(
+                                                            'users.show',
+                                                            user.id,
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            size="xs"
+                                                            variant="secondary"
+                                                        >
+                                                            View
+                                                        </Button>
+                                                    </Link>
+                                                    <Link
+                                                        href={route(
+                                                            'users.edit',
+                                                            user.id,
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            size="xs"
+                                                            variant="secondary"
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    </Link>
                                                     <Button
                                                         size="xs"
                                                         variant="secondary"
+                                                        color="red"
+                                                        icon={TrashIcon}
+                                                        onClick={() =>
+                                                            handleDelete(
+                                                                user.id,
+                                                            )
+                                                        }
                                                     >
-                                                        View
+                                                        Delete
                                                     </Button>
-                                                </Link>
-                                                <Link
-                                                    href={route(
-                                                        'users.edit',
-                                                        user.id,
-                                                    )}
-                                                >
-                                                    <Button
-                                                        size="xs"
-                                                        variant="secondary"
-                                                    >
-                                                        Edit
-                                                    </Button>
-                                                </Link>
-                                                <Button
-                                                    size="xs"
-                                                    variant="secondary"
-                                                    color="red"
-                                                    icon={TrashIcon}
-                                                    onClick={() =>
-                                                        handleDelete(user.id)
-                                                    }
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </div>
-                                        </TableCell>
+                                                </div>
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -252,7 +265,10 @@ export default function Index({ users, roles, filters }) {
 
                         {users.links && users.links.length > 0 && (
                             <div className="mt-4 flex items-center justify-center border-t border-gray-200 pt-4">
-                                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                <nav
+                                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                    aria-label="Pagination"
+                                >
                                     {users.links.map((link, index) => {
                                         const isDisabled = !link.url;
 

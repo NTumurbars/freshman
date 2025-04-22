@@ -25,6 +25,8 @@ export default function Edit({ user, roles, schools }) {
     // Check if the logged-in user is a super admin (role_id 1)
     const isSuperAdmin = user.role?.name === 'super_admin';
 
+    const isAdmin = user.role?.id === 2;
+
     const handleChange = (name, value) => setData(name, value);
 
     const submit = (e) => {
@@ -101,35 +103,57 @@ export default function Edit({ user, roles, schools }) {
                             <Text className="mb-2">Role & School</Text>
                             <Divider />
                             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div>
-                                    <label
-                                        htmlFor="role"
-                                        className="mb-1 block text-sm font-medium text-gray-700"
-                                    >
-                                        Role
-                                    </label>
-                                    <Select
-                                        id="role"
-                                        value={data.role_id}
-                                        onValueChange={(value) =>
-                                            handleChange('role_id', value)
-                                        }
-                                        placeholder="Select Role"
-                                        error={!!errors.role_id}
-                                        errorMessage={errors.role_id}
-                                    >
-                                        {roles.map((role) => (
-                                            <SelectItem
-                                                key={role.id}
-                                                value={role.id.toString()}
-                                            >
-                                                {role.name
-                                                    .replace('_', ' ')
-                                                    .toUpperCase()}
-                                            </SelectItem>
-                                        ))}
-                                    </Select>
-                                </div>
+                                {isAdmin || isSuperAdmin ? (
+                                    <div>
+                                        <label
+                                            htmlFor="role"
+                                            className="mb-1 block text-sm font-medium text-gray-700"
+                                        >
+                                            Role
+                                        </label>
+                                        <Select
+                                            id="role"
+                                            value={data.role_id}
+                                            onValueChange={(value) =>
+                                                handleChange('role_id', value)
+                                            }
+                                            placeholder="Select Role"
+                                            error={!!errors.role_id}
+                                            errorMessage={errors.role_id}
+                                        >
+                                            {roles.map((role) => (
+                                                <SelectItem
+                                                    key={role.id}
+                                                    value={role.id.toString()}
+                                                >
+                                                    {role.name
+                                                        .replace('_', ' ')
+                                                        .toUpperCase()}
+                                                </SelectItem>
+                                            ))}
+                                        </Select>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label
+                                            htmlFor="role"
+                                            className="mb-1 block text-sm font-medium text-gray-700"
+                                        >
+                                            Role
+                                        </label>
+                                        <TextInput
+                                            id="role_display"
+                                            value={
+                                                roles.find(
+                                                    (s) =>
+                                                        s.id ===
+                                                        parseInt(data.role_id),
+                                                )?.name || 'No role assigned'
+                                            }
+                                            disabled
+                                        />
+                                    </div>
+                                )}
 
                                 {isSuperAdmin ? (
                                     <div>
