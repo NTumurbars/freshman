@@ -50,7 +50,7 @@ class SectionPolicy
      */
     public function create(User $user)
     {
-        return in_array($user->role->name, ['super_admin', 'school_admin', 'major_coordinator']);
+        return in_array($user->role->name, ['super_admin', 'school_admin']);
     }
 
     /**

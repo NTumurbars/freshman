@@ -10,6 +10,7 @@ use App\Models\Term;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Section;
@@ -22,33 +23,115 @@ class StatsController extends Controller
 {
     public function superUser(): JsonResponse
     {
-        $schools = School::all()->count();
-        $departments = Department::all()->count();
-        $users = User::all()->count();
+        $schools = School::all();
+        $schoolsCount = $schools->count();
+        $departmentsCount = Department::all()->count();
+        $usersCount = User::all()->count();
+        $coursesCount = Course::all()->count();
 
-        // Get all active terms (current date falls between start_date and end_date)
-        // Use today's date at start of day to ensure proper date comparisons
-        $today = Carbon::now()->startOfDay();
-        $activeTerms = Term::where('start_date', '<=', $today)
-            ->where('end_date', '>=', $today)
-            ->count();
+        // Get roles distribution
+        $roleDistribution = User::selectRaw('role_id, count(*) as count')
+            ->groupBy('role_id')
+            ->get()
+            ->map(function ($item) {
+                $roleName = \App\Models\Role::find($item->role_id)?->name ?? 'Unknown';
+                return [
+                    'role' => $roleName,
+                    'count' => $item->count
+                ];
+            });
+
+        // Get recent users
+        $recentUsers = User::orderBy('created_at', 'desc')
+            ->take(5)
+            ->get(['id', 'name', 'email', 'created_at', 'school_id', 'role_id'])
+            ->each(function ($user) {
+                $user->school_name = $user->school ? $user->school->name : 'No School';
+                $user->role_name = $user->role ? $user->role->name : 'No Role';
+                // Remove relationship data to keep the response lean
+                unset($user->school);
+                unset($user->role);
+            });
+
+        // School stats
+        $schoolStats = $schools->map(function ($school) {
+            return [
+                'id' => $school->id,
+                'name' => $school->name,
+                'users_count' => $school->users()->count(),
+                'departments_count' => $school->departments()->count(),
+                'courses_count' => Course::whereHas('department', function($query) use ($school) {
+                    $query->where('school_id', $school->id);
+                })->count()
+            ];
+        })->sortByDesc('users_count')->values()->take(10);
+
+        // User growth - new users by last 30 days
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
+        $userGrowth = User::where('created_at', '>=', $thirtyDaysAgo)
+            ->get()
+            ->groupBy(function($user) {
+                return $user->created_at->format('Y-m-d');
+            })
+            ->map(function($users, $date) {
+                return [
+                    'date' => Carbon::createFromFormat('Y-m-d', $date)->format('M d'),
+                    'count' => $users->count(),
+                    'day' => Carbon::createFromFormat('Y-m-d', $date)->format('d'),
+                    'timestamp' => Carbon::createFromFormat('Y-m-d', $date)->timestamp
+                ];
+            })
+            ->sortBy('timestamp')
+            ->values();
+
+        // Ensure we have data for all 30 days by filling gaps
+        $filledData = [];
+        for ($i = 0; $i < 30; $i++) {
+            $date = $thirtyDaysAgo->copy()->addDays($i);
+            $dateKey = $date->format('Y-m-d');
+            $dateLabel = $date->format('M d');
+            $dayLabel = $date->format('d');
+
+            // Check if we have data for this date
+            $found = false;
+            foreach ($userGrowth as $growth) {
+                if ($growth['date'] === $dateLabel) {
+                    $filledData[] = $growth;
+                    $found = true;
+                    break;
+                }
+            }
+
+            // If no data, add a zero entry
+            if (!$found) {
+                $filledData[] = [
+                    'date' => $dateLabel,
+                    'count' => 0,
+                    'day' => $dayLabel,
+                    'timestamp' => $date->timestamp
+                ];
+            }
+        }
 
         return response()->json([
-            'schools' => $schools,
-            'users' => $users,
-            'activeTerms' => $activeTerms,
+            'stats' => [
+                'schools_count' => $schoolsCount,
+                'users_count' => $usersCount,
+                'courses_count' => $coursesCount,
+                'role_distribution' => $roleDistribution,
+                'recent_users' => $recentUsers,
+                'school_stats' => $schoolStats,
+                'user_growth' => $filledData
+            ]
         ]);
     }
 
     public function schoolAdmin(): JsonResponse
     {
         $school_id = Auth::user()->school_id;
-        $departments = Department::where('school_id', $school_id)->with('courses')->count();
-        $users = User::where('school_id', $school_id)->count();
-        $buildings = Building::where('school_id', $school_id)->count();
+        $school = School::find($school_id);
 
         // Get current term (where current date falls between start_date and end_date)
-        // Use today's date at start of day to ensure proper date comparisons
         $today = Carbon::now()->startOfDay();
         $currentTerm = Term::where('school_id', $school_id)
             ->where('start_date', '<=', $today)
@@ -58,27 +141,28 @@ class StatsController extends Controller
         // Get active courses for current term
         $activeCourses = 0;
         if ($currentTerm) {
-            $activeCourses = Course::where('is_active', true)
-                ->whereHas('sections', function($query) use ($currentTerm) {
-                    $query->where('term_id', $currentTerm->id);
-                })->count();
+            $activeCourses = Course::whereHas('sections', function($query) use ($currentTerm) {
+                $query->where('term_id', $currentTerm->id);
+            })->count();
         }
 
         // Room utilization stats
         $roomStats = $this->getRoomUtilizationStats($school_id, $currentTerm);
 
         // Count schedule conflicts
-        $scheduleConflicts = 0; // You can implement your conflict detection logic here
+        $scheduleConflicts = $this->getScheduleConflicts($school_id, $currentTerm);
 
         return response()->json([
-            'departments' => $departments,
-            'users' => $users,
-            'buildings' => $buildings,
-            'currentTerm' => $currentTerm,
-            'activeCourses' => $activeCourses,
-            'scheduleConflicts' => $scheduleConflicts,
-            'roomUtilization' => $roomStats['utilizationPercentage'],
-            'roomStats' => $roomStats,
+            'stats' => [
+                'departments' => Department::where('school_id', $school_id)->count(),
+                'users' => User::where('school_id', $school_id)->count(),
+                'buildings' => Building::where('school_id', $school_id)->count(),
+                'currentTerm' => $currentTerm,
+                'activeCourses' => $activeCourses,
+                'scheduleConflicts' => $scheduleConflicts,
+                'roomStats' => $roomStats
+            ],
+            'school' => $school
         ]);
     }
 
@@ -171,15 +255,57 @@ class StatsController extends Controller
     }
 
     /**
+     * Get schedule conflicts for a school
+     */
+    private function getScheduleConflicts($schoolId, $currentTerm = null): int
+    {
+        if (!$currentTerm) {
+            return 0;
+        }
+
+        $conflicts = 0;
+        $sections = Section::where('term_id', $currentTerm->id)
+            ->with('schedules')
+            ->get();
+
+        foreach ($sections as $section) {
+            foreach ($section->schedules as $schedule1) {
+                foreach ($sections as $otherSection) {
+                    if ($section->id === $otherSection->id) {
+                        continue;
+                    }
+                    foreach ($otherSection->schedules as $schedule2) {
+                        if (
+                            $schedule1->day_of_week === $schedule2->day_of_week &&
+                            $schedule1->room_id === $schedule2->room_id &&
+                            (
+                                ($schedule1->start_time >= $schedule2->start_time && $schedule1->start_time < $schedule2->end_time) ||
+                                ($schedule1->end_time > $schedule2->start_time && $schedule1->end_time <= $schedule2->end_time) ||
+                                ($schedule1->start_time <= $schedule2->start_time && $schedule1->end_time >= $schedule2->end_time)
+                            )
+                        ) {
+                            $conflicts++;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $conflicts;
+    }
+
+    /**
      * Get statistics for the professor dashboard
      *
+     * @param School $school
      * @param Request $request
-     * @return \Inertia\Response
+     * @return JsonResponse
      */
-    public function professorStats(Request $request)
+    public function professor(School $school, Request $request = null)
     {
         $user = Auth::user();
-        $school = $user->school;
+        // Use the passed school parameter instead of getting it from user
+        // $school = $user->school;
 
         // Find the professor profile
         $professorProfile = ProfessorProfile::where('user_id', $user->id)->first();
@@ -417,5 +543,131 @@ class StatsController extends Controller
         }
 
         return $today->copy()->addDays($daysToAdd);
+    }
+
+    public function student(School $school): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+
+            // Check if user has a school assigned and is a student
+            if (!$user || !$user->school || $user->role->name !== 'student') {
+                return response()->json([
+                    'stats' => [
+                        'registered_courses' => 0,
+                        'total_credits' => 0,
+                        'current_term' => null,
+                        'current_courses' => [],
+                    ],
+                    'school' => null,
+                ], 200);
+            }
+
+            // Get active term
+            $currentTerm = Term::where('school_id', $school->id)
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->first();
+
+            // Get student's current registrations with eager loading
+            $currentRegistrations = CourseRegistration::with([
+                'section.course',
+                'section.professor_profile.user',
+                'section.schedules.room.floor.building'
+            ])
+                ->where('user_id', $user->id)
+                ->when($currentTerm, function ($query) use ($currentTerm) {
+                    return $query->whereHas('section', function ($q) use ($currentTerm) {
+                        $q->where('term_id', $currentTerm->id);
+                    });
+                })
+                ->get();
+
+            // Log for debugging
+            Log::info('Student registrations', [
+                'student_id' => $user->id,
+                'term_id' => $currentTerm ? $currentTerm->id : null,
+                'registrations_count' => $currentRegistrations->count(),
+                'registration_ids' => $currentRegistrations->pluck('id'),
+            ]);
+
+            // Calculate total credits safely
+            $totalCredits = $currentRegistrations->sum(function ($registration) {
+                if (!$registration->section || !$registration->section->course) {
+                    Log::warning('Registration missing section or course', [
+                        'registration_id' => $registration->id,
+                        'has_section' => !!$registration->section,
+                        'has_course' => $registration->section ? !!$registration->section->course : false
+                    ]);
+                    return 0;
+                }
+                return $registration->section->course->credits ?? 0;
+            });
+
+            // Format current courses for the dashboard with null checks
+            $currentCourses = $currentRegistrations->map(function ($registration) {
+                $section = $registration->section;
+                if (!$section || !$section->course) {
+                    return null;
+                }
+
+                return [
+                    'id' => $section->id,
+                    'code' => $section->course->code,
+                    'title' => $section->course->title,
+                    'credits' => $section->course->credits,
+                    'professor' => $section->professor_profile ? [
+                        'name' => $section->professor_profile->user->name,
+                    ] : null,
+                    'schedules' => $section->schedules->map(function ($schedule) {
+                        return [
+                            'id' => $schedule->id,
+                            'day_of_week' => $schedule->day_of_week,
+                            'start_time' => $schedule->start_time,
+                            'end_time' => $schedule->end_time,
+                            'room' => $schedule->room ? [
+                                'id' => $schedule->room->id,
+                                'name' => $schedule->room->name,
+                                'building' => $schedule->room->floor->building->name,
+                            ] : null,
+                        ];
+                    }),
+                ];
+            })->filter()->values(); // Remove any null entries and reindex
+
+            return response()->json([
+                'stats' => [
+                    'registered_courses' => $currentRegistrations->count(),
+                    'total_credits' => $totalCredits,
+                    'current_term' => $currentTerm ? [
+                        'id' => $currentTerm->id,
+                        'name' => $currentTerm->name,
+                        'start_date' => $currentTerm->start_date,
+                        'end_date' => $currentTerm->end_date,
+                    ] : null,
+                    'current_courses' => $currentCourses,
+                ],
+                'school' => [
+                    'id' => $school->id,
+                    'name' => $school->name,
+                    'logo_url' => $school->logo_url,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in student stats: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
+            return response()->json([
+                'stats' => [
+                    'registered_courses' => 0,
+                    'total_credits' => 0,
+                    'current_term' => null,
+                    'current_courses' => [],
+                ],
+                'school' => null,
+                'error' => 'An error occurred while fetching student stats',
+            ], 200); // Return 200 with empty data instead of 500
+        }
     }
 }

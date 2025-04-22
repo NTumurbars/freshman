@@ -25,22 +25,23 @@ export default function Create({
     locationTypes: locationTypeOptions,
     activeTerm,
 }) {
-    console.log(courses, professorProfiles);
+    // Get course_id from URL if available
+    const params = new URLSearchParams(window.location.search);
+    const course_id_param = params.get('course_id');
+
     // State for active tab
     const [activeTab, setActiveTab] = useState('basic-info');
 
-    // For storing the department_id
-    const [department, setDepartment] = useState(null);
-
     // Form state
     const { data, setData, post, processing, errors } = useForm({
-        course_id: '',
+        course_id: course_id_param || '',
         term_id: activeTerm?.id || '',
         professor_profile_id: '',
         section_code: '',
         status: 'active',
         delivery_method: 'in-person',
         notes: '',
+        capacity: '',
         required_features: [],
         schedules: [],
         students_count: 0,
@@ -134,12 +135,28 @@ export default function Create({
             }));
         }
 
-        // Log for debugging
-        console.log('Adding schedules:', schedulesToAdd);
-        console.log('Location type:', schedulesToAdd[0]?.location_type);
+        // ADDED DEBUG LOGS
+        console.log('BEFORE ADDING SCHEDULE - Current schedules:', data.schedules);
+        console.log('ADDING SCHEDULES:', schedulesToAdd);
+        console.log('Schedule 0 details:', schedulesToAdd[0]);
+
+        // Compare with what the backend expects
+        console.log('SCHEDULE VALIDATION CHECK:', {
+            day_of_week_check: schedulesToAdd[0]?.day_of_week ? 'OK' : 'MISSING',
+            room_id_check: schedulesToAdd[0]?.room_id ? 'OK' : 'MISSING',
+            start_time_check: schedulesToAdd[0]?.start_time ? 'OK' : 'MISSING',
+            end_time_check: schedulesToAdd[0]?.end_time ? 'OK' : 'MISSING',
+            meeting_pattern_check: schedulesToAdd[0]?.meeting_pattern ? 'OK' : 'MISSING',
+            location_type_check: schedulesToAdd[0]?.location_type ? 'OK' : 'MISSING'
+        });
 
         // Add the new schedules to the existing ones
         setData('schedules', [...data.schedules, ...schedulesToAdd]);
+
+        // Log after adding
+        setTimeout(() => {
+            console.log('AFTER ADDING SCHEDULE - Current schedules:', data.schedules);
+        }, 100);
 
         // Reset the form
         setNewSchedule({
@@ -177,6 +194,36 @@ export default function Create({
     // Function to handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Debug logging for schedules data
+        console.log('SUBMITTING SECTION WITH SCHEDULES:', {
+            schedulesCount: data.schedules.length,
+            schedulesData: data.schedules,
+            allFormData: data
+        });
+
+        // Validate schedules data
+        if (data.schedules && data.schedules.length > 0) {
+            data.schedules.forEach((schedule, index) => {
+                console.log(`Schedule #${index + 1} validation:`, {
+                    hasRoomId: !!schedule.room_id,
+                    hasDayOfWeek: !!schedule.day_of_week,
+                    hasStartTime: !!schedule.start_time,
+                    hasEndTime: !!schedule.end_time,
+                    hasLocationtype: !!schedule.location_type,
+                    hasMeetingPattern: !!schedule.meeting_pattern,
+                    hasVirtualUrl: !!schedule.virtual_meeting_url,
+                    roomId: schedule.room_id,
+                    dayOfWeek: schedule.day_of_week,
+                    startTime: schedule.start_time,
+                    endTime: schedule.end_time,
+                    locationType: schedule.location_type,
+                    meetingPattern: schedule.meeting_pattern,
+                    virtualMeetingUrl: schedule.virtual_meeting_url
+                });
+            });
+        }
+
         post(route('sections.store', school.id));
     };
 
@@ -315,21 +362,9 @@ export default function Create({
                                     <select
                                         id="course_id"
                                         value={data.course_id}
-                                        onChange={(e) => {
-                                            setData(
-                                                'course_id',
-                                                e.target.value,
-                                            );
-                                            const selectedCourse = courses.find(
-                                                (course) =>
-                                                    course.id.toString() ===
-                                                    e.target.value,
-                                            );
-                                            setDepartment(
-                                                selectedCourse?.department_id ||
-                                                    null,
-                                            );
-                                        }}
+                                        onChange={(e) =>
+                                            setData('course_id', e.target.value)
+                                        }
                                         className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
                                     >
                                         <option value="">
@@ -449,37 +484,6 @@ export default function Create({
                                 </div>
                             </div>
 
-                            <div>
-                                <label
-                                    htmlFor="capacity"
-                                    className="mb-1 block text-sm font-medium text-gray-700"
-                                >
-                                    Section Capacity
-                                </label>
-                                <input
-                                    type="number"
-                                    id="capacity"
-                                    min="1"
-                                    value={data.capacity}
-                                    onChange={(e) =>
-                                        setData('capacity', e.target.value)
-                                    }
-                                    placeholder="Maximum number of students allowed"
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-                                />
-                                <p className="mt-1 text-xs text-gray-500">
-                                    {data.delivery_method === 'in-person' ||
-                                    data.delivery_method === 'hybrid'
-                                        ? 'For in-person or hybrid sections, capacity will be limited by room size.'
-                                        : 'For online sections, this sets the maximum enrollment limit.'}
-                                </p>
-                                {errors.capacity && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.capacity}
-                                    </p>
-                                )}
-                            </div>
-
                             <div className="flex justify-end space-x-2 pt-4">
                                 <button
                                     type="button"
@@ -527,20 +531,19 @@ export default function Create({
                                     <option value="">Not Assigned</option>
                                     {professorProfiles &&
                                         Array.isArray(professorProfiles) &&
-                                        professorProfiles.map((profile) =>
-                                            profile.user &&
-                                            profile.department_id ===
-                                                department ? (
-                                                <option
-                                                    key={profile.id}
-                                                    value={profile.id}
-                                                >
-                                                    {profile.user.name}{' '}
-                                                    {profile.title
-                                                        ? `(${profile.title})`
-                                                        : ''}
-                                                </option>
-                                            ) : null,
+                                        professorProfiles.map(
+                                            (profile) =>
+                                                profile.user && (
+                                                    <option
+                                                        key={profile.id}
+                                                        value={profile.id}
+                                                    >
+                                                        {profile.user.name}{' '}
+                                                        {profile.title
+                                                            ? `(${profile.title})`
+                                                            : ''}
+                                                    </option>
+                                                ),
                                         )}
                                 </select>
                                 {errors.professor_profile_id && (

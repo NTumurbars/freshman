@@ -12,6 +12,12 @@ export default function Create({
     rooms,
     school,
     preselectedSectionId,
+    preselectedRoomId,
+    preselectedLocationType,
+    preselectedDayOfWeek,
+    preselectedStartTime,
+    preselectedEndTime,
+    returnUrl
 }) {
     const userSchool = school || auth.user.school;
     const [previewSchedule, setPreviewSchedule] = useState(null);
@@ -81,6 +87,12 @@ export default function Create({
                                 rooms={rooms}
                                 submitLabel="Create Schedule"
                                 preselectedSectionId={preselectedSectionId}
+                                preselectedRoomId={preselectedRoomId}
+                                preselectedLocationType={preselectedLocationType}
+                                preselectedDayOfWeek={preselectedDayOfWeek}
+                                preselectedStartTime={preselectedStartTime}
+                                preselectedEndTime={preselectedEndTime}
+                                returnUrl={returnUrl}
                                 onPreview={handleSchedulePreview}
                                 onNotification={handleNotification}
                             />

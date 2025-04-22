@@ -7,12 +7,9 @@ import { useState } from 'react';
 
 export default function Index({ courses, flash, school }) {
     const { auth } = usePage().props;
-    const userRole = auth.user.role.id;
-
     const userSchool = auth.user.school;
+    const isAdmin = auth.user.role.id === 2;
     const [searchTerm, setSearchTerm] = useState('');
-
-    const actionsAllowed = userRole === 2 || userRole === 3;
 
     // Filter courses based on search term
     const filteredCourses = courses.filter(
@@ -41,7 +38,7 @@ export default function Index({ courses, flash, school }) {
                         </h1>
                         <p className="text-gray-600">{userSchool.name}</p>
                     </div>
-                    {userRole === 2 && (
+                    {isAdmin && (
                         <Link
                             href={route('courses.create', userSchool.id)}
                             className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -185,7 +182,7 @@ export default function Index({ courses, flash, school }) {
                                         >
                                             <Eye className="h-5 w-5" />
                                         </Link>
-                                        {actionsAllowed && (
+                                        {isAdmin && (
                                             <>
                                                 <Link
                                                     href={route(

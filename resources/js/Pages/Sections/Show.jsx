@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
     Calendar,
@@ -10,14 +10,26 @@ import {
     MapPin,
     User,
     Users,
+    ChevronDown,
+    ChevronUp,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Helper component to render professor info
-const ProfessorInfo = ({ professor }) => (
+const ProfessorInfo = ({ professor, school }) => (
     <div className="flex items-center">
         <User className="mr-1 h-4 w-4" />
-        {professor?.user?.name || 'Not assigned'}
+        {professor?.user ? (
+            <Link
+                href={route('users.show', {
+                    school: school?.id,
+                    user: professor.user.id,
+                })}
+                className="text-blue-600 hover:underline"
+            >
+                {professor.user.name}
+            </Link>
+        ) : 'Not assigned'}
         {professor?.title && (
             <span className="text-xs text-gray-500"> ({professor.title})</span>
         )}
@@ -25,11 +37,27 @@ const ProfessorInfo = ({ professor }) => (
 );
 
 export default function Show({ section, school }) {
+    const { auth } = usePage().props;
+    const isSchoolAdmin = auth.user.role.name === 'school_admin' || auth.user.role.name === 'super_admin';
+
+    // Add state for student pagination
+    const [studentsPerPage, setStudentsPerPage] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showAllStudents, setShowAllStudents] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+
     useEffect(() => {
+        console.log('Section full data object:', section);
         console.log('Section data:', section);
         console.log('Section schedules:', section.schedules);
         if (section.schedules && section.schedules.length > 0) {
             console.log('First schedule:', section.schedules[0]);
+        }
+        console.log('Course registrations:', section.courseRegistrations);
+        console.log('Section has courseRegistrations property:', section.hasOwnProperty('courseRegistrations'));
+        if (section.courseRegistrations && section.courseRegistrations.length > 0) {
+            console.log('First registration:', section.courseRegistrations[0]);
+            console.log('Student data:', section.courseRegistrations[0].student);
         }
     }, [section]);
 
@@ -131,7 +159,30 @@ export default function Show({ section, school }) {
         }, {});
     };
 
-    const featuresGrouped = groupFeaturesByCategory(section.requiredFeatures);
+    const featuresGrouped = groupFeaturesByCategory(section.required_features);
+
+    // Calculate which students to display based on pagination
+    const displayedStudents = showAllStudents
+        ? section.courseRegistrations || []
+        : (section.courseRegistrations || []).slice(
+            (currentPage - 1) * studentsPerPage,
+            currentPage * studentsPerPage
+        );
+
+    const totalPages = Math.ceil(
+        (section.courseRegistrations?.length || 0) / studentsPerPage
+    );
+
+    // Function to handle changing page
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    // Toggle between showing all students and paginated view
+    const toggleShowAll = () => {
+        setShowAllStudents(!showAllStudents);
+        setExpanded(!expanded);
+    };
 
     return (
         <AppLayout>
@@ -150,7 +201,17 @@ export default function Show({ section, school }) {
                             Sections
                         </Link>
                         <h1 className="text-2xl font-bold text-gray-800">
-                            {section.course?.title || 'Section Details'}
+                            {section.course ? (
+                                <Link
+                                    href={route('courses.show', {
+                                        school: school.id,
+                                        course: section.course.id,
+                                    })}
+                                    className="hover:text-blue-600 hover:underline"
+                                >
+                                    {section.course.title || 'Section Details'}
+                                </Link>
+                            ) : 'Section Details'}
                         </h1>
                         <div className="flex items-center">
                             <span className="mr-2 rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
@@ -161,18 +222,20 @@ export default function Show({ section, school }) {
                             </span>
                         </div>
                     </div>
-                    <div className="flex space-x-3">
-                        <Link
-                            href={route('sections.edit', [
-                                school.id,
-                                section.id,
-                            ])}
-                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Section
-                        </Link>
-                    </div>
+                    {isSchoolAdmin && (
+                        <div className="flex space-x-3">
+                            <Link
+                                href={route('sections.edit', [
+                                    school.id,
+                                    section.id,
+                                ])}
+                                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Section
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -184,7 +247,7 @@ export default function Show({ section, school }) {
                             <h2 className="text-lg font-medium text-gray-900">
                                 Section Information
                             </h2>
-                            {!section.schedules ||
+                            {isSchoolAdmin && (!section.schedules ||
                             section.schedules.length === 0 ? (
                                 <Link
                                     href={route('schedules.create', {
@@ -207,7 +270,7 @@ export default function Show({ section, school }) {
                                     <Calendar className="mr-1.5 h-4 w-4" />
                                     Edit Schedule
                                 </Link>
-                            )}
+                            ))}
                         </div>
                         <div className="px-6 py-4">
                             <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
@@ -217,11 +280,23 @@ export default function Show({ section, school }) {
                                         Course
                                     </dt>
                                     <dd className="mt-1 text-sm text-gray-900">
-                                        {section.course?.title || 'N/A'}
-                                        <span className="text-xs text-gray-500">
-                                            {' '}
-                                            ({section.course?.code || 'N/A'})
-                                        </span>
+                                        {section.course ? (
+                                            <>
+                                                <Link
+                                                    href={route('courses.show', {
+                                                        school: school.id,
+                                                        course: section.course.id,
+                                                    })}
+                                                    className="text-blue-600 hover:underline"
+                                                >
+                                                    {section.course.title || 'N/A'}
+                                                </Link>
+                                                <span className="text-xs text-gray-500">
+                                                    {' '}
+                                                    ({section.course.code || 'N/A'})
+                                                </span>
+                                            </>
+                                        ) : 'N/A'}
                                     </dd>
                                 </div>
                                 <div>
@@ -243,6 +318,7 @@ export default function Show({ section, school }) {
                                             professor={
                                                 section.professor_profile
                                             }
+                                            school={school}
                                         />
                                     </dd>
                                 </div>
@@ -270,10 +346,20 @@ export default function Show({ section, school }) {
                                     <dd className="mt-1 text-sm text-gray-900">
                                         {groupedSchedules.length > 0 &&
                                         groupedSchedules[0].room
-                                            ? `${groupedSchedules[0].room.room_number} (${
-                                                  groupedSchedules[0].room.floor
-                                                      ?.building?.name || ''
-                                              })`
+                                            ? (
+                                                <Link
+                                                    href={route('rooms.show', {
+                                                        school: school.id,
+                                                        room: groupedSchedules[0].room.id,
+                                                    })}
+                                                    className="text-blue-600 hover:underline"
+                                                >
+                                                    {`${groupedSchedules[0].room.room_number} (${
+                                                        groupedSchedules[0].room.floor
+                                                            ?.building?.name || ''
+                                                    })`}
+                                                </Link>
+                                            )
                                             : 'Not assigned'}
                                     </dd>
                                 </div>
@@ -302,193 +388,178 @@ export default function Show({ section, school }) {
                             </h2>
                         </div>
                         {groupedSchedules.length > 0 ? (
-                            <div className="space-y-6 px-6 py-4">
+                            <div className="space-y-4 px-6 py-4">
                                 {groupedSchedules.map((scheduleGroup, idx) => (
                                     <div
                                         key={idx}
-                                        className="rounded-md bg-blue-50 p-4"
+                                        className="rounded-md border border-blue-100 bg-white shadow-sm transition-all hover:shadow-md"
                                     >
-                                        <div className="flex">
-                                            <div className="flex-shrink-0">
-                                                <Clock className="h-5 w-5 text-blue-400" />
-                                            </div>
-                                            <div className="ml-3 w-full">
-                                                <h3 className="text-sm font-medium text-blue-800">
-                                                    {scheduleGroup.pattern}
-                                                </h3>
-                                                <div className="mt-2 text-sm text-blue-700">
-                                                    <p>
-                                                        <span className="font-medium">
-                                                            Time:
-                                                        </span>{' '}
-                                                        {scheduleGroup.start_time.substring(
-                                                            0,
-                                                            5,
-                                                        )}{' '}
-                                                        -{' '}
-                                                        {scheduleGroup.end_time.substring(
-                                                            0,
-                                                            5,
-                                                        )}
-                                                    </p>
-                                                    <p className="mt-1">
-                                                        <span className="font-medium">
-                                                            Room:
-                                                        </span>{' '}
-                                                        {scheduleGroup.room
-                                                            ? `${scheduleGroup.room.room_number} (${
-                                                                  scheduleGroup
-                                                                      .room
-                                                                      .floor
-                                                                      ?.building
-                                                                      ?.name ||
-                                                                  'Unknown Building'
-                                                              }) - Capacity: ${scheduleGroup.room.capacity}`
-                                                            : 'No room assigned'}
-                                                    </p>
-                                                    {scheduleGroup.location_type &&
-                                                        scheduleGroup.location_type !==
-                                                            'in_person' && (
-                                                            <>
-                                                                <p className="mt-1">
-                                                                    <span className="font-medium">
-                                                                        Type:
-                                                                    </span>{' '}
-                                                                    {scheduleGroup.location_type ===
-                                                                    'virtual'
-                                                                        ? 'Virtual (Online)'
-                                                                        : scheduleGroup.location_type ===
-                                                                            'hybrid'
-                                                                          ? 'Hybrid'
-                                                                          : 'In Person'}
-                                                                </p>
-                                                                {scheduleGroup.virtual_meeting_url && (
-                                                                    <p className="mt-1">
-                                                                        <span className="font-medium">
-                                                                            Meeting
-                                                                            Link:
-                                                                        </span>{' '}
-                                                                        <a
-                                                                            href={
-                                                                                scheduleGroup.virtual_meeting_url
-                                                                            }
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            className="text-blue-800 underline hover:text-blue-900"
-                                                                        >
-                                                                            Join
-                                                                            Meeting
-                                                                        </a>
-                                                                    </p>
-                                                                )}
-                                                            </>
-                                                        )}
+                                        <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center">
+                                                    <Calendar className="h-5 w-5 text-blue-600" />
+                                                    <h3 className="ml-2 text-base font-semibold text-blue-900">
+                                                        {scheduleGroup.pattern}
+                                                    </h3>
                                                 </div>
-                                                {scheduleGroup.group.length >
-                                                    1 && (
-                                                    <div className="mt-3 border-t border-blue-200 pt-3">
-                                                        <h4 className="mb-2 text-xs font-medium text-blue-800">
-                                                            Individual
-                                                            Schedules:
-                                                        </h4>
-                                                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                                            {scheduleGroup.group.map(
-                                                                (
-                                                                    schedule,
-                                                                    i,
-                                                                ) => (
-                                                                    <div
-                                                                        key={i}
-                                                                        className="flex items-center justify-between"
-                                                                    >
-                                                                        <span className="text-xs">
-                                                                            {formatIndividualSchedule(
-                                                                                schedule,
-                                                                            )}
-                                                                        </span>
-                                                                        <Link
-                                                                            href={route(
-                                                                                'schedules.edit',
-                                                                                [
-                                                                                    school.id,
-                                                                                    schedule.id,
-                                                                                ],
-                                                                            )}
-                                                                            className="text-xs text-blue-800 hover:text-blue-900"
-                                                                        >
-                                                                            Edit
-                                                                        </Link>
-                                                                    </div>
-                                                                ),
+                                                <div className="flex items-center rounded-full bg-blue-200 px-3 py-1">
+                                                    <Clock className="mr-1 h-3.5 w-3.5 text-blue-700" />
+                                                    <span className="text-xs font-medium text-blue-800">
+                                                        {scheduleGroup.start_time.substring(0, 5)} - {scheduleGroup.end_time.substring(0, 5)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-4">
+                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                                <div className="flex items-start">
+                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                                                        <MapPin className="h-4 w-4 text-blue-600" />
+                                                    </div>
+                                                    <div className="ml-3">
+                                                        <p className="text-xs font-medium uppercase text-gray-500">Location</p>
+                                                        {scheduleGroup.room ? (
+                                                            <div className="mt-1">
+                                                                <Link
+                                                                    href={route('rooms.show', {
+                                                                        school: school.id,
+                                                                        room: scheduleGroup.room.id,
+                                                                    })}
+                                                                    className="text-sm font-medium text-blue-600 hover:underline"
+                                                                >
+                                                                    {scheduleGroup.room.room_number}
+                                                                </Link>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {scheduleGroup.room.floor?.building?.name || 'Unknown Building'}
+                                                                </p>
+                                                                <p className="mt-1 text-xs text-gray-500">
+                                                                    Capacity: {scheduleGroup.room.capacity} students
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="mt-1 text-sm text-gray-700">No room assigned</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {scheduleGroup.location_type && scheduleGroup.location_type !== 'in_person' && (
+                                                    <div className="flex items-start">
+                                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-purple-600" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                                                                <path d="M17 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                                                                <path d="M7 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                                                                <path d="M12 7m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                                                                <path d="M12 17m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                                                                <path d="M12 12l0 .01" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="ml-3">
+                                                            <p className="text-xs font-medium uppercase text-gray-500">Meeting Type</p>
+                                                            <p className="mt-1 text-sm font-medium text-gray-800">
+                                                                {scheduleGroup.location_type === 'virtual' ? 'Virtual (Online)' : 'Hybrid'}
+                                                            </p>
+                                                            {scheduleGroup.virtual_meeting_url && (
+                                                                <a
+                                                                    href={scheduleGroup.virtual_meeting_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="mt-1.5 inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800 hover:bg-purple-200"
+                                                                >
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="mr-1 h-3.5 w-3.5" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                        <path d="M15 10l-4 4l6 6l4 -16l-16 4l6 6l4 -4" />
+                                                                    </svg>
+                                                                    Join Meeting
+                                                                </a>
                                                             )}
                                                         </div>
                                                     </div>
                                                 )}
-                                                <div className="mt-4 flex justify-between">
-                                                    {scheduleGroup.group
-                                                        .length === 1 ? (
+                                            </div>
+
+                                            {scheduleGroup.group.length > 1 && (
+                                                <div className="mt-4 border-t border-gray-100 pt-4">
+                                                    <h4 className="mb-2 text-xs font-medium text-gray-600">
+                                                        Individual Sessions
+                                                    </h4>
+                                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+                                                        {scheduleGroup.group.map((schedule, i) => (
+                                                            <div
+                                                                key={i}
+                                                                className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
+                                                            >
+                                                                <div className="flex items-center">
+                                                                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                                                                    <span className="ml-2 text-xs font-medium text-gray-700">
+                                                                        {schedule.day_of_week}
+                                                                    </span>
+                                                                </div>
+                                                                {isSchoolAdmin && (
+                                                                    <Link
+                                                                        href={route('schedules.edit', [school.id, schedule.id])}
+                                                                        className="rounded-md bg-white px-2 py-1 text-xs font-medium text-blue-600 shadow-sm hover:bg-blue-50 hover:text-blue-700"
+                                                                    >
+                                                                        Edit
+                                                                    </Link>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {isSchoolAdmin && (
+                                                <div className="mt-4 flex justify-end space-x-3">
+                                                    {scheduleGroup.group.length === 1 && (
                                                         <Link
-                                                            href={route(
-                                                                'schedules.edit',
-                                                                [
-                                                                    school.id,
-                                                                    scheduleGroup
-                                                                        .group[0]
-                                                                        .id,
-                                                                ],
-                                                            )}
-                                                            className="inline-flex items-center rounded-md bg-blue-200 px-2.5 py-1.5 text-sm font-medium text-blue-800 hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                                                            href={route('schedules.edit', [school.id, scheduleGroup.group[0].id])}
+                                                            className="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-sm font-medium text-blue-600 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-50"
                                                         >
-                                                            <Edit className="mr-1 h-3 w-3" />
-                                                            Edit Schedule
+                                                            <Edit className="mr-1.5 h-3.5 w-3.5" />
+                                                            Edit
                                                         </Link>
-                                                    ) : (
-                                                        <span></span>
                                                     )}
                                                     <Link
-                                                        href={route(
-                                                            'schedules.create',
-                                                            {
-                                                                school: school.id,
-                                                                section_id:
-                                                                    section.id,
-                                                            },
-                                                        )}
-                                                        className="inline-flex items-center rounded-md bg-green-100 px-2.5 py-1.5 text-sm font-medium text-green-800 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                                                        href={route('schedules.create', {
+                                                            school: school.id,
+                                                            section_id: section.id,
+                                                        })}
+                                                        className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-600 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-100"
                                                     >
-                                                        <CalendarPlus className="mr-1 h-3 w-3" />
+                                                        <CalendarPlus className="mr-1.5 h-3.5 w-3.5" />
                                                         Add Schedule
                                                     </Link>
                                                 </div>
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="px-6 py-8 text-center">
-                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                                    <Calendar className="h-6 w-6 text-gray-400" />
+                            <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+                                    <Calendar className="h-8 w-8 text-blue-500" />
                                 </div>
-                                <h3 className="mt-2 text-sm font-semibold text-gray-900">
+                                <h3 className="mt-4 text-base font-semibold text-gray-900">
                                     No Schedule Assigned
                                 </h3>
-                                <p className="mt-1 text-sm text-gray-500">
-                                    This section doesn't have a schedule yet.
-                                    Create one to assign time and location.
+                                <p className="mt-1 max-w-md text-sm text-gray-500">
+                                    This section doesn't have a schedule yet. Create one to assign time and location for students.
                                 </p>
-                                <div className="mt-6">
-                                    <Link
-                                        href={route('schedules.create', {
-                                            school: school.id,
-                                            section_id: section.id,
-                                        })}
-                                        className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                    >
-                                        <CalendarPlus className="mr-1.5 h-4 w-4" />
-                                        Add Schedule
-                                    </Link>
-                                </div>
+                                {isSchoolAdmin && (
+                                    <div className="mt-6">
+                                        <Link
+                                            href={route('schedules.create', {
+                                                school: school.id,
+                                                section_id: section.id,
+                                            })}
+                                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                        >
+                                            <CalendarPlus className="mr-2 h-4 w-4" />
+                                            Create Schedule
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -565,8 +636,10 @@ export default function Show({ section, school }) {
                                                         key={feature.id}
                                                         className="flex items-center text-sm"
                                                     >
-                                                        <span className="mr-2 h-2 w-2 rounded-full bg-green-500"></span>
-                                                        {feature.name}
+                                                        <span className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-green-100">
+                                                            <span className="h-2.5 w-2.5 rounded-full bg-green-500"></span>
+                                                        </span>
+                                                        <span className="font-medium text-gray-700">{feature.name}</span>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -587,33 +660,98 @@ export default function Show({ section, school }) {
                             <h2 className="text-lg font-medium text-gray-900">
                                 Enrolled Students
                             </h2>
-                            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                                {section.courseRegistrations?.length || 0}
-                            </span>
+                            <div className="flex items-center">
+                                <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 mr-2">
+                                    {section.courseRegistrations?.length || 0}
+                                </span>
+                                {section.courseRegistrations && section.courseRegistrations.length > studentsPerPage && (
+                                    <button
+                                        onClick={toggleShowAll}
+                                        className="flex items-center text-xs text-blue-600 hover:text-blue-800"
+                                    >
+                                        {expanded ? (
+                                            <>
+                                                <ChevronUp className="h-3 w-3 mr-1" />
+                                                Show Less
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ChevronDown className="h-3 w-3 mr-1" />
+                                                Show All
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <div className="px-6 py-4">
                             {section.courseRegistrations &&
                             section.courseRegistrations.length > 0 ? (
-                                <ul className="divide-y divide-gray-200">
-                                    {section.courseRegistrations.map(
-                                        (registration) => (
-                                            <li
-                                                key={registration.id}
-                                                className="py-2"
-                                            >
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {registration.student
-                                                        ?.name ||
+                                <>
+                                    <ul className="divide-y divide-gray-200">
+                                        {displayedStudents.map(
+                                            (registration) => (
+                                                <li
+                                                    key={registration.id}
+                                                    className="py-2"
+                                                >
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {(registration.student && registration.student.name) ||
                                                         'Unknown Student'}
-                                                </p>
-                                                <p className="text-xs text-gray-500">
-                                                    {registration.student
-                                                        ?.email || ''}
-                                                </p>
-                                            </li>
-                                        ),
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {(registration.student && registration.student.email) ||
+                                                        ''}
+                                                    </p>
+                                                </li>
+                                            ),
+                                        )}
+                                    </ul>
+
+                                    {!showAllStudents && totalPages > 1 && (
+                                        <div className="flex items-center justify-center space-x-2 mt-4">
+                                            <button
+                                                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                                                disabled={currentPage === 1}
+                                                className={`inline-flex items-center justify-center w-8 h-8 rounded-md ${
+                                                    currentPage === 1
+                                                        ? 'text-gray-400 cursor-not-allowed'
+                                                        : 'text-blue-600 hover:bg-blue-50'
+                                                }`}
+                                            >
+                                                <span className="sr-only">Previous</span>
+                                                <ChevronLeft className="h-4 w-4" />
+                                            </button>
+
+                                            {[...Array(totalPages)].map((_, i) => (
+                                                <button
+                                                    key={i + 1}
+                                                    onClick={() => handlePageChange(i + 1)}
+                                                    className={`inline-flex items-center justify-center w-8 h-8 rounded-md ${
+                                                        currentPage === i + 1
+                                                            ? 'bg-blue-600 text-white'
+                                                            : 'text-gray-700 hover:bg-blue-50'
+                                                    }`}
+                                                >
+                                                    {i + 1}
+                                                </button>
+                                            ))}
+
+                                            <button
+                                                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                                                disabled={currentPage === totalPages}
+                                                className={`inline-flex items-center justify-center w-8 h-8 rounded-md ${
+                                                    currentPage === totalPages
+                                                        ? 'text-gray-400 cursor-not-allowed'
+                                                        : 'text-blue-600 hover:bg-blue-50'
+                                                }`}
+                                            >
+                                                <span className="sr-only">Next</span>
+                                                <ChevronLeft className="h-4 w-4 transform rotate-180" />
+                                            </button>
+                                        </div>
                                     )}
-                                </ul>
+                                </>
                             ) : (
                                 <p className="text-sm text-gray-500">
                                     No students enrolled

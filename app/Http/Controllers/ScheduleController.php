@@ -96,11 +96,25 @@ class ScheduleController extends Controller
             })
             ->get();
 
+        // Get room_id and location_type from query params if provided
+        $preselectedRoomId = $request->query('room_id');
+        $preselectedLocationType = $request->query('location_type');
+        $preselectedDayOfWeek = $request->query('day_of_week');
+        $preselectedStartTime = $request->query('start_time');
+        $preselectedEndTime = $request->query('end_time');
+        $returnUrl = $request->query('return_url');
+
         return Inertia::render('Schedules/Create', [
             'sections' => $sections,
             'rooms' => $rooms,
             'school' => $school,
-            'preselectedSectionId' => $selectedSectionId
+            'preselectedSectionId' => $selectedSectionId,
+            'preselectedRoomId' => $preselectedRoomId,
+            'preselectedLocationType' => $preselectedLocationType,
+            'preselectedDayOfWeek' => $preselectedDayOfWeek,
+            'preselectedStartTime' => $preselectedStartTime,
+            'preselectedEndTime' => $preselectedEndTime,
+            'returnUrl' => $returnUrl
         ]);
     }
 
@@ -479,13 +493,55 @@ class ScheduleController extends Controller
             return back()->withErrors($conflict);
         }
 
-        $schedule->update($data);
+        // Begin transaction
+        DB::beginTransaction();
 
-        Log::info('Schedule updated successfully:', ['id' => $schedule->id]);
+        try {
+            // Get the section_id before any changes are made
+            $sectionId = $schedule->section_id;
 
-        // Always redirect to the section show page
-        return redirect()->route('sections.show', [$school->id, $section->id])
-            ->with('success', 'Schedule updated successfully');
+            // If there's a meeting pattern other than 'single', delete all schedules for this section
+            // and create new ones based on the pattern
+            if (isset($data['meeting_pattern']) && $data['meeting_pattern'] !== 'single') {
+                Log::info("Deleting all schedules for section {$sectionId} before creating new ones with pattern {$data['meeting_pattern']}");
+
+                // Delete all existing schedules for this section
+                $deleteCount = Schedule::where('section_id', $sectionId)->delete();
+
+                Log::info("Deleted {$deleteCount} existing schedules for section {$sectionId}");
+
+                // Create new schedules based on the pattern
+                $days = $this->getDaysFromPattern($data['meeting_pattern']);
+
+                foreach ($days as $day) {
+                    $newSchedule = new Schedule($data);
+                    $newSchedule->setAttribute('day_of_week', $day);
+                    $newSchedule->save();
+
+                    Log::info("Created new schedule for day {$day}");
+                }
+
+                DB::commit();
+                return redirect()->route('sections.show', [$school->id, $sectionId])
+                    ->with('success', 'Schedules updated successfully');
+            } else {
+                // For single schedules, just update the existing one
+                $schedule->update($data);
+                Log::info('Schedule updated successfully:', ['id' => $schedule->id]);
+
+                DB::commit();
+                return redirect()->route('sections.show', [$school->id, $section->id])
+                    ->with('success', 'Schedule updated successfully');
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating schedules:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->withErrors(['general' => 'Error updating schedules: ' . $e->getMessage()]);
+        }
     }
 
     // DELETE /schools/{school}/schedules/{schedule}

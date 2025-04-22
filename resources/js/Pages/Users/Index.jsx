@@ -7,7 +7,7 @@ import {
     TrashIcon,
     UserPlusIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     Badge,
     Button,
@@ -64,6 +64,9 @@ export default function Index({ users, roles, filters }) {
         userId: null,
     });
     const { get, delete: destroy, processing } = useForm();
+
+    const { auth } = usePage().props;
+    const isAdmin = auth.user.role.id === 2;
 
     const debouncedSearch = debounce((value) => {
         get(
@@ -129,9 +132,11 @@ export default function Index({ users, roles, filters }) {
             <div className="px-4 py-6 sm:px-6 lg:px-8">
                 <div className="sm:flex sm:items-center sm:justify-between">
                     <Title>User Management</Title>
-                    <Link href={route('users.create')}>
-                        <Button icon={UserPlusIcon}>Add User</Button>
-                    </Link>
+                    {isAdmin && (
+                        <Link href={route('users.create')}>
+                            <Button icon={UserPlusIcon}>Add User</Button>
+                        </Link>
+                    )}
                 </div>
 
                 <Card className="mt-6">
@@ -180,7 +185,11 @@ export default function Index({ users, roles, filters }) {
                                     </TableHeaderCell>
                                     <TableHeaderCell>Role</TableHeaderCell>
                                     <TableHeaderCell>School</TableHeaderCell>
-                                    <TableHeaderCell>Actions</TableHeaderCell>
+                                    {isAdmin && (
+                                        <TableHeaderCell>
+                                            Actions
+                                        </TableHeaderCell>
+                                    )}
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -204,114 +213,127 @@ export default function Index({ users, roles, filters }) {
                                         <TableCell>
                                             {user.school?.name || 'N/A'}
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-2">
-                                                <Link
-                                                    href={route(
-                                                        'users.show',
-                                                        user.id,
-                                                    )}
-                                                >
+                                        {isAdmin && (
+                                            <TableCell>
+                                                <div className="flex gap-2">
+                                                    <Link
+                                                        href={route(
+                                                            'users.show',
+                                                            user.id,
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            size="xs"
+                                                            variant="secondary"
+                                                        >
+                                                            View
+                                                        </Button>
+                                                    </Link>
+                                                    <Link
+                                                        href={route(
+                                                            'users.edit',
+                                                            user.id,
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            size="xs"
+                                                            variant="secondary"
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    </Link>
                                                     <Button
                                                         size="xs"
                                                         variant="secondary"
+                                                        color="red"
+                                                        icon={TrashIcon}
+                                                        onClick={() =>
+                                                            handleDelete(
+                                                                user.id,
+                                                            )
+                                                        }
                                                     >
-                                                        View
+                                                        Delete
                                                     </Button>
-                                                </Link>
-                                                <Link
-                                                    href={route(
-                                                        'users.edit',
-                                                        user.id,
-                                                    )}
-                                                >
-                                                    <Button
-                                                        size="xs"
-                                                        variant="secondary"
-                                                    >
-                                                        Edit
-                                                    </Button>
-                                                </Link>
-                                                <Button
-                                                    size="xs"
-                                                    variant="secondary"
-                                                    color="red"
-                                                    icon={TrashIcon}
-                                                    onClick={() =>
-                                                        handleDelete(user.id)
-                                                    }
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </div>
-                                        </TableCell>
+                                                </div>
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
 
-                        {users.links.map((link, index) => {
-                            const isDisabled = !link.url;
-
-                            if (link.label === '&laquo; Previous') {
-                                return isDisabled ? (
-                                    <span
-                                        key={index}
-                                        className="relative inline-flex cursor-not-allowed items-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-200"
-                                    >
-                                        <ChevronUpIcon className="h-5 w-5" />
-                                    </span>
-                                ) : (
-                                    <Link
-                                        key={index}
-                                        href={link.url}
-                                        className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                    >
-                                        <ChevronUpIcon className="h-5 w-5" />
-                                    </Link>
-                                );
-                            }
-
-                            if (link.label === 'Next &raquo;') {
-                                return isDisabled ? (
-                                    <span
-                                        key={index}
-                                        className="relative inline-flex cursor-not-allowed items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-200"
-                                    >
-                                        <ChevronDownIcon className="h-5 w-5" />
-                                    </span>
-                                ) : (
-                                    <Link
-                                        key={index}
-                                        href={link.url}
-                                        className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                    >
-                                        <ChevronDownIcon className="h-5 w-5" />
-                                    </Link>
-                                );
-                            }
-
-                            return isDisabled ? (
-                                <span
-                                    key={index}
-                                    className="relative inline-flex cursor-not-allowed items-center px-4 py-2 text-sm font-semibold text-gray-400 ring-1 ring-inset ring-gray-200"
+                        {users.links && users.links.length > 0 && (
+                            <div className="mt-4 flex items-center justify-center border-t border-gray-200 pt-4">
+                                <nav
+                                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                    aria-label="Pagination"
                                 >
-                                    {link.label}
-                                </span>
-                            ) : (
-                                <Link
-                                    key={index}
-                                    href={link.url}
-                                    className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                                        link.active
-                                            ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                                            : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
-                                    }`}
-                                >
-                                    {link.label}
-                                </Link>
-                            );
-                        })}
+                                    {users.links.map((link, index) => {
+                                        const isDisabled = !link.url;
+
+                                        if (link.label === '&laquo; Previous') {
+                                            return isDisabled ? (
+                                                <span
+                                                    key={index}
+                                                    className="relative inline-flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-200"
+                                                >
+                                                    <ChevronUpIcon className="h-5 w-5" />
+                                                </span>
+                                            ) : (
+                                                <Link
+                                                    key={index}
+                                                    href={link.url}
+                                                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                                >
+                                                    <ChevronUpIcon className="h-5 w-5" />
+                                                </Link>
+                                            );
+                                        }
+
+                                        if (link.label === 'Next &raquo;') {
+                                            return isDisabled ? (
+                                                <span
+                                                    key={index}
+                                                    className="relative inline-flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-200"
+                                                >
+                                                    <ChevronDownIcon className="h-5 w-5" />
+                                                </span>
+                                            ) : (
+                                                <Link
+                                                    key={index}
+                                                    href={link.url}
+                                                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                                >
+                                                    <ChevronDownIcon className="h-5 w-5" />
+                                                </Link>
+                                            );
+                                        }
+
+                                        return isDisabled ? (
+                                            <span
+                                                key={index}
+                                                className="relative inline-flex h-10 w-10 cursor-not-allowed items-center justify-center px-4 py-2 text-sm font-semibold text-gray-400 ring-1 ring-inset ring-gray-200"
+                                            >
+                                                {link.label}
+                                            </span>
+                                        ) : (
+                                            <Link
+                                                key={index}
+                                                href={link.url}
+                                                className={`relative inline-flex h-10 w-10 items-center justify-center px-4 py-2 text-sm font-semibold ${
+                                                    link.active
+                                                        ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                                                        : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                                                }`}
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        );
+                                    })}
+                                </nav>
+                            </div>
+                        )}
                     </div>
                 </Card>
             </div>

@@ -16,7 +16,7 @@ import {
 } from '@tremor/react';
 import { Settings } from 'lucide-react';
 
-export default function Edit({ roomfeature, school, categories }) {
+export default function Edit({ roomfeature, school, categories, flash }) {
     const { data, setData, put, processing, errors } = useForm({
         name: roomfeature.name || '',
         description: roomfeature.description || '',

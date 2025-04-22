@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { X } from 'lucide-react';
 
 export default function SectionForm({
@@ -12,7 +12,48 @@ export default function SectionForm({
     isSubmitting,
     onSubmit
 }) {
-    const [selectedFeatures, setSelectedFeatures] = useState(data.required_features || []);
+    // Use ref to track initial render and prevent loops
+    const initialRender = useRef(true);
+
+    // Convert feature IDs to numbers if they're not already - for initial state
+    const initialFeatures = useMemo(() => {
+        if (!Array.isArray(data.required_features)) {
+            return [];
+        }
+
+        return data.required_features.map(id =>
+            typeof id === 'string' ? parseInt(id, 10) : id
+        );
+    }, [data.required_features]); // Include data.required_features in deps
+
+    const [selectedFeatures, setSelectedFeatures] = useState(initialFeatures);
+
+    // Helper function to check if a feature is selected
+    const isFeatureSelected = (featureId) => {
+        const numericId = typeof featureId === 'string' ? parseInt(featureId, 10) : featureId;
+        return selectedFeatures.some(id => {
+            const selectedId = typeof id === 'string' ? parseInt(id, 10) : id;
+            return selectedId === numericId;
+        });
+    };
+
+    // Update selected features when props change, but only if they're different
+    useEffect(() => {
+        if (Array.isArray(data.required_features) && data.required_features.length > 0) {
+            // Only process on initial render or if data.required_features actually changes
+            if (initialRender.current) {
+                initialRender.current = false;
+
+                // Convert any string IDs to numbers for comparison
+                const newFeatureIds = data.required_features.map(id =>
+                    typeof id === 'string' ? parseInt(id, 10) : id
+                );
+
+                console.log('Initial setting of selectedFeatures:', newFeatureIds);
+                setSelectedFeatures(newFeatureIds);
+            }
+        }
+    }, [data.required_features]);
 
     // Log the professor data for debugging
     useEffect(() => {
@@ -30,23 +71,66 @@ export default function SectionForm({
 
     // Add or remove features
     const toggleFeature = (featureId) => {
+        // Ensure featureId is a number
+        const numericFeatureId = typeof featureId === 'string' ? parseInt(featureId, 10) : featureId;
+
+        // Mark that we've moved past the initial render
+        if (initialRender.current) {
+            initialRender.current = false;
+        }
+
         setSelectedFeatures(prev => {
-            if (prev.includes(featureId)) {
-                return prev.filter(id => id !== featureId);
+            // Check directly in the update function to avoid stale closures
+            const isSelected = prev.some(id => {
+                const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+                return numId === numericFeatureId;
+            });
+
+            if (isSelected) {
+                // Remove the feature
+                return prev.filter(id => {
+                    const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+                    return numId !== numericFeatureId;
+                });
             } else {
-                return [...prev, featureId];
+                // Add the feature
+                return [...prev, numericFeatureId];
             }
         });
     };
 
     // Update parent form data when selected features change
     useEffect(() => {
-        setData('required_features', selectedFeatures);
+        // Skip on initial render
+        if (initialRender.current) {
+            return;
+        }
+
+        // Update parent form with a small delay to avoid rapid changes
+        const timer = setTimeout(() => {
+            // Ensure selectedFeatures is always an array of numbers
+            const featureIds = selectedFeatures.map(id =>
+                typeof id === 'string' ? parseInt(id, 10) : id
+            );
+            console.log('Updating form data required_features:', featureIds);
+            setData('required_features', featureIds);
+        }, 100);
+
+        return () => clearTimeout(timer);
     }, [selectedFeatures]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setData(name, value);
+        const { name, value, type } = e.target;
+
+        // Special handling for number inputs
+        if (type === 'number') {
+            // If the field is empty, pass empty string; otherwise convert to number
+            const numValue = value === '' ? '' : parseInt(value, 10);
+            console.log(`Setting ${name} from ${value} (${typeof value}) to ${numValue} (${typeof numValue})`);
+            setData(name, numValue);
+        } else {
+            setData(name, value);
+        }
     };
 
     return (
@@ -171,7 +255,7 @@ export default function SectionForm({
                     id="capacity"
                     name="capacity"
                     className={`mt-1 block w-full rounded-md border ${errors.capacity ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm`}
-                    value={data.capacity || ''}
+                    value={data.capacity === null || data.capacity === undefined ? '' : data.capacity}
                     onChange={handleChange}
                     min="1"
                     placeholder="Maximum enrollment capacity"
@@ -200,9 +284,7 @@ export default function SectionForm({
                     required
                 >
                     <option value="active">Active</option>
-                    <option value="canceled">Canceled</option>
-                    <option value="full">Full</option>
-                    <option value="pending">Pending</option>
+                    <option value="cancelled">Cancelled</option>
                 </select>
                 {errors.status && (
                     <p className="mt-1 text-sm text-red-600">{errors.status}</p>
@@ -271,13 +353,13 @@ export default function SectionForm({
                                             type="button"
                                             onClick={() => toggleFeature(feature.id)}
                                             className={`inline-flex items-center rounded-md px-3 py-1 text-sm ${
-                                                selectedFeatures.includes(feature.id)
+                                                isFeatureSelected(feature.id)
                                                     ? 'bg-blue-100 text-blue-800'
                                                     : 'bg-gray-100 text-gray-800'
                                             }`}
                                         >
                                             {feature.name}
-                                            {selectedFeatures.includes(feature.id) && (
+                                            {isFeatureSelected(feature.id) && (
                                                 <X className="ml-1 h-3 w-3" />
                                             )}
                                         </button>

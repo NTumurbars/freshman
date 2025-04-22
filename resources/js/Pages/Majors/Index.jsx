@@ -26,19 +26,8 @@ import {
     Text,
     Title,
 } from '@tremor/react';
-import { useState } from 'react';
 
 export default function Index({ majors, school, can_create }) {
-    const [selectedDepartment, setSelectedDepartment] = useState('all');
-
-    // Filter majors based on the selected department
-    const filteredMajors =
-        selectedDepartment === 'all'
-            ? majors
-            : majors.filter(
-                  (major) => major.department.name === selectedDepartment
-              );
-
     return (
         <AppLayout>
             <Head title="Academic Majors" />
@@ -55,16 +44,13 @@ export default function Index({ majors, school, can_create }) {
                         </Text>
                     </div>
                     {can_create && (
-                        <Link href={route('majors.create', school.id)}>
-                            <Button
-                                icon={PlusIcon}
-                                color="blue"
-                                size="md"
-                                className="shadow-sm transition-all hover:shadow-md"
-                            >
-                                Add Major
-                            </Button>
-                        </Link>
+                        <a
+                            href={route('majors.create', school.id)}
+                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            <PlusIcon className="mr-2 h-4 w-4" />
+                            Add Major
+                        </a>
                     )}
                 </div>
 
@@ -74,31 +60,18 @@ export default function Index({ majors, school, can_create }) {
                             <div className="mb-2 flex items-center gap-2 sm:mb-0">
                                 <AcademicCapIcon className="h-5 w-5 text-blue-600" />
                                 <Text className="font-medium">
-                                    All Majors ({filteredMajors.length})
+                                    All Majors ({majors.length})
                                 </Text>
                             </div>
                             <div className="flex w-full gap-2 sm:w-auto">
                                 <SearchSelect
                                     className="max-w-xs"
                                     placeholder="Filter by department"
-                                    value={selectedDepartment}
-                                    onValueChange={(value) =>
-                                        setSelectedDepartment(value)
-                                    }
                                 >
+                                    {/* You can populate this dynamically if needed */}
                                     <SearchSelectItem value="all">
                                         All Departments
                                     </SearchSelectItem>
-                                    {[...new Set(majors.map((major) => major.department.name))].map(
-                                        (departmentName) => (
-                                            <SearchSelectItem
-                                                key={departmentName}
-                                                value={departmentName}
-                                            >
-                                                {departmentName}
-                                            </SearchSelectItem>
-                                        )
-                                    )}
                                 </SearchSelect>
                                 <Select
                                     className="w-40"
@@ -132,7 +105,7 @@ export default function Index({ majors, school, can_create }) {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {filteredMajors.map((major) => (
+                                {majors.map((major) => (
                                     <TableRow
                                         key={major.id}
                                         className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -207,46 +180,35 @@ export default function Index({ majors, school, can_create }) {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Link
+                                            <div className="flex items-center justify-end gap-4">
+                                                <a
                                                     href={route('majors.edit', {
                                                         school: school.id,
                                                         major: major.id,
                                                     })}
-                                                    onClick={(e) =>
-                                                        e.stopPropagation()
-                                                    }
+                                                    className="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                                    onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    <Button
-                                                        icon={PencilSquareIcon}
-                                                        variant="light"
-                                                        color="blue"
-                                                        size="xs"
-                                                        tooltip="Edit major"
-                                                    >
-                                                        Edit
-                                                    </Button>
-                                                </Link>
+                                                    <PencilSquareIcon className="mr-1 h-3.5 w-3.5" />
+                                                    Edit
+                                                </a>
 
-                                                <Link
-                                                    href={route(
-                                                        'majors.destroy',
-                                                        {
-                                                            school: school.id,
-                                                            major: major.id,
-                                                        },
-                                                    )}
-                                                    method="delete"
-                                                    as="button"
+                                                <button
                                                     type="button"
-                                                    className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
-                                                    onClick={(e) =>
-                                                        e.stopPropagation()
-                                                    }
+                                                    className="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (confirm('Are you sure you want to delete this major?')) {
+                                                            router.delete(route('majors.destroy', {
+                                                                school: school.id,
+                                                                major: major.id,
+                                                            }));
+                                                        }
+                                                    }}
                                                 >
-                                                    <TrashIcon className="h-3 w-3" />
+                                                    <TrashIcon className="mr-1 h-3.5 w-3.5" />
                                                     Delete
-                                                </Link>
+                                                </button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -266,16 +228,13 @@ export default function Index({ majors, school, can_create }) {
                                 to this school.
                             </Text>
                             {can_create && (
-                                <Link href={route('majors.create', school.id)}>
-                                    <Button
-                                        variant="primary"
-                                        color="blue"
-                                        icon={PlusIcon}
-                                        className="shadow-sm transition-all hover:shadow-md"
-                                    >
-                                        Create your first major
-                                    </Button>
-                                </Link>
+                                <a
+                                    href={route('majors.create', school.id)}
+                                    className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                >
+                                    <PlusIcon className="mr-2 h-4 w-4" />
+                                    Create your first major
+                                </a>
                             )}
                         </div>
                     </Card>
