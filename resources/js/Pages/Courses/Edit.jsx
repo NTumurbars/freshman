@@ -6,6 +6,7 @@ export default function Edit({ departments, majors, course }) {
         department_id: course.department_id,
         major_id: course.major_id,
         code: course.code,
+        credits: course.credits,
         title: course.title,
         description: course.description || '',
         credits: course.credits,
@@ -106,6 +107,23 @@ export default function Edit({ departments, majors, course }) {
                         {errors.code && (
                             <div className="mt-1 text-sm text-red-600">
                                 {errors.code}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block font-medium text-gray-700">
+                            Credits
+                        </label>
+                        <input
+                            type="number"
+                            className="mt-1 block w-full rounded border-gray-300"
+                            value={data.credits}
+                            onChange={(e) => setData('credits', e.target.value)}
+                        />
+                        {errors.credits && (
+                            <div className="mt-1 text-sm text-red-600">
+                                {errors.credits}
                             </div>
                         )}
                     </div>

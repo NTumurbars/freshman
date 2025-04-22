@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
+
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Course;
 use App\Models\ProfessorProfile;
@@ -12,6 +15,9 @@ use App\Models\RoomFeature;
 
 class Section extends Model
 {
+
+    use HasFactory, Notifiable;
+
     protected $fillable = [
         'course_id',
         'term_id',

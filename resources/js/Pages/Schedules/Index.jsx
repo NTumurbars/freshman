@@ -19,15 +19,9 @@ import { useEffect, useState } from 'react';
 export default function Index({
     auth,
     schedules,
-    professorSchedules,
     rooms = [],
     isProfessor = false,
 }) {
-    // Extract user permissions from auth
-    const canCreateSchedule = auth.can?.create_schedule || false;
-    const canUpdateSchedule = auth.can?.update_schedule || false;
-    const canDeleteSchedule = auth.can?.delete_schedule || false;
-
     const [selectedDay, setSelectedDay] = useState('All');
     const days = [
         'All',
@@ -55,7 +49,6 @@ export default function Index({
         professor: 'All',
         course: 'All',
     });
-    const [showOnlyMySchedules, setShowOnlyMySchedules] = useState(false);
 
     // Extract unique professors and courses for filter dropdowns
     const professors = [
@@ -71,33 +64,13 @@ export default function Index({
 
     // Add state for calendar view type
     const [calendarViewType, setCalendarViewType] = useState(() => {
+        if (userRole <= 2) return 'room'; // Admin and School Admin
         if (isProfessor) return 'professor'; // Professor
         return 'default'; // Others
     });
 
-    // Apply initial filters
-    useEffect(() => {
-        if (isProfessor) {
-            // Default to the professor's name in the filter if they are a professor
-            const professorName = professorSchedules?.[0]?.section?.professor_profile?.user?.name;
-            if (professorName) {
-                setFilterOptions(prev => ({
-                    ...prev,
-                    professor: professorName
-                }));
-            }
-        }
-    }, [isProfessor, professorSchedules]);
-
     // Filter schedules based on all criteria
     const filteredSchedules = schedules
-        .filter(schedule => {
-            // Apply "My Schedules Only" filter if selected
-            if (isProfessor && showOnlyMySchedules) {
-                return schedule.is_professor_schedule;
-            }
-            return true;
-        })
         .filter(
             (schedule) =>
                 selectedDay === 'All' || schedule.day_of_week === selectedDay,
@@ -200,7 +173,7 @@ export default function Index({
                         Manage and view all class schedules
                     </p>
                 </div>
-                {canCreateSchedule && (
+                {auth.can.create_schedule && (
                     <Link
                         href={route('schedules.create', { school: userSchool.id })}
                         className="mt-4 inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0"
@@ -320,72 +293,21 @@ export default function Index({
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                        {/* Day Filter */}
-                        <div className="flex flex-wrap gap-2">
-                            {days.map((day) => (
-                                <button
-                                    key={day}
-                                    onClick={() => setSelectedDay(day)}
-                                    className={`rounded-full px-3 py-1 text-sm font-medium ${
-                                        selectedDay === day
-                                            ? 'bg-blue-100 text-blue-800'
-                                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    {day}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* View Toggle */}
-                        <div className="flex space-x-2">
-                            {isProfessor && (
-                                <div className="flex items-center mr-4">
-                                    <input
-                                        id="my-schedules"
-                                        name="my-schedules"
-                                        type="checkbox"
-                                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                        checked={showOnlyMySchedules}
-                                        onChange={(e) => setShowOnlyMySchedules(e.target.checked)}
-                                    />
-                                    <label htmlFor="my-schedules" className="ml-2 block text-sm text-gray-900">
-                                        My Schedules Only
-                                    </label>
-                                </div>
-                            )}
+                    {/* Day Filter */}
+                    <div className="flex space-x-2 overflow-x-auto pb-2">
+                        {days.map((day) => (
                             <button
-                                onClick={() => setViewMode('list')}
-                                className={`rounded-md p-2 ${
-                                    viewMode === 'list'
-                                        ? 'bg-blue-100 text-blue-600'
+                                key={day}
+                                onClick={() => setSelectedDay(day)}
+                                className={`rounded-full px-4 py-2 text-sm font-medium ${
+                                    selectedDay === day
+                                        ? 'bg-blue-100 text-blue-700'
                                         : 'text-gray-500 hover:bg-gray-100'
                                 }`}
                             >
-                                <List className="h-5 w-5" />
+                                {day}
                             </button>
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={`rounded-md p-2 ${
-                                    viewMode === 'grid'
-                                        ? 'bg-blue-100 text-blue-600'
-                                        : 'text-gray-500 hover:bg-gray-100'
-                                }`}
-                            >
-                                <LayoutGrid className="h-5 w-5" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('calendar')}
-                                className={`rounded-md p-2 ${
-                                    viewMode === 'calendar'
-                                        ? 'bg-blue-100 text-blue-600'
-                                        : 'text-gray-500 hover:bg-gray-100'
-                                }`}
-                            >
-                                <Calendar className="h-5 w-5" />
-                            </button>
-                        </div>
+                        ))}
                     </div>
                 </div>
 
@@ -554,7 +476,7 @@ export default function Index({
                                 {currentItems.map((schedule) => (
                                     <tr
                                         key={schedule.id}
-                                        className={`hover:bg-gray-50 ${isProfessor && schedule.is_professor_schedule ? 'bg-blue-50' : ''}`}
+                                        className="hover:bg-gray-50"
                                     >
                                         <td className="whitespace-nowrap px-6 py-4">
                                             <div className="flex items-center">
@@ -622,7 +544,7 @@ export default function Index({
                                                 >
                                                     View Section
                                                 </Link>
-                                                {canUpdateSchedule && (
+                                                {auth.can.update_schedule && (
                                                     <Link
                                                         href={route(
                                                             'schedules.edit',
@@ -699,7 +621,6 @@ export default function Index({
                                         </span>
                                     </div>
                                 </div>
-                                {/* Grid view actions */}
                                 {auth.can.update_schedule && (
                                     <div className="flex justify-between border-t bg-gray-50 px-4 py-3">
                                         <Link
@@ -711,29 +632,14 @@ export default function Index({
                                         >
                                             View Section
                                         </Link>
-                                        {canUpdateSchedule && (
-                                            <Link
-                                                href={route('schedules.edit', [
-                                                    userSchool.id,
-                                                    schedule.id,
-                                                ])}
-                                                className="text-sm text-blue-600 hover:text-blue-900"
-                                            >
-                                                Edit Schedule
-                                            </Link>
-                                        )}
-                                    </div>
-                                )}
-                                {!auth.can.update_schedule && (
-                                    <div className="flex justify-center border-t bg-gray-50 px-4 py-3">
                                         <Link
-                                            href={route('sections.show', [
+                                            href={route('schedules.edit', [
                                                 userSchool.id,
-                                                schedule.section.id,
+                                                schedule.id,
                                             ])}
                                             className="text-sm text-blue-600 hover:text-blue-900"
                                         >
-                                            View Section
+                                            Edit Schedule
                                         </Link>
                                     </div>
                                 )}
@@ -767,6 +673,19 @@ export default function Index({
                                             <CalendarDays className="mr-1 inline-block h-4 w-4" />
                                             Weekly View
                                         </button>
+                                        <button
+                                            onClick={() =>
+                                                setCalendarViewType('room')
+                                            }
+                                            className={`rounded-md px-3 py-1.5 text-sm ${
+                                                calendarViewType === 'room'
+                                                    ? 'bg-blue-100 text-blue-700'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            <Building className="mr-1 inline-block h-4 w-4" />
+                                            Room View
+                                        </button>
                                     </div>
                                 )}
 
@@ -779,9 +698,11 @@ export default function Index({
                                 )}
                             </div>
                             <p className="mt-1 text-sm text-gray-500">
-                                {calendarViewType === 'professor'
-                                    ? 'Your personal teaching schedule for the current term'
-                                    : 'View all schedules in a weekly calendar format'}
+                                {calendarViewType === 'room'
+                                    ? 'View schedules organized by room to see availability and utilization'
+                                    : calendarViewType === 'professor'
+                                      ? 'Your personal teaching schedule for the current term'
+                                      : 'View all schedules in a weekly calendar format'}
                             </p>
                         </div>
                         <ScheduleCalendar
