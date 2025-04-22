@@ -1,7 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import {
     ArrowLeftIcon,
-    BuildingOffice2Icon,
     PencilIcon,
     PlusIcon,
     TrashIcon,
@@ -12,7 +11,6 @@ import {
     Badge,
     Button,
     Card,
-    Col,
     Divider,
     Flex,
     Grid,
@@ -24,9 +22,9 @@ import {
 import { Layers } from 'lucide-react';
 import { useState } from 'react';
 
-const FloorCard = ({ floor, onEdit, onDelete, editMode }) => (
+const FloorCard = ({ floor, onEdit, onDelete, editMode, isAdmin }) => (
     <Card
-        className={`${!editMode ? 'cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1' : ''} floor-index-card`}
+        className={`${!editMode ? 'cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg' : ''} floor-index-card`}
     >
         <div className="flex items-start justify-between">
             <div>
@@ -76,9 +74,11 @@ const FloorCard = ({ floor, onEdit, onDelete, editMode }) => (
             </div>
         ) : (
             <div className="mt-4">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                     <Text className="text-gray-500">Click to manage rooms</Text>
-                    <Badge color="blue" size="sm">View</Badge>
+                    <Badge color="blue" size="sm">
+                        View
+                    </Badge>
                 </div>
             </div>
         )}
@@ -88,6 +88,7 @@ const FloorCard = ({ floor, onEdit, onDelete, editMode }) => (
 export default function Index({ floors, building }) {
     const { auth, flash } = usePage().props;
     const school = auth.user.school;
+    const isAdmin = auth.user.role.id === 1;
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editFloor, setEditFloor] = useState(null);
     const [editMode, setEditMode] = useState(false);
@@ -186,22 +187,24 @@ export default function Index({ floors, building }) {
                             </div>
                         </div>
                     </div>
-                    <div className="mt-4 flex space-x-3 sm:mt-0">
-                        <Button
-                            variant={!editMode ? 'light' : 'primary'}
-                            color={!editMode ? 'gray' : 'blue'}
-                            icon={PencilIcon}
-                            onClick={() => setEditMode(!editMode)}
-                        >
-                            {editMode ? 'Done Editing' : 'Edit Floors'}
-                        </Button>
-                        <Button
-                            icon={PlusIcon}
-                            onClick={() => setShowCreateModal(true)}
-                        >
-                            Add Floor
-                        </Button>
-                    </div>
+                    {isAdmin && (
+                        <div className="mt-4 flex space-x-3 sm:mt-0">
+                            <Button
+                                variant={!editMode ? 'light' : 'primary'}
+                                color={!editMode ? 'gray' : 'blue'}
+                                icon={PencilIcon}
+                                onClick={() => setEditMode(!editMode)}
+                            >
+                                {editMode ? 'Done Editing' : 'Edit Floors'}
+                            </Button>
+                            <Button
+                                icon={PlusIcon}
+                                onClick={() => setShowCreateModal(true)}
+                            >
+                                Add Floor
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 <Card className="mb-6">
@@ -270,6 +273,7 @@ export default function Index({ floors, building }) {
                                             onEdit={setEditFloor}
                                             onDelete={handleDelete}
                                             editMode={editMode}
+                                            isAdmin={isAdmin}
                                         />
                                     </div>
                                 ))}

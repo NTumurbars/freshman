@@ -1,3 +1,4 @@
+import RoomCalendar from '@/Components/RoomCalendar';
 import AppLayout from '@/Layouts/AppLayout';
 import {
     ArrowLeftIcon,
@@ -5,7 +6,6 @@ import {
     PencilIcon,
     TrashIcon,
     UsersIcon,
-    PlusIcon,
 } from '@heroicons/react/24/outline';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
@@ -19,12 +19,12 @@ import {
     Text,
     Title,
 } from '@tremor/react';
-import { DoorOpen, Hotel, Layers, Percent, Clock } from 'lucide-react';
-import RoomCalendar from '@/Components/RoomCalendar';
+import { Clock, DoorOpen, Hotel, Layers, Percent } from 'lucide-react';
 
 export default function Show({ room }) {
     const { auth } = usePage().props;
     const school = auth.user.school;
+    const isAdmin = auth.user.role.id === 2;
 
     const features = room.features || [];
     const schedules = room.schedules || [];
@@ -34,7 +34,7 @@ export default function Show({ room }) {
         utilization_percentage: 0,
         used_slots: 0,
         total_slots: 60,
-        available_slots: 60
+        available_slots: 60,
     };
 
     // Determine color based on utilization percentage
@@ -45,7 +45,9 @@ export default function Show({ room }) {
         return 'blue';
     };
 
-    const utilizationColor = getUtilizationColor(utilization.utilization_percentage);
+    const utilizationColor = getUtilizationColor(
+        utilization.utilization_percentage,
+    );
 
     // Determine utilization status text
     const getUtilizationStatus = (percentage) => {
@@ -55,7 +57,9 @@ export default function Show({ room }) {
         return 'Underutilized';
     };
 
-    const utilizationStatus = getUtilizationStatus(utilization.utilization_percentage);
+    const utilizationStatus = getUtilizationStatus(
+        utilization.utilization_percentage,
+    );
 
     return (
         <AppLayout>
@@ -88,55 +92,59 @@ export default function Show({ room }) {
                             </div>
                         </div>
                     </div>
-                    <div className="mt-4 flex space-x-3 sm:mt-0">
-                        <Button
-                            variant="primary"
-                            icon={CalendarIcon}
-                            className="bg-indigo-600 hover:bg-indigo-700"
-                            onClick={() => {
-                                // Use the useForm visit method with data to pre-fill values
-                                const url = route('schedules.create', { school: school.id });
-                                window.location.href = `${url}?room_id=${room.id}&location_type=in-person&return_url=${encodeURIComponent(
-                                    route('rooms.show', {
+                    {isAdmin && (
+                        <div className="mt-4 flex space-x-3 sm:mt-0">
+                            <Button
+                                variant="primary"
+                                icon={CalendarIcon}
+                                className="bg-indigo-600 hover:bg-indigo-700"
+                                onClick={() => {
+                                    // Use the useForm visit method with data to pre-fill values
+                                    const url = route('schedules.create', {
                                         school: school.id,
-                                        room: room.id
-                                    })
-                                )}`;
-                            }}
-                        >
-                            Create Schedule
-                        </Button>
-                        <Link
-                            href={route('rooms.edit', {
-                                school: school.id,
-                                room: room.id,
-                            })}
-                        >
+                                    });
+                                    window.location.href = `${url}?room_id=${room.id}&location_type=in-person&return_url=${encodeURIComponent(
+                                        route('rooms.show', {
+                                            school: school.id,
+                                            room: room.id,
+                                        }),
+                                    )}`;
+                                }}
+                            >
+                                Create Schedule
+                            </Button>
+                            <Link
+                                href={route('rooms.edit', {
+                                    school: school.id,
+                                    room: room.id,
+                                })}
+                            >
+                                <Button
+                                    variant="secondary"
+                                    icon={PencilIcon}
+                                    className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                >
+                                    Edit Room
+                                </Button>
+                            </Link>
                             <Button
                                 variant="secondary"
-                                icon={PencilIcon}
-                                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                icon={TrashIcon}
+                                className="border-red-500 text-red-600 hover:bg-red-50"
+                                onClick={() => {
+                                    if (
+                                        confirm(
+                                            'Are you sure you want to delete this room?',
+                                        )
+                                    ) {
+                                        // TODO: Handle delete
+                                    }
+                                }}
                             >
-                                Edit Room
+                                Delete
                             </Button>
-                        </Link>
-                        <Button
-                            variant="secondary"
-                            icon={TrashIcon}
-                            className="border-red-500 text-red-600 hover:bg-red-50"
-                            onClick={() => {
-                                if (
-                                    confirm(
-                                        'Are you sure you want to delete this room?',
-                                    )
-                                ) {
-                                    // TODO: Handle delete
-                                }
-                            }}
-                        >
-                            Delete
-                        </Button>
-                    </div>
+                        </div>
+                    )}
                 </div>
 
                 <Grid numItems={1} numItemsSm={3} className="mb-6 gap-6">
@@ -164,7 +172,9 @@ export default function Show({ room }) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <Text>Utilization</Text>
-                                <Metric>{utilization.utilization_percentage}%</Metric>
+                                <Metric>
+                                    {utilization.utilization_percentage}%
+                                </Metric>
                             </div>
                             <Percent className="h-8 w-8 text-blue-500" />
                         </div>
@@ -180,7 +190,7 @@ export default function Show({ room }) {
                     <Divider className="my-4" />
 
                     <div className="mb-5">
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="mb-2 flex items-center justify-between">
                             <Text>Current Utilization</Text>
                             <Badge color={utilizationColor} size="lg">
                                 {utilizationStatus}
@@ -194,13 +204,17 @@ export default function Show({ room }) {
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                        <div className={`rounded-md bg-${utilizationColor}-50 p-4`}>
+                        <div
+                            className={`rounded-md bg-${utilizationColor}-50 p-4`}
+                        >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center">
                                     <Clock className="mr-1 h-4 w-4 text-gray-600" />
                                     <Text>Used Slots</Text>
                                 </div>
-                                <Text className="font-semibold">{utilization.used_slots}</Text>
+                                <Text className="font-semibold">
+                                    {utilization.used_slots}
+                                </Text>
                             </div>
                         </div>
 
@@ -210,7 +224,9 @@ export default function Show({ room }) {
                                     <Clock className="mr-1 h-4 w-4 text-gray-600" />
                                     <Text>Available Slots</Text>
                                 </div>
-                                <Text className="font-semibold">{utilization.available_slots}</Text>
+                                <Text className="font-semibold">
+                                    {utilization.available_slots}
+                                </Text>
                             </div>
                         </div>
 
@@ -220,14 +236,17 @@ export default function Show({ room }) {
                                     <Clock className="mr-1 h-4 w-4 text-gray-600" />
                                     <Text>Total Slots</Text>
                                 </div>
-                                <Text className="font-semibold">{utilization.total_slots}</Text>
+                                <Text className="font-semibold">
+                                    {utilization.total_slots}
+                                </Text>
                             </div>
                         </div>
                     </div>
 
                     <div className="mt-4">
                         <Text className="text-xs text-gray-500">
-                            *Utilization is calculated based on 12 hours per day, 5 days per week (60 total possible time slots)
+                            *Utilization is calculated based on 12 hours per
+                            day, 5 days per week (60 total possible time slots)
                         </Text>
                     </div>
                 </Card>
@@ -305,7 +324,11 @@ export default function Show({ room }) {
                     </div>
                     <Divider className="my-4" />
 
-                    <RoomCalendar schedules={schedules} room={room} school={school} />
+                    <RoomCalendar
+                        schedules={schedules}
+                        room={room}
+                        school={school}
+                    />
                 </Card>
             </div>
         </AppLayout>

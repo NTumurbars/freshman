@@ -6,7 +6,7 @@ import {
     PencilIcon,
     UsersIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Badge,
     Button,
@@ -20,15 +20,15 @@ import {
     Text,
     Title,
 } from '@tremor/react';
-import { DoorOpen, Hotel, Layers, Percent, Clock } from 'lucide-react';
+import { Percent } from 'lucide-react';
 
-const RoomCard = ({ room, school, building, floor }) => {
+const RoomCard = ({ room, school, building, floor, isAdmin }) => {
     const features = room.features || [];
     const utilization = room.utilization || {
         utilization_percentage: 0,
         used_slots: 0,
         available_slots: 60,
-        total_slots: 60
+        total_slots: 60,
     };
 
     // Determine color based on utilization percentage
@@ -39,10 +39,12 @@ const RoomCard = ({ room, school, building, floor }) => {
         return 'blue';
     };
 
-    const utilizationColor = getUtilizationColor(utilization.utilization_percentage);
+    const utilizationColor = getUtilizationColor(
+        utilization.utilization_percentage,
+    );
 
     return (
-        <Card className="room-detail-card transition-all hover:shadow-lg hover:-translate-y-1">
+        <Card className="room-detail-card transition-all hover:-translate-y-1 hover:shadow-lg">
             <Link
                 href={route('rooms.show', {
                     school: school.id,
@@ -52,10 +54,14 @@ const RoomCard = ({ room, school, building, floor }) => {
             >
                 <div className="flex items-start justify-between">
                     <div>
-                        <Title className="text-blue-700">{room.room_number}</Title>
-                        <div className="flex items-center mt-1">
-                            <UsersIcon className="h-4 w-4 text-gray-500 mr-1" />
-                            <Text className="text-gray-600">Capacity: {room.capacity}</Text>
+                        <Title className="text-blue-700">
+                            {room.room_number}
+                        </Title>
+                        <div className="mt-1 flex items-center">
+                            <UsersIcon className="mr-1 h-4 w-4 text-gray-500" />
+                            <Text className="text-gray-600">
+                                Capacity: {room.capacity}
+                            </Text>
                         </div>
                     </div>
                     <div className="room-icon-wrapper">
@@ -65,28 +71,42 @@ const RoomCard = ({ room, school, building, floor }) => {
 
                 {/* Room Utilization Section */}
                 <div className="mt-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="mb-2 flex items-center justify-between">
                         <div className="flex items-center">
                             <Percent className="mr-1 h-4 w-4 text-gray-500" />
-                            <Text className="text-sm font-medium">Utilization</Text>
+                            <Text className="text-sm font-medium">
+                                Utilization
+                            </Text>
                         </div>
                         <Badge color={utilizationColor} size="sm">
                             {utilization.utilization_percentage}%
                         </Badge>
                     </div>
-                    <ProgressBar value={utilization.utilization_percentage} color={utilizationColor} className="mt-1" />
+                    <ProgressBar
+                        value={utilization.utilization_percentage}
+                        color={utilizationColor}
+                        className="mt-1"
+                    />
                     <div className="mt-1 flex justify-between text-xs text-gray-500">
                         <span>Used: {utilization.used_slots} slots</span>
-                        <span>Available: {utilization.available_slots} slots</span>
+                        <span>
+                            Available: {utilization.available_slots} slots
+                        </span>
                     </div>
                 </div>
 
                 {features.length > 0 && (
-                    <div className="mt-4 room-features">
-                        <Text className="font-medium text-gray-700">Features:</Text>
+                    <div className="room-features mt-4">
+                        <Text className="font-medium text-gray-700">
+                            Features:
+                        </Text>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {features.map((feature) => (
-                                <Badge key={feature.id} color="blue" className="feature-badge">
+                                <Badge
+                                    key={feature.id}
+                                    color="blue"
+                                    className="feature-badge"
+                                >
                                     {feature.name}
                                 </Badge>
                             ))}
@@ -95,35 +115,52 @@ const RoomCard = ({ room, school, building, floor }) => {
                 )}
 
                 <div className="view-details-hint mt-2 text-right">
-                    <Badge color="indigo" size="sm">View Details</Badge>
+                    <Badge color="indigo" size="sm">
+                        View Details
+                    </Badge>
                 </div>
             </Link>
 
             <Divider className="my-4" />
 
-            <Flex justifyContent="end">
-                <Link
-                    href={route('rooms.edit', {
-                        school: school.id,
-                        room: room.id,
-                        return_url: route('buildings.floors.show', {
+            {isAdmin && (
+                <Flex justifyContent="end">
+                    <Link
+                        href={route('rooms.edit', {
                             school: school.id,
-                            building: building.id,
-                            floor: floor.id,
-                        }),
-                    })}
-                >
-                    <Button variant="light" icon={PencilIcon} className="edit-room-btn">
-                        Edit Room
-                    </Button>
-                </Link>
-            </Flex>
+                            room: room.id,
+                            return_url: route('buildings.floors.show', {
+                                school: school.id,
+                                building: building.id,
+                                floor: floor.id,
+                            }),
+                        })}
+                    >
+                        <Button
+                            variant="light"
+                            icon={PencilIcon}
+                            className="edit-room-btn"
+                        >
+                            Edit Room
+                        </Button>
+                    </Link>
+                </Flex>
+            )}
         </Card>
     );
 };
 
-export default function Show({ floor, building, school, utilization, processed_rooms }) {
+export default function Show({
+    floor,
+    building,
+    school,
+    utilization,
+    processed_rooms,
+}) {
     const rooms = floor.rooms || [];
+
+    const { auth } = usePage().props;
+    const isAdmin = auth.user.role.id === 2;
 
     const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
 
@@ -135,7 +172,9 @@ export default function Show({ floor, building, school, utilization, processed_r
         return 'blue';
     };
 
-    const utilizationColor = getUtilizationColor(utilization?.utilization_percentage || 0);
+    const utilizationColor = getUtilizationColor(
+        utilization?.utilization_percentage || 0,
+    );
 
     return (
         <AppLayout>
@@ -168,17 +207,19 @@ export default function Show({ floor, building, school, utilization, processed_r
                         </div>
                     </div>
                     <div className="mt-4 flex space-x-3 sm:mt-0">
-                        <Link
-                            href={route('buildings.floors.edit', {
-                                school: school.id,
-                                building: building.id,
-                                floor: floor.id,
-                            })}
-                        >
-                            <Button variant="secondary" icon={PencilIcon}>
-                                Edit Floor
-                            </Button>
-                        </Link>
+                        {isAdmin && (
+                            <Link
+                                href={route('buildings.floors.edit', {
+                                    school: school.id,
+                                    building: building.id,
+                                    floor: floor.id,
+                                })}
+                            >
+                                <Button variant="secondary" icon={PencilIcon}>
+                                    Edit Floor
+                                </Button>
+                            </Link>
+                        )}
                         <Link
                             href={route('buildings.floors.rooms.index', {
                                 school: school.id,
@@ -216,12 +257,17 @@ export default function Show({ floor, building, school, utilization, processed_r
                             </Flex>
                             <Metric>{totalCapacity}</Metric>
                         </Card>
-                        <Card decoration="top" decorationColor={utilizationColor}>
+                        <Card
+                            decoration="top"
+                            decorationColor={utilizationColor}
+                        >
                             <Flex alignItems="center">
                                 <Percent className="mr-2 h-6 w-6 text-blue-600" />
                                 <Text>Utilization</Text>
                             </Flex>
-                            <Metric>{utilization?.utilization_percentage || 0}%</Metric>
+                            <Metric>
+                                {utilization?.utilization_percentage || 0}%
+                            </Metric>
                         </Card>
                     </Grid>
                 </Card>
@@ -242,45 +288,67 @@ export default function Show({ floor, building, school, utilization, processed_r
                             className="h-2.5"
                         />
                         <div className="mt-2 text-right text-xs text-gray-500">
-                            {utilization?.used_slots || 0} of {utilization?.possible_slots || 0} slots used
+                            {utilization?.used_slots || 0} of{' '}
+                            {utilization?.possible_slots || 0} slots used
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         {/* Most Utilized Rooms */}
                         <div>
-                            <Text className="mb-2 font-medium text-gray-700">Most Utilized Rooms</Text>
+                            <Text className="mb-2 font-medium text-gray-700">
+                                Most Utilized Rooms
+                            </Text>
                             <div className="space-y-2">
-                                {utilization?.most_utilized_rooms?.map((room, index) => (
-                                    <div key={room.id} className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-                                                    {index + 1}
-                                                </div>
-                                                <div className="ml-3">
-                                                    <Link
-                                                        href={route('rooms.show', {
-                                                            school: school.id,
-                                                            room: room.id,
-                                                        })}
-                                                        className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
-                                                    >
-                                                        Room {room.room_number}
-                                                    </Link>
-                                                    <div className="text-xs text-gray-500">
-                                                        Capacity: {room.capacity}
+                                {utilization?.most_utilized_rooms?.map(
+                                    (room, index) => (
+                                        <div
+                                            key={room.id}
+                                            className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center">
+                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                                                        {index + 1}
+                                                    </div>
+                                                    <div className="ml-3">
+                                                        <Link
+                                                            href={route(
+                                                                'rooms.show',
+                                                                {
+                                                                    school: school.id,
+                                                                    room: room.id,
+                                                                },
+                                                            )}
+                                                            className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
+                                                        >
+                                                            Room{' '}
+                                                            {room.room_number}
+                                                        </Link>
+                                                        <div className="text-xs text-gray-500">
+                                                            Capacity:{' '}
+                                                            {room.capacity}
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <Badge
+                                                    color={getUtilizationColor(
+                                                        room.utilization_percentage,
+                                                    )}
+                                                >
+                                                    {
+                                                        room.utilization_percentage
+                                                    }
+                                                    %
+                                                </Badge>
                                             </div>
-                                            <Badge color={getUtilizationColor(room.utilization_percentage)}>
-                                                {room.utilization_percentage}%
-                                            </Badge>
                                         </div>
-                                    </div>
-                                ))}
+                                    ),
+                                )}
 
-                                {(!utilization?.most_utilized_rooms || utilization.most_utilized_rooms.length === 0) && (
+                                {(!utilization?.most_utilized_rooms ||
+                                    utilization.most_utilized_rooms.length ===
+                                        0) && (
                                     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-gray-500">
                                         No room utilization data available
                                     </div>
@@ -290,40 +358,55 @@ export default function Show({ floor, building, school, utilization, processed_r
 
                         {/* Least Utilized Rooms */}
                         <div>
-                            <Text className="mb-2 font-medium text-gray-700">Least Utilized Rooms</Text>
+                            <Text className="mb-2 font-medium text-gray-700">
+                                Least Utilized Rooms
+                            </Text>
                             <div className="space-y-2">
-                                {utilization?.least_utilized_rooms?.map((room, index) => (
-                                    <div key={room.id} className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-700">
-                                                    {index + 1}
-                                                </div>
-                                                <div className="ml-3">
-                                                    <Link
-                                                        href={route('rooms.show', {
-                                                            school: school.id,
-                                                            room: room.id,
-                                                        })}
-                                                        className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
-                                                    >
-                                                        Room {room.room_number}
-                                                    </Link>
-                                                    <div className="text-xs text-gray-500">
-                                                        Capacity: {room.capacity}
+                                {utilization?.least_utilized_rooms?.map(
+                                    (room, index) => (
+                                        <div
+                                            key={room.id}
+                                            className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center">
+                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-700">
+                                                        {index + 1}
+                                                    </div>
+                                                    <div className="ml-3">
+                                                        <Link
+                                                            href={route(
+                                                                'rooms.show',
+                                                                {
+                                                                    school: school.id,
+                                                                    room: room.id,
+                                                                },
+                                                            )}
+                                                            className="font-medium text-gray-900 hover:text-blue-600 hover:underline"
+                                                        >
+                                                            Room{' '}
+                                                            {room.room_number}
+                                                        </Link>
+                                                        <div className="text-xs text-gray-500">
+                                                            Capacity:{' '}
+                                                            {room.capacity}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <Badge color="green">
-                                                    {room.available_slots} free slots
-                                                </Badge>
+                                                <div className="flex items-center">
+                                                    <Badge color="green">
+                                                        {room.available_slots}{' '}
+                                                        free slots
+                                                    </Badge>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ),
+                                )}
 
-                                {(!utilization?.least_utilized_rooms || utilization.least_utilized_rooms.length === 0) && (
+                                {(!utilization?.least_utilized_rooms ||
+                                    utilization.least_utilized_rooms.length ===
+                                        0) && (
                                     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-gray-500">
                                         No room utilization data available
                                     </div>
@@ -334,7 +417,8 @@ export default function Show({ floor, building, school, utilization, processed_r
 
                     <div className="mt-4">
                         <Text className="text-xs text-gray-500">
-                            *Utilization is calculated based on 12 hours per day (8am-8pm), 5 days per week
+                            *Utilization is calculated based on 12 hours per day
+                            (8am-8pm), 5 days per week
                         </Text>
                     </div>
                 </Card>
@@ -346,24 +430,23 @@ export default function Show({ floor, building, school, utilization, processed_r
                         className="mb-4"
                     >
                         <Title>Rooms on Floor {floor.number}</Title>
-                        <Link
-                            href={route('rooms.create', {
-                                school: school.id,
-                                floor_id: floor.id,
-                                return_url: route(
-                                    'buildings.floors.show',
-                                    {
+                        {isAdmin && (
+                            <Link
+                                href={route('rooms.create', {
+                                    school: school.id,
+                                    floor_id: floor.id,
+                                    return_url: route('buildings.floors.show', {
                                         school: school.id,
                                         building: building.id,
                                         floor: floor.id,
-                                    },
-                                ),
-                            })}
-                        >
-                            <Button variant="light" icon={PencilIcon}>
-                                Add Room
-                            </Button>
-                        </Link>
+                                    }),
+                                })}
+                            >
+                                <Button variant="light" icon={PencilIcon}>
+                                    Add Room
+                                </Button>
+                            </Link>
+                        )}
                     </Flex>
 
                     {rooms.length === 0 ? (
@@ -373,25 +456,30 @@ export default function Show({ floor, building, school, utilization, processed_r
                                 <Text className="mt-2">
                                     No rooms found in this floor
                                 </Text>
-                                <Link
-                                    href={route('rooms.create', {
-                                        school: school.id,
-                                        floor_id: floor.id,
-                                        return_url: route(
-                                            'buildings.floors.show',
-                                            {
-                                                school: school.id,
-                                                building: building.id,
-                                                floor: floor.id,
-                                            },
-                                        ),
-                                    })}
-                                    className="mt-4"
-                                >
-                                    <Button variant="light" icon={PencilIcon}>
-                                        Add your first room
-                                    </Button>
-                                </Link>
+                                {isAdmin && (
+                                    <Link
+                                        href={route('rooms.create', {
+                                            school: school.id,
+                                            floor_id: floor.id,
+                                            return_url: route(
+                                                'buildings.floors.show',
+                                                {
+                                                    school: school.id,
+                                                    building: building.id,
+                                                    floor: floor.id,
+                                                },
+                                            ),
+                                        })}
+                                        className="mt-4"
+                                    >
+                                        <Button
+                                            variant="light"
+                                            icon={PencilIcon}
+                                        >
+                                            Add your first room
+                                        </Button>
+                                    </Link>
+                                )}
                             </div>
                         </Card>
                     ) : (
@@ -408,6 +496,7 @@ export default function Show({ floor, building, school, utilization, processed_r
                                         school={school}
                                         building={building}
                                         floor={floor}
+                                        isAdmin={isAdmin}
                                     />
                                 </Col>
                             ))}

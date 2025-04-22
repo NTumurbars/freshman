@@ -6,7 +6,7 @@ import {
     UsersIcon,
     WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     Badge,
     Button,
@@ -22,6 +22,8 @@ import {
 import { DoorOpen, Hotel, Layers } from 'lucide-react';
 
 const RoomCard = ({ room, school, building, floor }) => {
+    const { auth } = usePage().props;
+    const isAdmin = auth.user.role.id === 2;
     const features = room.features || [];
 
     return (
@@ -54,23 +56,25 @@ const RoomCard = ({ room, school, building, floor }) => {
 
             <Divider className="my-4" />
 
-            <Flex justifyContent="end">
-                <Link
-                    href={route('rooms.edit', {
-                        school: school.id,
-                        room: room.id,
-                        return_url: route('buildings.floors.rooms.index', {
+            {isAdmin && (
+                <Flex justifyContent="end">
+                    <Link
+                        href={route('rooms.edit', {
                             school: school.id,
-                            building: building.id,
-                            floor: floor.id,
-                        }),
-                    })}
-                >
-                    <Button variant="light" icon={WrenchScrewdriverIcon}>
-                        Manage Room
-                    </Button>
-                </Link>
-            </Flex>
+                            room: room.id,
+                            return_url: route('buildings.floors.rooms.index', {
+                                school: school.id,
+                                building: building.id,
+                                floor: floor.id,
+                            }),
+                        })}
+                    >
+                        <Button variant="light" icon={WrenchScrewdriverIcon}>
+                            Manage Room
+                        </Button>
+                    </Link>
+                </Flex>
+            )}
         </Card>
     );
 };
@@ -126,11 +130,13 @@ export default function Index({ rooms, floor, building, school }) {
                             </div>
                         </div>
                     </div>
-                    <div className="mt-4 sm:mt-0">
-                        <Button icon={PlusIcon} onClick={handleAddRoom}>
-                            Add Room
-                        </Button>
-                    </div>
+                    {isAdmin && (
+                        <div className="mt-4 sm:mt-0">
+                            <Button icon={PlusIcon} onClick={handleAddRoom}>
+                                Add Room
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 <Card className="mb-6">
@@ -187,20 +193,22 @@ export default function Index({ rooms, floor, building, school }) {
                     <Title className="mb-4">Rooms</Title>
                     {rooms.length === 0 ? (
                         <Card>
-                            <div className="flex flex-col items-center justify-center py-12">
-                                <DoorOpen className="h-12 w-12 text-gray-400" />
-                                <Text className="mt-2">
-                                    No rooms found in this floor
-                                </Text>
-                                <Button
-                                    variant="light"
-                                    icon={PlusIcon}
-                                    onClick={handleAddRoom}
-                                    className="mt-4"
-                                >
-                                    Add your first room
-                                </Button>
-                            </div>
+                            {isAdmin && (
+                                <div className="flex flex-col items-center justify-center py-12">
+                                    <DoorOpen className="h-12 w-12 text-gray-400" />
+                                    <Text className="mt-2">
+                                        No rooms found in this floor
+                                    </Text>
+                                    <Button
+                                        variant="light"
+                                        icon={PlusIcon}
+                                        onClick={handleAddRoom}
+                                        className="mt-4"
+                                    >
+                                        Add your first room
+                                    </Button>
+                                </div>
+                            )}
                         </Card>
                     ) : (
                         <Grid
