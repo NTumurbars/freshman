@@ -11,6 +11,12 @@ export default function ScheduleForm({
     rooms = [],
     submitLabel = 'Save Schedule',
     preselectedSectionId = null,
+    preselectedRoomId = null,
+    preselectedLocationType = null,
+    preselectedDayOfWeek = null,
+    preselectedStartTime = null,
+    preselectedEndTime = null,
+    returnUrl = null,
     onPreview = null,
     onNotification = null
 }) {
@@ -25,6 +31,11 @@ export default function ScheduleForm({
         room_id: schedule?.room_id,
         sectionsCount: sections.length,
         roomsCount: rooms.length,
+        preselectedRoomId,
+        preselectedLocationType,
+        preselectedDayOfWeek,
+        preselectedStartTime,
+        preselectedEndTime
     });
 
     // Find initial section and room - do this synchronously before state initialization
@@ -43,19 +54,24 @@ export default function ScheduleForm({
             initialRoom = rooms.find(r => r && r.id && r.id.toString() === schedule.room_id.toString()) || null;
             console.log('Found initial room:', initialRoom);
         }
+    } else if (preselectedRoomId && rooms.length > 0) {
+        // If no schedule but we have a preselected room id
+        initialRoom = rooms.find(r => r && r.id && r.id.toString() === preselectedRoomId.toString()) || null;
+        console.log('Using preselected room:', initialRoom);
     }
 
     // Initialize form with schedule data if available
     const { data, setData, post, put, processing, errors, delete: destroy } = useForm({
         section_id: schedule?.section_id || preselectedSectionId || '',
-        room_id: schedule?.room_id || '',
-        day_of_week: schedule?.day_of_week || '',
-        start_time: schedule?.start_time ? schedule.start_time.substring(0, 5) : '',
-        end_time: schedule?.end_time ? schedule.end_time.substring(0, 5) : '',
-        location_type: schedule?.location_type || 'in-person',
+        room_id: schedule?.room_id || preselectedRoomId || '',
+        day_of_week: schedule?.day_of_week || preselectedDayOfWeek || '',
+        start_time: schedule?.start_time ? schedule.start_time.substring(0, 5) : (preselectedStartTime || ''),
+        end_time: schedule?.end_time ? schedule.end_time.substring(0, 5) : (preselectedEndTime || ''),
+        location_type: schedule?.location_type || preselectedLocationType || 'in-person',
         virtual_meeting_url: schedule?.virtual_meeting_url || '',
         meeting_pattern: schedule?.meeting_pattern || 'single',
         redirect_section: true,
+        return_url: returnUrl || ''
     });
 
     const [isVirtual, setIsVirtual] = useState(data.location_type === 'virtual');
@@ -469,193 +485,212 @@ export default function ScheduleForm({
         }
     };
 
+    // When submitting, take into account any return URL
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!data.section_id) {
-            alert('Please select a section first');
-            return;
-        }
-
-        // Basic validation for required fields
-        if (!data.start_time || !data.end_time) {
-            alert('Please enter both start and end times');
-            return;
-        }
-
-        if ((data.location_type === 'in-person' || data.location_type === 'hybrid') && !data.room_id) {
-            alert('Please select a room for in-person or hybrid classes');
-            return;
-        }
-
-        if ((data.location_type === 'virtual' || data.location_type === 'hybrid') && !data.virtual_meeting_url) {
-            alert('Please enter a virtual meeting URL for virtual or hybrid classes');
-            return;
-        }
-
-        // Check if we're editing a schedule and keeping the same room
-        const isKeepingSameRoom = schedule && schedule.room_id && data.room_id.toString() === schedule.room_id.toString();
-
-        // Skip room conflict check if we're editing and keeping the same room, day and have similar times
-        const isSimilarTime = schedule && data.start_time && data.end_time &&
-            schedule.start_time && schedule.end_time &&
-            Math.abs(timeToMinutes(data.start_time) - timeToMinutes(schedule.start_time.substring(0, 5))) < 15 &&
-            Math.abs(timeToMinutes(data.end_time) - timeToMinutes(schedule.end_time.substring(0, 5))) < 15;
-
-        const isSameDay = schedule && schedule.day_of_week === data.day_of_week;
-
-        // Skip room conflict check if this is the same room, same day and similar time as the original schedule
-        const skipConflictCheck = isKeepingSameRoom && isSameDay && isSimilarTime;
-
-        console.log('Submit conflict check params:', {
-            isEditing: !!schedule,
-            isKeepingSameRoom,
-            isSameDay,
-            isSimilarTime,
-            skipConflictCheck,
-            scheduleStartTime: schedule?.start_time,
-            dataStartTime: data.start_time,
-            scheduleEndTime: schedule?.end_time,
-            dataEndTime: data.end_time
-        });
-
-        // Final check for room conflicts before submitting
-        if (!skipConflictCheck && data.room_id && data.start_time && data.end_time) {
-            const selectedRoom = rooms.find(r => r && r.id && r.id.toString() === data.room_id.toString());
-
-            if (selectedRoom && selectedRoom.schedules) {
-                // Get days to check based on meeting pattern
-                let daysToCheck = [data.day_of_week || 'Monday'];
-                try {
-                    if (data.meeting_pattern && data.meeting_pattern !== 'single') {
-                        daysToCheck = getDaysFromPattern(data.meeting_pattern) || daysToCheck;
-                    }
-                } catch (error) {
-                    console.error('Error getting days from pattern:', error);
-                }
-
-                // Check for conflicts
-                let hasConflict = false;
-                let conflictDetails = [];
-
-                daysToCheck.forEach(day => {
-                    if (!day) return;
-
-                    const daySchedules = selectedRoom.schedules.filter(s => s && s.day_of_week === day) || [];
-
-                    // Skip the current schedule being edited - ensure we're using string comparison
-                    const schedulesToCheck = schedule?.id ?
-                        daySchedules.filter(s => s && s.id && s.id.toString() !== schedule.id.toString()) :
-                        daySchedules;
-
-                    schedulesToCheck.forEach(s => {
-                        if (s && s.start_time && s.end_time &&
-                            hasTimeConflict(s.start_time, s.end_time, data.start_time, data.end_time)) {
-                            hasConflict = true;
-                            const section = s.section?.course?.title || 'Unknown course';
-                            const time = `${s.start_time}-${s.end_time}`;
-                            conflictDetails.push(`${section} on ${day} at ${time}`);
-                        }
-                    });
-                });
-
-                if (hasConflict) {
-                    alert(`Cannot save schedule due to room conflicts:\n${conflictDetails.join('\n')}`);
-                    return;
-                }
-            }
-        }
-
-        // Check if there's a capacity warning to acknowledge
-        if (capacityMismatch && capacityMismatch.type === 'warning' &&
-            !confirm('The selected room has less capacity than the section requires. Continue anyway?')) {
-            return;
-        }
-
-        // Include capacity update if user chose to update it
-        const finalData = { ...data };
-
-        // Debug logging for the capacity update
-        console.log('Before capacity update check:', {
-            shouldUpdateCapacity,
-            hasSelectedRoom: !!selectedRoom,
-            selectedRoomCapacity: selectedRoom?.capacity,
-            hasSelectedSection: !!selectedSection,
-            selectedSectionCapacity: selectedSection?.capacity
-        });
-
-        if (shouldUpdateCapacity && selectedRoom && selectedSection) {
-            // Explicitly set as boolean true, not as string
-            finalData.update_section_capacity = true;
-            finalData.new_capacity = Number(selectedRoom.capacity);
-
-            // More explicit logging
-            console.log('Will update section capacity:', {
-                update_section_capacity: true,
-                section_id: selectedSection.id,
-                new_capacity: Number(selectedRoom.capacity),
-                from: selectedSection.capacity,
-                to: selectedRoom.capacity
-            });
-        } else {
-            // Explicitly set as boolean false, not as string
-            finalData.update_section_capacity = false;
-            finalData.new_capacity = null;
-
-            console.log('Not updating section capacity');
-        }
+        console.log('Submitting schedule form...');
 
         try {
-            // If editing an existing schedule with pattern change, handle pattern change
-            if (schedule && isEditingPattern) {
-                console.log('Changing schedule pattern to:', data.meeting_pattern);
-                await createSchedulesWithPattern(finalData);
+            // Format times
+            const formattedData = { ...data };
+
+            // Format times to ensure HH:MM:SS format
+            formattedData.start_time = ensureTimeFormat(data.start_time);
+            formattedData.end_time = ensureTimeFormat(data.end_time);
+
+            // Set return url if provided
+            if (returnUrl) {
+                formattedData.return_url = returnUrl;
+            }
+
+            if (!formattedData.section_id) {
+                alert('Please select a section first');
                 return;
             }
 
-            // For normal editing (not changing pattern)
-            if (schedule && !isEditingPattern) {
-                console.log('Updating schedule with data:', finalData);
-                console.log('Should update capacity:', shouldUpdateCapacity);
-                console.log('Form data update_section_capacity:', data.update_section_capacity);
+            // Basic validation for required fields
+            if (!formattedData.start_time || !formattedData.end_time) {
+                alert('Please enter both start and end times');
+                return;
+            }
 
-                // Check if we're editing a schedule with the same room
-                const isKeepingSameRoom = schedule && schedule.room_id &&
-                    finalData.room_id.toString() === schedule.room_id.toString();
+            if ((formattedData.location_type === 'in-person' || formattedData.location_type === 'hybrid') && !formattedData.room_id) {
+                alert('Please select a room for in-person or hybrid classes');
+                return;
+            }
 
-                console.log('Edit params:', {
-                    isKeepingSameRoom,
-                    scheduleRoomId: schedule.room_id,
-                    finalDataRoomId: finalData.room_id,
-                    scheduleDay: schedule.day_of_week,
-                    finalDataDay: finalData.day_of_week,
-                });
+            if ((formattedData.location_type === 'virtual' || formattedData.location_type === 'hybrid') && !formattedData.virtual_meeting_url) {
+                alert('Please enter a virtual meeting URL for virtual or hybrid classes');
+                return;
+            }
 
-                // Create a new object for the submission that explicitly includes all needed fields
-                const submissionData = {
-                    ...data,
-                    update_section_capacity: shouldUpdateCapacity, // Use the checkbox state directly
-                    new_capacity: shouldUpdateCapacity && selectedRoom ? Number(selectedRoom.capacity) : null,
-                    is_keeping_same_room: isKeepingSameRoom,
-                    bypass_conflict_check_for_same_room: isKeepingSameRoom,
-                    original_schedule_id: schedule.id
-                };
+            // Check if we're editing a schedule and keeping the same room
+            const isKeepingSameRoom = schedule && schedule.room_id && formattedData.room_id.toString() === schedule.room_id.toString();
 
-                console.log('Final submission data:', submissionData);
-                await put(route('schedules.update', [school.id, schedule.id]), submissionData);
+            // Skip room conflict check if we're editing and keeping the same room, day and have similar times
+            const isSimilarTime = schedule && formattedData.start_time && formattedData.end_time &&
+                schedule.start_time && schedule.end_time &&
+                Math.abs(timeToMinutes(formattedData.start_time) - timeToMinutes(schedule.start_time.substring(0, 5))) < 15 &&
+                Math.abs(timeToMinutes(formattedData.end_time) - timeToMinutes(schedule.end_time.substring(0, 5))) < 15;
 
-                if (data.redirect_section) {
-                    window.location.href = route('sections.show', [school.id, data.section_id]);
+            const isSameDay = schedule && schedule.day_of_week === formattedData.day_of_week;
+
+            // Skip room conflict check if this is the same room, same day and similar time as the original schedule
+            const skipConflictCheck = isKeepingSameRoom && isSameDay && isSimilarTime;
+
+            console.log('Submit conflict check params:', {
+                isEditing: !!schedule,
+                isKeepingSameRoom,
+                isSameDay,
+                isSimilarTime,
+                skipConflictCheck,
+                scheduleStartTime: schedule?.start_time,
+                dataStartTime: formattedData.start_time,
+                scheduleEndTime: schedule?.end_time,
+                dataEndTime: formattedData.end_time
+            });
+
+            // Final check for room conflicts before submitting
+            if (!skipConflictCheck && formattedData.room_id && formattedData.start_time && formattedData.end_time) {
+                const selectedRoom = rooms.find(r => r && r.id && r.id.toString() === formattedData.room_id.toString());
+
+                if (selectedRoom && selectedRoom.schedules) {
+                    // Get days to check based on meeting pattern
+                    let daysToCheck = [formattedData.day_of_week || 'Monday'];
+                    try {
+                        if (formattedData.meeting_pattern && formattedData.meeting_pattern !== 'single') {
+                            daysToCheck = getDaysFromPattern(formattedData.meeting_pattern) || daysToCheck;
+                        }
+                    } catch (error) {
+                        console.error('Error getting days from pattern:', error);
+                    }
+
+                    // Check for conflicts
+                    let hasConflict = false;
+                    let conflictDetails = [];
+
+                    daysToCheck.forEach(day => {
+                        if (!day) return;
+
+                        const daySchedules = selectedRoom.schedules.filter(s => s && s.day_of_week === day) || [];
+
+                        // Skip the current schedule being edited - ensure we're using string comparison
+                        const schedulesToCheck = schedule?.id ?
+                            daySchedules.filter(s => s && s.id && s.id.toString() !== schedule.id.toString()) :
+                            daySchedules;
+
+                        schedulesToCheck.forEach(s => {
+                            if (s && s.start_time && s.end_time &&
+                                hasTimeConflict(s.start_time, s.end_time, formattedData.start_time, formattedData.end_time)) {
+                                hasConflict = true;
+                                const section = s.section?.course?.title || 'Unknown course';
+                                const time = `${s.start_time}-${s.end_time}`;
+                                conflictDetails.push(`${section} on ${day} at ${time}`);
+                            }
+                        });
+                    });
+
+                    if (hasConflict) {
+                        alert(`Cannot save schedule due to room conflicts:\n${conflictDetails.join('\n')}`);
+                        return;
+                    }
                 }
+            }
+
+            // Check if there's a capacity warning to acknowledge
+            if (capacityMismatch && capacityMismatch.type === 'warning' &&
+                !confirm('The selected room has less capacity than the section requires. Continue anyway?')) {
                 return;
             }
 
-            // For new schedules (creating, not editing)
-            console.log('Creating new schedule with data:', finalData);
-            await createSchedulesWithPattern(finalData);
+            // Include capacity update if user chose to update it
+            const finalData = { ...formattedData };
 
+            // Debug logging for the capacity update
+            console.log('Before capacity update check:', {
+                shouldUpdateCapacity,
+                hasSelectedRoom: !!selectedRoom,
+                selectedRoomCapacity: selectedRoom?.capacity,
+                hasSelectedSection: !!selectedSection,
+                selectedSectionCapacity: selectedSection?.capacity
+            });
+
+            if (shouldUpdateCapacity && selectedRoom && selectedSection) {
+                // Explicitly set as boolean true, not as string
+                finalData.update_section_capacity = true;
+                finalData.new_capacity = Number(selectedRoom.capacity);
+
+                // More explicit logging
+                console.log('Will update section capacity:', {
+                    update_section_capacity: true,
+                    section_id: selectedSection.id,
+                    new_capacity: Number(selectedRoom.capacity),
+                    from: selectedSection.capacity,
+                    to: selectedRoom.capacity
+                });
+            } else {
+                // Explicitly set as boolean false, not as string
+                finalData.update_section_capacity = false;
+                finalData.new_capacity = null;
+
+                console.log('Not updating section capacity');
+            }
+
+            try {
+                // If editing an existing schedule with pattern change, handle pattern change
+                if (schedule && isEditingPattern) {
+                    console.log('Changing schedule pattern to:', formattedData.meeting_pattern);
+                    await createSchedulesWithPattern(finalData);
+                    return;
+                }
+
+                // For normal editing (not changing pattern)
+                if (schedule && !isEditingPattern) {
+                    console.log('Updating schedule with data:', finalData);
+                    console.log('Should update capacity:', shouldUpdateCapacity);
+                    console.log('Form data update_section_capacity:', formattedData.update_section_capacity);
+
+                    // Check if we're editing a schedule with the same room
+                    const isKeepingSameRoom = schedule && schedule.room_id &&
+                        finalData.room_id.toString() === schedule.room_id.toString();
+
+                    console.log('Edit params:', {
+                        isKeepingSameRoom,
+                        scheduleRoomId: schedule.room_id,
+                        finalDataRoomId: finalData.room_id,
+                        scheduleDay: schedule.day_of_week,
+                        finalDataDay: formattedData.day_of_week,
+                    });
+
+                    // Create a new object for the submission that explicitly includes all needed fields
+                    const submissionData = {
+                        ...formattedData,
+                        update_section_capacity: shouldUpdateCapacity, // Use the checkbox state directly
+                        new_capacity: shouldUpdateCapacity && selectedRoom ? Number(selectedRoom.capacity) : null,
+                        is_keeping_same_room: isKeepingSameRoom,
+                        bypass_conflict_check_for_same_room: isKeepingSameRoom,
+                        original_schedule_id: schedule.id
+                    };
+
+                    console.log('Final submission data:', submissionData);
+                    await put(route('schedules.update', [school.id, schedule.id]), submissionData);
+
+                    if (formattedData.redirect_section) {
+                        window.location.href = route('sections.show', [school.id, formattedData.section_id]);
+                    }
+                    return;
+                }
+
+                // For new schedules (creating, not editing)
+                console.log('Creating new schedule with data:', finalData);
+                await createSchedulesWithPattern(finalData);
+
+            } catch (error) {
+                console.error('Error in schedule creation/update:', error);
+                alert('Error: ' + (error.response?.data?.message || error.message || 'Unknown error occurred'));
+            }
         } catch (error) {
-            console.error('Error in schedule creation/update:', error);
+            console.error('Error in schedule submission:', error);
             alert('Error: ' + (error.response?.data?.message || error.message || 'Unknown error occurred'));
         }
     };
@@ -1200,11 +1235,11 @@ export default function ScheduleForm({
                                                 onChange={(e) => {
                                                     console.log('Checkbox changed:', e.target.checked);
                                                     setShouldUpdateCapacity(e.target.checked);
-                                                    setData('update_section_capacity', e.target.checked);
+                                                    handleChange('update_section_capacity', e.target.checked);
                                                     if (e.target.checked && selectedRoom) {
-                                                        setData('new_capacity', Number(selectedRoom.capacity));
+                                                        handleChange('new_capacity', Number(selectedRoom.capacity));
                                                     } else {
-                                                        setData('new_capacity', null);
+                                                        handleChange('new_capacity', null);
                                                     }
                                                 }}
                                             />

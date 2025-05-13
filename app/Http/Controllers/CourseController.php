@@ -9,6 +9,7 @@ use App\Models\Major;
 use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
 
 class CourseController extends Controller
 {
@@ -22,9 +23,15 @@ class CourseController extends Controller
 
         // Filter courses based on departments that belong to the school
         $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
+        $schoolDepartmentIds = Department::where('school_id', $school->id)->pluck('id');
         $courses = Course::whereIn('department_id', $schoolDepartmentIds)
             ->with(['department', 'major', 'sections'])
             ->get();
+        if (Auth::user()->role_id == 3) {
+            $courses = Course::where('department_id', Auth::user()->professor_profile->department_id)
+                ->with(['department', 'major', 'sections'])
+                ->get();
+        }
 
         return Inertia::render('Courses/Index', [
             'courses' => $courses,
@@ -65,7 +72,20 @@ class CourseController extends Controller
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'major_id'      => 'nullable|exists:majors,id',
-            'code'          => 'required|string|unique:courses,code',
+            'code'          => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) use ($school) {
+                    // Check if this code is unique within this school
+                    $exists = Course::whereHas('department', function ($query) use ($school) {
+                        $query->where('school_id', $school->id);
+                    })->where('code', $value)->exists();
+
+                    if ($exists) {
+                        $fail('The course code has already been taken within this school.');
+                    }
+                }
+            ],
             'title'         => 'required|string|max:255',
             'description'   => 'nullable|string',
             'credits'       => 'required|integer|min:1|max:6',
@@ -121,7 +141,23 @@ class CourseController extends Controller
         $data = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'major_id'      => 'nullable|exists:majors,id',
-            'code'          => 'required|string|unique:courses,code,' . $course->id,
+            'code'          => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) use ($school, $course) {
+                    // Check if this code is unique within this school, excluding this course
+                    $exists = Course::whereHas('department', function ($query) use ($school) {
+                        $query->where('school_id', $school->id);
+                    })
+                    ->where('code', $value)
+                    ->where('id', '!=', $course->id)
+                    ->exists();
+
+                    if ($exists) {
+                        $fail('The course code has already been taken within this school.');
+                    }
+                }
+            ],
             'title'         => 'required|string|max:255',
             'description'   => 'nullable|string',
             'credits'       => 'required|integer|min:1|max:6',
@@ -156,8 +192,14 @@ class CourseController extends Controller
             'major',
             'sections.term',
             'sections.schedules.room.floor.building',
-            'sections.professor_profile.user'
+            'sections.professor_profile.user',
+            'sections.courseRegistrations'
         ]);
+
+        // Make sure effective_capacity is calculated for each section
+        $course->sections->each(function($section) {
+            $section->append('effective_capacity');
+        });
 
         // Check if the user can view this course
         $this->authorize('view', $course);

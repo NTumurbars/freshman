@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Building, User, School, FileBarChart, Settings, ShieldCheck, BarChart3 } from 'lucide-react';
+import { Building, User, School, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function SuperUserSideBar() {
@@ -28,7 +28,7 @@ export default function SuperUserSideBar() {
     );
 
     return (
-        <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto scrollbar-hide">
+        <aside className="fixed h-screen w-64 border-r border-gray-200 bg-white p-4">
             <div className="mb-6 border-b border-gray-100 pb-4">
                 <div className="flex items-center space-x-3">
                     <div className="h-10 w-10 flex items-center justify-center bg-blue-100 text-blue-700 rounded-md flex-shrink-0 border border-blue-200">
@@ -50,26 +50,11 @@ export default function SuperUserSideBar() {
                     <NavItem href={route('schools.index')} icon={School}>
                         Manage Schools
                     </NavItem>
-                    <NavItem href={route('schools.create')} icon={Building}>
-                        Add New School
-                    </NavItem>
                 </NavGroup>
 
                 <NavGroup title="Users">
                     <NavItem href={route('users.index')} icon={User}>
                         All Users
-                    </NavItem>
-                    <NavItem href="#" icon={ShieldCheck}>
-                        Permissions
-                    </NavItem>
-                </NavGroup>
-
-                <NavGroup title="System">
-                    <NavItem href="#" icon={Settings}>
-                        System Settings
-                    </NavItem>
-                    <NavItem href={route('reports.view')} icon={FileBarChart}>
-                        Reports
                     </NavItem>
                 </NavGroup>
             </div>

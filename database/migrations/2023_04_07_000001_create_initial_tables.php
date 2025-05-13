@@ -206,6 +206,19 @@ return new class extends Migration
             $table->unsignedInteger('created_at');
         });
 
+        Schema::create('job_batches', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name');
+            $table->integer('total_jobs');
+            $table->integer('pending_jobs');
+            $table->integer('failed_jobs');
+            $table->longText('failed_job_ids');
+            $table->mediumText('options')->nullable();
+            $table->integer('cancelled_at')->nullable();
+            $table->integer('created_at');
+            $table->integer('finished_at')->nullable();
+        });
+
         Schema::create('failed_jobs', function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique();
@@ -226,6 +239,12 @@ return new class extends Migration
             $table->string('key')->primary();
             $table->string('owner');
             $table->integer('expiration');
+        });
+
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
         });
 
         // Create sessions table
@@ -260,11 +279,13 @@ return new class extends Migration
         Schema::dropIfExists('majors');
         Schema::dropIfExists('departments');
         Schema::dropIfExists('failed_jobs');
+        Schema::dropIfExists('job_batches');
         Schema::dropIfExists('jobs');
         Schema::dropIfExists('users');
         Schema::dropIfExists('roles');
         Schema::dropIfExists('schools');
         Schema::dropIfExists('cache_locks');
+        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('cache');
     }
 };

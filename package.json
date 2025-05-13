@@ -47,6 +47,8 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "lucide-react": "^0.483.0",
+        "moment": "^2.30.1",
+        "react-big-calendar": "^1.18.0",
         "react-hot-toast": "^2.5.2",
         "tailwind-merge": "^3.0.2",
         "tailwindcss-animate": "^1.0.7"

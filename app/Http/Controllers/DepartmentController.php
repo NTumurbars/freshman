@@ -23,7 +23,9 @@ class DepartmentController extends Controller
             abort(403, 'You do not have access to this school');
         }
 
-        $departments = Department::where('school_id', $school->id)
+        if($user->role->id == 2)
+        {
+            $departments = Department::where('school_id', $school->id)
             ->with(['school', 'majors', 'courses', 'professor_profiles'])
             ->withCount(['majors', 'courses', 'professor_profiles'])
             ->orderBy('name')
@@ -41,6 +43,35 @@ class DepartmentController extends Controller
                     ]
                 ];
             });
+        }
+        else if ($user->role->id == 3)
+        {
+            $departments = Department::where('school_id', $school->id)
+            ->where('id', $user->professor_profile->department_id)
+            ->with(['school', 'majors', 'courses', 'professor_profiles'])
+            ->withCount(['majors', 'courses', 'professor_profiles'])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($department) {
+                return [
+                    'id' => $department->id,
+                    'name' => $department->name,
+                    'school_id' => $department->school_id,
+                    'code' => $department->code,
+                    'stats' => [
+                        'majors' => $department->majors_count,
+                        'courses' => $department->courses_count,
+                        'professors' => $department->professor_profiles_count,
+                    ]
+                ];
+            });
+        }
+        else
+        {
+            abort(403, 'You do not have access to this school');
+        }
+
+        
         return Inertia::render('Departments/Index', [
             'departments' => $departments,
             'school' => $school,

@@ -23,12 +23,12 @@ class CourseRegistrationPolicy
         // or if the registration belongs to the student.
         return $user->role->name === 'super_admin' ||
                $user->role->name === 'school_admin' ||
-               $user->id === $registration->student_id;
+               $user->id === $registration->user_id;
     }
 
     public function create(User $user)
     {
-        // Allow students to create their own registration; 
+        // Allow students to create their own registration;
         // super_admin and school_admin can create for others.
         return in_array($user->role->name, ['super_admin', 'school_admin', 'student']);
     }

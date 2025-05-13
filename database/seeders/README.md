@@ -1,55 +1,100 @@
-# Database Seeders
+# Freshman Database Seeders
 
-This directory contains the database seeders for the application. Seeders are used to populate the database with sample data.
+This directory contains database seeders for creating realistic test data for the Freshman application.
 
-## Seeder Organization
+## Overview
 
-The seeders are organized in a logical, consolidated way to make them easier to maintain and understand:
+The seeders create a complete academic ecosystem with two universities, their departments, majors, professors, courses, sections, schedules, students, and course registrations.
 
-1. **DatabaseSeeder.php** - The main seeder that coordinates all other seeders and seeds core data like roles, users, schools, etc.
-2. **BuildingSeeder.php** - Handles all physical space data (buildings, floors, rooms, and room features)
-3. **CourseSeeder.php** - Handles all course-related data (courses, sections, etc.)
-4. **ScheduleSeeder.php** - Handles all schedule-related data (primary and weekly schedules)
+## Seeder Sequence
 
-## How to Use
+The seeders run in the following order, managed by `DatabaseSeeder.php`:
 
-To run all seeders, use:
+1. **Core Data (inline in `DatabaseSeeder.php`)**:
+   - Roles and admin users
+   - Schools (Temple University and Temple Japan)
+   - Departments, majors, and terms
+   - Initial professor accounts
 
+2. **Specialized Seeders**:
+   - `BuildingSeeder.php`: Creates campus buildings, floors, rooms, and room features
+   - `CourseSeeder.php`: Creates courses and sections for each department
+   - `ScheduleSeeder.php`: Creates realistic class schedules for the sections
+   - `StudentSeeder.php`: Creates diverse student population for each school
+   - `CourseRegistrationSeeder.php`: Registers students for appropriate courses
+
+## Key Features
+
+- **Realistic Data**: Names, schedules, and academic patterns reflect real-world scenarios
+- **School-Specific**: Data is tailored to the location (Philadelphia vs Tokyo)
+- **Capacity-Aware**: Respects room capacities and section limits
+- **Conflict Avoidance**: Ensures no schedule conflicts in student registrations
+- **Diverse Workloads**: Students take 3-5 courses from a variety of subject areas
+
+## Running the Seeders
+
+### Full Database Reset and Seed
 ```bash
-php artisan db:seed
+php artisan migrate:fresh --seed
 ```
 
-To run a specific seeder, use:
-
+### Running Individual Seeders
 ```bash
-php artisan db:seed --class=ScheduleSeeder
+php artisan db:seed --class=StudentSeeder
+php artisan db:seed --class=CourseRegistrationSeeder
 ```
 
-## Seeder Execution Order
+## Modifying Seeders
 
-When running `php artisan db:seed`, the seeders are executed in the following order:
+### Adding More Students
+To increase the number of students:
 
-1. Core data is seeded first (roles, users, schools, departments, majors, terms)
-2. Buildings, floors, rooms, and room features are seeded
-3. Courses and sections are created
-4. Schedules are assigned to sections
+1. Open `database/seeders/StudentSeeder.php`
+2. Modify the count parameters in the `run()` method:
+   ```php
+   $this->seedStudentsForSchool($templeSchool, $studentRole, $faker, 100); // Increase from 60
+   $this->seedStudentsForSchool($tujSchool, $studentRole, $faker, 80);    // Increase from 40
+   ```
 
-## Sample Data
+### Creating More Courses
+To add new courses:
 
-The seeders create the following sample data:
+1. Open `database/seeders/CourseSeeder.php`
+2. Add course definitions to the `getCoursesForDepartment()` method:
+   ```php
+   case 'Computer Science':
+       return [
+           // Existing courses
+           ['code' => 'CS101', 'title' => 'Introduction to Computer Science', 'credits' => 3],
+           // Add new courses
+           ['code' => 'CS150', 'title' => 'Web Development Basics', 'credits' => 3],
+       ];
+   ```
 
-- **Schools**: Temple University (main campus) and Temple University Japan
-- **Users**: Super Admin, School Admins, Professors, and Students
-- **Departments**: Computer Science, Electrical Engineering, Business, Asian Studies, etc.
-- **Buildings**: Main Building and Science Building for each school
-- **Courses**: Various courses for each department
-- **Sections**: Sections for active terms with professors
-- **Schedules**: Class schedules with different patterns (MWF, TR, etc.)
+### Customizing Registration Patterns
+To adjust how students register for courses:
 
-## Login Credentials
+1. Open `database/seeders/CourseRegistrationSeeder.php`
+2. Modify the coursesToRegister variable to change the course load:
+   ```php
+   // Increase the range for more courses per student
+   $coursesToRegister = rand(4, 6); // Changed from 3-5
+   ```
 
-The following login credentials are created by the seeders:
+## Default Accounts
+
+The seeders create the following admin accounts for testing:
 
 - **Super Admin**: super@admin.com / password
-- **Temple Admin**: temple@admin.com / password
-- **TUJ Admin**: tuj@admin.com / password 
+- **Temple Main Campus Admin**: temple@admin.com / password
+- **Temple Japan Admin**: tuj@admin.com / password
+
+Student accounts are generated with emails following the pattern `firstname.lastname@temple.edu` or `firstname.lastname@tuj.temple.edu` and the password "password".
+
+## Contributions
+
+When enhancing the seeders, please ensure:
+
+1. All seeders work together without conflicts
+2. Data remains realistic and appropriate for an academic setting
+3. Documentation reflects any changes to seeder behavior 

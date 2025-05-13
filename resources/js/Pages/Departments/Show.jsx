@@ -10,7 +10,7 @@ import {
     PlusIcon,
     UserGroupIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Badge,
     Button,
@@ -39,11 +39,15 @@ export default function Show({ department, school }) {
         department.professor_profiles = [];
     }
 
+    const { auth } = usePage().props;
+
+    const isAdmin = auth.user.role.id === 2;
+
     // Debug - check if users are loaded correctly
     console.log(
         'Professor Profiles with users:',
         JSON.stringify(department.professor_profiles, null, 2),
-        Array.isArray(department.courses)
+        Array.isArray(department.courses),
     );
     console.log(
         'Department contact data:',
@@ -84,14 +88,16 @@ export default function Show({ department, school }) {
                             </Badge>
                         )}
                     </div>
-                    <Link
-                        href={route('departments.edit', {
-                            school: school.id,
-                            department: department.id,
-                        })}
-                    >
-                        <Button icon={PencilIcon}>Edit Department</Button>
-                    </Link>
+                    {isAdmin && (
+                        <Link
+                            href={route('departments.edit', {
+                                school: school.id,
+                                department: department.id,
+                            })}
+                        >
+                            <Button icon={PencilIcon}>Edit Department</Button>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Department Info Section */}
@@ -198,10 +204,11 @@ export default function Show({ department, school }) {
                                         </div>
                                     </div>
 
-                                    {hasMajors && (
+                                    {hasMajors && isAdmin && (
                                         <Link
                                             href={route('majors.create', {
                                                 school: school.id,
+                                                department_id: department.id,
                                             })}
                                         >
                                             <Button
@@ -280,15 +287,19 @@ export default function Show({ department, school }) {
                                 <Card>
                                     <div className="flex items-center justify-between">
                                         <Title>Academic Majors</Title>
-                                        <Link
-                                            href={route('majors.create', {
-                                                school: school.id,
-                                            })}
-                                        >
-                                            <Button icon={PlusIcon}>
-                                                Add Major
-                                            </Button>
-                                        </Link>
+                                        {isAdmin && (
+                                            <Link
+                                                href={route('majors.create', {
+                                                    school: school.id,
+                                                    department_id:
+                                                        department.id,
+                                                })}
+                                            >
+                                                <Button icon={PlusIcon}>
+                                                    Add Major
+                                                </Button>
+                                            </Link>
+                                        )}
                                     </div>
                                     <Divider />
 
@@ -337,19 +348,26 @@ export default function Show({ department, school }) {
                                                 No majors found in this
                                                 department
                                             </Text>
-                                            <Link
-                                                href={route('majors.create', {
-                                                    school: school.id,
-                                                })}
-                                                className="mt-4 inline-block"
-                                            >
-                                                <Button
-                                                    variant="light"
-                                                    icon={PlusIcon}
+                                            {isAdmin && (
+                                                <Link
+                                                    href={route(
+                                                        'majors.create',
+                                                        {
+                                                            school: school.id,
+                                                            department_id:
+                                                                department.id,
+                                                        },
+                                                    )}
+                                                    className="mt-4 inline-block"
                                                 >
-                                                    Add your first major
-                                                </Button>
-                                            </Link>
+                                                    <Button
+                                                        variant="light"
+                                                        icon={PlusIcon}
+                                                    >
+                                                        Add your first major
+                                                    </Button>
+                                                </Link>
+                                            )}
                                         </div>
                                     )}
                                 </Card>
@@ -360,15 +378,19 @@ export default function Show({ department, school }) {
                                 <Card>
                                     <div className="flex items-center justify-between">
                                         <Title>Courses</Title>
-                                        <Link
-                                            href={route('courses.create', {
-                                                school: school.id,
-                                            })}
-                                        >
-                                            <Button icon={PlusIcon}>
-                                                Add Course
-                                            </Button>
-                                        </Link>
+                                        {isAdmin && (
+                                            <Link
+                                                href={route('courses.create', {
+                                                    school: school.id,
+                                                    department_id:
+                                                        department.id,
+                                                })}
+                                            >
+                                                <Button icon={PlusIcon}>
+                                                    Add Course
+                                                </Button>
+                                            </Link>
+                                        )}
                                     </div>
                                     <Divider />
 
@@ -435,19 +457,26 @@ export default function Show({ department, school }) {
                                                 No courses found in this
                                                 department
                                             </Text>
-                                            <Link
-                                                href={route('courses.create', {
-                                                    school: school.id,
-                                                })}
-                                            >
-                                                <Button
-                                                    className="mt-4"
-                                                    variant="light"
-                                                    icon={PlusIcon}
+                                            {isAdmin && (
+                                                <Link
+                                                    href={route(
+                                                        'courses.create',
+                                                        {
+                                                            school: school.id,
+                                                            department_id:
+                                                                department.id,
+                                                        },
+                                                    )}
                                                 >
-                                                    Add your first course
-                                                </Button>
-                                            </Link>
+                                                    <Button
+                                                        className="mt-4"
+                                                        variant="light"
+                                                        icon={PlusIcon}
+                                                    >
+                                                        Add your first course
+                                                    </Button>
+                                                </Link>
+                                            )}
                                         </div>
                                     )}
                                 </Card>
@@ -459,15 +488,20 @@ export default function Show({ department, school }) {
                                     <div className="flex items-center justify-between">
                                         <Title>Faculty Members</Title>
                                         <div className="flex gap-2">
-                                            <Link
-                                                href={route('users.create', {
-                                                    school: school.id,
-                                                })}
-                                            >
-                                                <Button icon={PlusIcon}>
-                                                    Add Professor
-                                                </Button>
-                                            </Link>
+                                            {isAdmin && (
+                                                <Link
+                                                    href={route(
+                                                        'users.create',
+                                                        {
+                                                            school: school.id,
+                                                        },
+                                                    )}
+                                                >
+                                                    <Button icon={PlusIcon}>
+                                                        Add Professor
+                                                    </Button>
+                                                </Link>
+                                            )}
                                             <Link
                                                 href={route('users.index', {
                                                     school: school.id,
@@ -565,19 +599,24 @@ export default function Show({ department, school }) {
                                                 No professors assigned to this
                                                 department yet
                                             </Text>
-                                            <Link
-                                                href={route('users.create', {
-                                                    school: school.id,
-                                                })}
-                                                className="mt-4 inline-block"
-                                            >
-                                                <Button
-                                                    variant="light"
-                                                    icon={PlusIcon}
+                                            {isAdmin && (
+                                                <Link
+                                                    href={route(
+                                                        'users.create',
+                                                        {
+                                                            school: school.id,
+                                                        },
+                                                    )}
+                                                    className="mt-4 inline-block"
                                                 >
-                                                    Add your first professor
-                                                </Button>
-                                            </Link>
+                                                    <Button
+                                                        variant="light"
+                                                        icon={PlusIcon}
+                                                    >
+                                                        Add your first professor
+                                                    </Button>
+                                                </Link>
+                                            )}
                                         </div>
                                     )}
                                 </Card>

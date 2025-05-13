@@ -40,8 +40,8 @@ class TermController extends Controller
                     'school_id' => $term->school_id,
                     'name' => $term->name,
                     'school_name' => $term->school->name,
-                    'start_date' => $term->start_date,
-                    'end_date' => $term->end_date,
+                    'start_date' => $term->start_date->format('Y-m-d'),
+                    'end_date' => $term->end_date->format('Y-m-d'),
                     'sections_count' => $term->sections_count,
                     'is_current' => $today->between($term->start_date, $term->end_date)
                 ];
@@ -118,7 +118,14 @@ class TermController extends Controller
         }
 
         return Inertia::render('Terms/Edit', [
-            'term' => $term,
+            'term' => [
+                'id' => $term->id,
+                'name' => $term->name,
+                'start_date' => $term->start_date ? $term->start_date->format('Y-m-d') : null,
+                'end_date' => $term->end_date ? $term->end_date->format('Y-m-d') : null,
+                'school_id' => $term->school_id,
+                'sections_count' => $term->sections()->count(),
+            ],
             'school' => [
                 'id' => $school->id,
                 'name' => $school->name
@@ -195,8 +202,8 @@ class TermController extends Controller
             'term' => [
                 'id' => $term->id,
                 'name' => $term->name,
-                'start_date' => $term->start_date,
-                'end_date' => $term->end_date,
+                'start_date' => $term->start_date->format('Y-m-d'),
+                'end_date' => $term->end_date->format('Y-m-d'),
                 'sections' => $term->sections->map(function($section) {
                     return [
                         'id' => $section->id,

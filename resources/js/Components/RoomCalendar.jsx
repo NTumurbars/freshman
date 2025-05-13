@@ -4,11 +4,13 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Button, Dialog, DialogPanel, Text, Title, Card, Badge } from '@tremor/react';
 import { Link } from '@inertiajs/react';
-import { ClockIcon, MapPinIcon, UserIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, MapPinIcon, UserIcon, AcademicCapIcon, PlusIcon } from '@heroicons/react/24/outline';
 
-const RoomCalendar = ({ schedules, room }) => {
+const RoomCalendar = ({ schedules, room, school }) => {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+    const [selectedSlot, setSelectedSlot] = useState(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Convert schedules to FullCalendar events format
     const events = schedules.map(schedule => {
@@ -17,8 +19,8 @@ const RoomCalendar = ({ schedules, room }) => {
             .indexOf(schedule.day_of_week);
 
         // Create a title that includes section info
-        const sectionInfo = schedule.section ?
-            `${schedule.section.course?.code} (${schedule.section.section_code})` :
+        const sectionInfo = schedule.section ? 
+            `${schedule.section.course?.code} (${schedule.section.section_code})` : 
             'Reserved';
 
         return {
@@ -27,7 +29,7 @@ const RoomCalendar = ({ schedules, room }) => {
             daysOfWeek: [dayIndex],
             startTime: schedule.start_time,
             endTime: schedule.end_time,
-            backgroundColor: schedule.location_type === 'virtual' ? '#4CAF50' :
+            backgroundColor: schedule.location_type === 'virtual' ? '#4CAF50' : 
                            schedule.location_type === 'hybrid' ? '#FF9800' : '#1976D2',
             extendedProps: {
                 schedule,
@@ -41,11 +43,53 @@ const RoomCalendar = ({ schedules, room }) => {
         setIsEventModalOpen(true);
     };
 
+    // Handle selecting a time slot on the calendar
+    const handleSelect = (selectInfo) => {
+        const dayOfWeek = new Date(selectInfo.start).toLocaleDateString('en-US', { weekday: 'long' });
+
+        // Format times for the create schedule form (HH:MM format)
+        const startTime = selectInfo.start.toTimeString().substring(0, 5);
+        const endTime = selectInfo.end.toTimeString().substring(0, 5);
+
+        setSelectedSlot({
+            dayOfWeek,
+            startTime,
+            endTime
+        });
+
+        setIsCreateModalOpen(true);
+
+        // Important: Clear the selection after processing
+        selectInfo.view.calendar.unselect();
+    };
+
+    // Create the URL for the schedule creation with pre-filled values
+    const getCreateScheduleUrl = () => {
+        if (!selectedSlot) return '';
+
+        const baseUrl = route('schedules.create', { school: school.id });
+        const params = new URLSearchParams({
+            room_id: room.id,
+            location_type: 'in-person',
+            day_of_week: selectedSlot.dayOfWeek,
+            start_time: selectedSlot.startTime,
+            end_time: selectedSlot.endTime,
+            return_url: window.location.href
+        });
+
+        return `${baseUrl}?${params.toString()}`;
+    };
+
     return (
         <div className="bg-white rounded-lg shadow p-4">
-            <div className="mb-4">
-                <h2 className="text-xl font-semibold">{room.name} Schedule</h2>
-                <p className="text-gray-600">Capacity: {room.capacity} people</p>
+            <div className="mb-4 flex justify-between items-center">
+                <div>
+                    <h2 className="text-xl font-semibold">{room.room_number} Schedule</h2>
+                    <p className="text-gray-600">Capacity: {room.capacity} people</p>
+                </div>
+                <div className="text-sm text-gray-500">
+                    Click and drag on the calendar to create a new schedule
+                </div>
             </div>
             <div className="h-[600px]">
                 <FullCalendar
@@ -64,7 +108,8 @@ const RoomCalendar = ({ schedules, room }) => {
                     slotDuration="00:30:00"
                     height="100%"
                     nowIndicator={true}
-                    selectable={false}
+                    selectable={true}
+                    select={handleSelect}
                     dayHeaderFormat={{ weekday: 'long' }}
                     eventClick={handleEventClick}
                     eventTimeFormat={{
@@ -76,7 +121,7 @@ const RoomCalendar = ({ schedules, room }) => {
                 />
             </div>
 
-            <div className="mt-4 flex gap-4">
+            <div className="mt-4 flex flex-wrap gap-4">
                 <div className="flex items-center">
                     <div className="w-4 h-4 rounded bg-[#1976D2] mr-2"></div>
                     <span>In-person</span>
@@ -88,6 +133,9 @@ const RoomCalendar = ({ schedules, room }) => {
                 <div className="flex items-center">
                     <div className="w-4 h-4 rounded bg-[#FF9800] mr-2"></div>
                     <span>Hybrid</span>
+                </div>
+                <div className="ml-auto text-sm text-gray-500">
+                    <i>Click on an existing schedule to view details</i>
                 </div>
             </div>
 
@@ -111,8 +159,8 @@ const RoomCalendar = ({ schedules, room }) => {
                                     <MapPinIcon className="h-5 w-5 text-gray-500" />
                                     <Text className="capitalize">{selectedEvent.extendedProps.schedule.location_type}</Text>
                                     {selectedEvent.extendedProps.schedule.virtual_meeting_url && (
-                                        <a href={selectedEvent.extendedProps.schedule.virtual_meeting_url}
-                                           target="_blank"
+                                        <a href={selectedEvent.extendedProps.schedule.virtual_meeting_url} 
+                                           target="_blank" 
                                            className="text-blue-600 hover:underline ml-2">
                                             Join Meeting →
                                         </a>
@@ -128,7 +176,7 @@ const RoomCalendar = ({ schedules, room }) => {
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <Text className="font-semibold">{selectedEvent.extendedProps.section.course?.code}</Text>
-                                                    <Badge color={selectedEvent.extendedProps.section.status === 'active' ? 'green' :
+                                                    <Badge color={selectedEvent.extendedProps.section.status === 'active' ? 'green' : 
                                                                  selectedEvent.extendedProps.section.status === 'full' ? 'red' : 'yellow'}>
                                                         {selectedEvent.extendedProps.section.status}
                                                     </Badge>
@@ -162,7 +210,7 @@ const RoomCalendar = ({ schedules, room }) => {
                                         </div>
 
                                         <div className="mt-2">
-                                            <Link
+                                            <Link 
                                                 href={route('sections.show', {
                                                     school: selectedEvent.extendedProps.section.course?.department?.school_id,
                                                     section: selectedEvent.extendedProps.section.id
@@ -179,8 +227,55 @@ const RoomCalendar = ({ schedules, room }) => {
                     )}
                 </DialogPanel>
             </Dialog>
+
+            {/* Create Schedule Modal */}
+            <Dialog open={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} static={true}>
+                <DialogPanel>
+                    <div className="p-4">
+                        <div className="flex items-center justify-between mb-6">
+                            <Title>Create New Schedule</Title>
+                            <Button variant="light" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+                        </div>
+
+                        <Card className="mb-4">
+                            {selectedSlot && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <Text className="font-medium">Room</Text>
+                                        <Text className="text-lg font-bold">{room.room_number}</Text>
+                                    </div>
+                                    <div>
+                                        <Text className="font-medium">Day</Text>
+                                        <Text className="text-lg">{selectedSlot.dayOfWeek}</Text>
+                                    </div>
+                                    <div className="flex gap-6">
+                                        <div>
+                                            <Text className="font-medium">Start Time</Text>
+                                            <Text className="text-lg">{selectedSlot.startTime}</Text>
+                                        </div>
+                                        <div>
+                                            <Text className="font-medium">End Time</Text>
+                                            <Text className="text-lg">{selectedSlot.endTime}</Text>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </Card>
+
+                        <div className="flex justify-center">
+                            <Link
+                                href={getCreateScheduleUrl()}
+                                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                            >
+                                <PlusIcon className="h-5 w-5 mr-2" />
+                                Continue to Create Schedule
+                            </Link>
+                        </div>
+                    </div>
+                </DialogPanel>
+            </Dialog>
         </div>
     );
 };
 
-export default RoomCalendar;
+export default RoomCalendar; 

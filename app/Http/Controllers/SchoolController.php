@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class SchoolController extends Controller
 {
@@ -92,7 +93,39 @@ class SchoolController extends Controller
     {
         $this->authorize('view', $school);
 
-        $school->loadCount(['users', 'terms', 'buildings']);
+        $school->loadCount(['users', 'terms', 'buildings', 'departments']);
+
+        // Get admin users for this school with debugging
+        try {
+            // Find all admin-related roles
+            $adminRoleIds = \App\Models\Role::whereIn('name', [
+                'admin',
+                'school_admin',
+                'administrator',
+                'super_admin'
+            ])->pluck('id')->toArray();
+
+            if (empty($adminRoleIds)) {
+                Log::warning('No admin roles found in the system');
+                $adminUsers = [];
+            } else {
+                // Use the role IDs to get users
+                $adminUsers = $school->users()
+                    ->whereIn('role_id', $adminRoleIds)
+                    ->select('id', 'name', 'email', 'created_at')
+                    ->get()
+                    ->toArray(); // Convert to array for easier passing to frontend
+
+                Log::info('School admin query', [
+                    'school_id' => $school->id,
+                    'admin_role_ids' => $adminRoleIds,
+                    'admins_found' => count($adminUsers)
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error fetching school admins: ' . $e->getMessage());
+            $adminUsers = [];
+        }
 
         return Inertia::render('Schools/Show', [
             'school_info' => [
@@ -106,6 +139,8 @@ class SchoolController extends Controller
                 'users' => $school->users_count,
                 'terms' => $school->terms_count,
                 'buildings' => $school->buildings_count,
+                'departments' => $school->departments_count,
+                'admin_users' => $adminUsers,
             ],
         ]);
     }

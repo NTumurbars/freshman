@@ -1,33 +1,39 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
+    BarChart3,
     BookOpen,
-    Calendar,
-    GraduationCap,
-    User,
-    Building,
-    Users,
-    ClipboardList,
-    Clock
+    User
 } from 'lucide-react';
 
 export default function StudentSideBar({ school }) {
+    const { url } = usePage();
+
     // Helper function to generate school-specific routes
     const schoolRoute = (name, params = {}) => {
         if (!school?.id) return '#';
         return route(name, { school: school.id, ...params });
     };
 
+    // Check if the current route matches the given path
+    const isActive = (path) => {
+        return url.startsWith(path);
+    };
+
     const NavItem = ({ href, icon, children }) => {
         const Icon = icon;
+        const active = isActive(href);
+
         return (
             <Link
                 href={href}
-                className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                className={`flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    active
+                        ? 'bg-blue-50 text-blue-700'
+                        : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                }`}
             >
-                <div className="flex items-center">
-                    <Icon className="mr-2 h-5 w-5" />
-                    <span>{children}</span>
-                </div>
+                <Icon className="mr-2 h-5 w-5" />
+                <span>{children}</span>
             </Link>
         );
     };
@@ -44,7 +50,8 @@ export default function StudentSideBar({ school }) {
     );
 
     return (
-        <aside className="h-full min-h-screen w-64 border-r border-gray-200 bg-white p-4 overflow-y-auto scrollbar-hide">
+        <aside className="fixed h-screen w-64 border-r border-gray-200 bg-white p-4">
+            {/* School Info Header */}
             <div className="mb-6 border-b border-gray-100 pb-4">
                 <div className="flex items-center space-x-3">
                     {school && school.logo_url ? (
@@ -78,46 +85,21 @@ export default function StudentSideBar({ school }) {
                 </div>
             </div>
 
+            {/* Navigation */}
             <div className="space-y-6">
-                <NavGroup title="Dashboard">
-                    <NavItem href={route('dashboard')} icon={ClipboardList}>
-                        Dashboard
-                    </NavItem>
-                </NavGroup>
+                <NavItem href={route('dashboard')} icon={BarChart3}>
+                    Dashboard
+                </NavItem>
 
                 <NavGroup title="Courses">
-                    <NavItem href={`${schoolRoute('courses.index')}?view=student`} icon={BookOpen}>
-                        Browse Courses
-                    </NavItem>
-                    <NavItem href={`${schoolRoute('sections.index')}?view=student`} icon={Clock}>
-                        Course Sections
-                    </NavItem>
-                    <NavItem href={`${schoolRoute('sections.calendar')}?view=student`} icon={Calendar}>
-                        Course Calendar
+                    <NavItem href={schoolRoute('student.course-registration')} icon={BookOpen}>
+                        Course Registration
                     </NavItem>
                 </NavGroup>
 
-                <NavGroup title="Academic Information">
-                    <NavItem href={`${schoolRoute('departments.index')}?view=student`} icon={Building}>
-                        Departments
-                    </NavItem>
-                    <NavItem href={`${schoolRoute('majors.index')}?view=student`} icon={GraduationCap}>
-                        Majors
-                    </NavItem>
-                    <NavItem href={`${schoolRoute('professor-profiles.index')}?view=student`} icon={Users}>
-                        Professors
-                    </NavItem>
-                </NavGroup>
-
-                <NavGroup title="My Schedule">
-                    <NavItem href={`${schoolRoute('schedules.index')}?view=student`} icon={Calendar}>
-                        My Schedule
-                    </NavItem>
-                </NavGroup>
-
-                <NavGroup title="Settings">
+                <NavGroup title="Profile">
                     <NavItem href={route('profile.edit')} icon={User}>
-                        Profile
+                        My Profile
                     </NavItem>
                 </NavGroup>
             </div>

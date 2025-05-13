@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Department;
 use App\Models\School;
@@ -10,6 +12,8 @@ use App\Models\Section;
 // Need to add school to this and update school
 class Course extends Model
 {
+    use HasFactory, Notifiable;
+
      protected $fillable = [
         'department_id',
         'major_id',

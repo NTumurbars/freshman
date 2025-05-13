@@ -1,10 +1,11 @@
+import AppLayout from '@/Layouts/AppLayout';
 import {
     BuildingOffice2Icon,
     BuildingStorefrontIcon,
     ChevronRightIcon,
     PlusIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Button,
     Card,
@@ -15,9 +16,8 @@ import {
     Text,
     Title,
 } from '@tremor/react';
-import AppLayout from '@/Layouts/AppLayout';
 
-const BuildingCard = ({ building }) => (
+const BuildingCard = ({ building, isAdmin }) => (
     <Card>
         <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -58,23 +58,32 @@ const BuildingCard = ({ building }) => (
                     building: building.id,
                 })}
             >
-                <Button variant="light" color="gray" icon={ChevronRightIcon}>
+                <Button
+                    variant="light"
+                    color="gray"
+                    icon={ChevronRightIcon}
+                    className="flex items-center pr-2"
+                >
                     View Details
                 </Button>
             </Link>
-            <Link
-                href={route('buildings.floors.index', {
-                    school: building.school_id,
-                    building: building.id,
-                })}
-            >
-                <Button variant="secondary">Manage Floors</Button>
-            </Link>
+            {isAdmin && (
+                <Link
+                    href={route('buildings.floors.index', {
+                        school: building.school_id,
+                        building: building.id,
+                    })}
+                >
+                    <Button variant="secondary">Manage Floors</Button>
+                </Link>
+            )}
         </div>
     </Card>
 );
 
 export default function Index({ buildings, school, can_create }) {
+    const { auth } = usePage().props;
+    const isAdmin = auth.user.role.id === 2;
     return (
         <AppLayout>
             <Head title="Buildings" />
@@ -122,7 +131,10 @@ export default function Index({ buildings, school, can_create }) {
                         >
                             {buildings.map((building) => (
                                 <Col key={building.id}>
-                                    <BuildingCard building={building} />
+                                    <BuildingCard
+                                        building={building}
+                                        isAdmin={isAdmin}
+                                    />
                                 </Col>
                             ))}
                         </Grid>

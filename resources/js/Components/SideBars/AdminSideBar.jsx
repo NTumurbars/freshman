@@ -113,7 +113,7 @@ export default function AdminSideBar({ school }) {
     // If no school is assigned, show limited navigation
     if (!school?.id) {
         return (
-            <aside className="h-full min-h-screen w-64 border-r border-blue-100 bg-white p-4 overflow-y-auto scrollbar-hide">
+            <aside className="fixed h-screen w-64 border-r border-blue-100 bg-white p-4">
                 <div className="mb-6 border-b border-blue-100 pb-4">
                     <div className="flex items-center space-x-3">
                         <div className="h-10 w-10 flex items-center justify-center bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-600 rounded-md flex-shrink-0 border border-blue-200">
@@ -150,13 +150,13 @@ export default function AdminSideBar({ school }) {
     };
 
     return (
-        <aside className="h-full min-h-screen w-64 border-r border-blue-100 bg-white p-4 overflow-y-auto scrollbar-hide">
+        <aside className="fixed h-screen w-64 border-r border-blue-100 bg-white p-4">
             <div className="mb-6 border-b border-blue-100 pb-4">
                 <div className="flex items-center space-x-3">
                     {school?.logo_url ? (
                         <div className="h-10 w-10 flex-shrink-0 rounded-md overflow-hidden border border-blue-100 bg-white shadow-sm">
-                            <img 
-                                src={school.logo_url} 
+                            <img
+                                src={school.logo_url}
                                 alt={school?.name || 'School Logo'}
                                 className="h-full w-full object-contain"
                                 onError={(e) => {
@@ -199,14 +199,14 @@ export default function AdminSideBar({ school }) {
                     <NavItem href={schoolRoute('schools.edit')} icon={School}>
                         Your School
                     </NavItem>
-                    
+
                     <NavItem
                         href={schoolRoute('departments.index')}
                         icon={Warehouse}
                     >
                         Departments
                     </NavItem>
-                    
+
                     <NavItem
                         href={schoolRoute('majors.index')}
                         icon={GraduationCap}
@@ -229,7 +229,7 @@ export default function AdminSideBar({ school }) {
                         >
                             Courses
                         </NavItem>
-                        
+
                         <NavItem
                             href={schoolRoute('sections.index')}
                             icon={LayoutList}
@@ -237,7 +237,7 @@ export default function AdminSideBar({ school }) {
                         >
                             Sections
                         </NavItem>
-                        
+
                         <NavItem
                             href={schoolRoute('schedules.index')}
                             icon={Clock}
@@ -245,7 +245,7 @@ export default function AdminSideBar({ school }) {
                         >
                             Class Schedules
                         </NavItem>
-                        
+
                         <NavItem
                             href={schoolRoute('terms.index')}
                             icon={Calendar}
@@ -308,14 +308,14 @@ export default function AdminSideBar({ school }) {
                                 ))}
                             </div>
                         )}
-                        
+
                         {!loading && buildings.length === 0 && (
                             <div className="px-3 py-2 text-sm text-gray-500 italic">
                                 No buildings found
                             </div>
                         )}
                     </CollapsibleNavItem>
-                    
+
                     <CollapsibleNavItem
                         title="Room Features"
                         icon={Settings}
@@ -331,12 +331,6 @@ export default function AdminSideBar({ school }) {
                             Add Feature
                         </NavItem>
                     </CollapsibleNavItem>
-                </NavGroup>
-
-                <NavGroup title="Reporting">
-                    <NavItem href={route('reports.view')} icon={FileBarChart}>
-                        School Reports
-                    </NavItem>
                 </NavGroup>
             </div>
         </aside>

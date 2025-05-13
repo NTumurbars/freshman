@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Floor;
 use App\Models\Room;
 
 class Building extends Model
 {
+    use HasFactory, Notifiable;
+
     protected $fillable = [
         'school_id',
         'name'
