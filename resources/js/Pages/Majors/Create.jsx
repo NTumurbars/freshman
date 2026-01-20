@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import {
     Button,
     Card,
@@ -12,10 +12,15 @@ import {
     Title,
 } from '@tremor/react';
 import toast from 'react-hot-toast';
+import { useEffect } from 'react';
 
 export default function Create({ departments, school }) {
+    const { url } = usePage();
+    const params = new URLSearchParams(window.location.search);
+    const department_id = params.get('department_id');
+
     const { data, setData, post, processing, errors } = useForm({
-        department_id: '',
+        department_id: department_id || '',
         code: '',
         name: '',
         description: '',

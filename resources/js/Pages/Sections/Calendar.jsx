@@ -1,103 +1,199 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/Components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/Components/ui/select';
 import AppLayout from '@/Layouts/AppLayout';
-import ScheduleCalendar from '@/Components/ui/ScheduleCalendar';
+import { Calendar } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import resourceTimeGridPlugin from '@fullcalendar/resource-timegrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import { Head, Link } from '@inertiajs/react';
-import { ChevronLeft, HelpCircle, List } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronLeft, HelpCircle, List, Plus } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
-// Define color palette for section differentiation
-const SECTION_COLORS = [
-    'bg-blue-100 border-blue-400 text-blue-800',
-    'bg-green-100 border-green-400 text-green-800',
-    'bg-purple-100 border-purple-400 text-purple-800',
-    'bg-yellow-100 border-yellow-400 text-yellow-800',
-    'bg-pink-100 border-pink-400 text-pink-800',
-    'bg-indigo-100 border-indigo-400 text-indigo-800',
-    'bg-red-100 border-red-400 text-red-800',
-    'bg-orange-100 border-orange-400 text-orange-800',
-    'bg-teal-100 border-teal-400 text-teal-800',
-    'bg-cyan-100 border-cyan-400 text-cyan-800',
-];
-
-export default function ProfessorCalendar({ calendarEvents, school, isProfessor, user }) {
+export default function SectionCalendar({ calendarEvents, resources, school }) {
+    const calendarRef = useRef(null);
+    const [calendarApi, setCalendarApi] = useState(null);
+    const [view, setView] = useState('resourceTimeGridWeek');
+    const [selectedBuilding, setSelectedBuilding] = useState('all');
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [showEventDetails, setShowEventDetails] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
 
-    // Map section IDs to colors to keep them consistent
-    const sectionColorMap = {};
+    // Get unique buildings from resources
+    const buildings = [...new Set(resources.map((r) => r.building))].filter(
+        (b) => b !== 'N/A',
+    );
 
-    // Extract unique section IDs from events
-    const uniqueSectionIds = [...new Set(calendarEvents.map(event => event.extendedProps.section_id))];
-
-    // Assign a color to each section ID
-    uniqueSectionIds.forEach((sectionId, index) => {
-        sectionColorMap[sectionId] = SECTION_COLORS[index % SECTION_COLORS.length];
-    });
-
-    // Convert calendarEvents to the format expected by ScheduleCalendar
-    const formattedSchedules = calendarEvents.map(event => {
-        // Extract time part from the start/end date strings
-        const startTime = event.start.split(' ')[1];
-        const endTime = event.end.split(' ')[1];
-        const dayOfWeek = event.start.split(' ')[0];
-        const sectionId = event.extendedProps.section_id;
-
-        return {
-            id: event.id,
-            day_of_week: dayOfWeek,
-            start_time: startTime,
-            end_time: endTime,
-            location_type: event.extendedProps.delivery_method,
-            room_id: null, // Not needed for professor view
-            virtual_meeting_url: null,
-            custom_color_class: sectionColorMap[sectionId], // Add custom color based on section ID
-            section: {
-                id: sectionId,
-                course: {
-                    title: event.description,
-                    code: event.title.split(' - ')[0],
-                    department: {
-                        school_id: event.extendedProps.school_id
+    useEffect(() => {
+        if (calendarRef.current) {
+            const calendar = new Calendar(calendarRef.current, {
+                plugins: [
+                    dayGridPlugin,
+                    timeGridPlugin,
+                    resourceTimeGridPlugin,
+                    interactionPlugin,
+                ],
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'resourceTimeGridDay,resourceTimeGridWeek',
+                },
+                initialView: view,
+                resources: resources,
+                events: calendarEvents,
+                slotMinTime: '07:00:00',
+                slotMaxTime: '22:00:00',
+                allDaySlot: false,
+                resourceLabelDidMount: function (info) {
+                    if (info.resource.id === 'unassigned') {
+                        info.el.style.backgroundColor = '#f9fafb';
+                        info.el.style.color = '#6b7280';
+                        info.el.style.fontWeight = 'bold';
                     }
                 },
-                section_code: event.title.split(' - ')[1],
-                professor_profile: event.extendedProps.professor_profile,
-                status: event.extendedProps.status
-            },
-            room: {
-                room_number: event.extendedProps.room ? event.extendedProps.room.split(' (')[0] : 'Unassigned',
-                floor: {
-                    building: {
-                        name: event.extendedProps.room ? event.extendedProps.room.split(' (')[1].replace(')', '') : 'N/A'
+                eventClick: function (info) {
+                    const event = calendarEvents.find(
+                        (e) => e.id === info.event.id,
+                    );
+                    if (event) {
+                        setSelectedEvent({
+                            title: info.event.title,
+                            description: info.event.extendedProps.description,
+                            professor: info.event.extendedProps.professor_profile?.user?.name || 'Not Assigned',
+                            room: info.event.extendedProps.room,
+                            term: info.event.extendedProps.term,
+                            start: info.event.start,
+                            end: info.event.end,
+                            status: info.event.extendedProps.status,
+                            deliveryMethod:
+                                info.event.extendedProps.delivery_method,
+                            section_id: info.event.extendedProps.section_id,
+                            school_id:
+                                info.event.extendedProps.school_id || school.id,
+                        });
+                        setShowEventDetails(true);
                     }
-                }
+                },
+                eventDidMount: function (info) {
+                    // Color code by status
+                    if (info.event.extendedProps.status === 'canceled') {
+                        info.el.style.backgroundColor = '#ef4444';
+                    } else if (info.event.extendedProps.status === 'full') {
+                        info.el.style.backgroundColor = '#eab308';
+                    } else if (info.event.extendedProps.status === 'pending') {
+                        info.el.style.backgroundColor = '#3b82f6';
+                    }
+
+                    // Add colored indicator for delivery method
+                    if (info.event.extendedProps.delivery_method === 'online') {
+                        info.el.style.borderLeft = '4px solid #10b981'; // Green
+                    } else if (
+                        info.event.extendedProps.delivery_method === 'hybrid'
+                    ) {
+                        info.el.style.borderLeft = '4px solid #8b5cf6'; // Purple
+                    }
+
+                    // Add tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'fc-tooltip';
+                    tooltip.innerHTML = `
+            <div class="p-2 bg-white shadow rounded border">
+              <div class="font-semibold">${info.event.title}</div>
+              <div>${info.event.extendedProps.description}</div>
+              <div class="text-sm text-gray-600">Professor: ${info.event.extendedProps.professor_profile?.user?.name || 'Not Assigned'}</div>
+              <div class="text-sm text-gray-600">Room: ${info.event.extendedProps.room}</div>
+              <div class="text-sm text-gray-600">Delivery: ${info.event.extendedProps.delivery_method}</div>
+            </div>
+          `;
+
+                    info.el.addEventListener('mouseover', function () {
+                        document.body.appendChild(tooltip);
+                        tooltip.style.position = 'absolute';
+                        tooltip.style.zIndex = 10000;
+                        tooltip.style.top =
+                            info.el.getBoundingClientRect().top +
+                            window.scrollY +
+                            'px';
+                        tooltip.style.left =
+                            info.el.getBoundingClientRect().left +
+                            window.scrollX +
+                            'px';
+                    });
+
+                    info.el.addEventListener('mouseout', function () {
+                        if (document.body.contains(tooltip)) {
+                            document.body.removeChild(tooltip);
+                        }
+                    });
+                },
+            });
+
+            calendar.render();
+            setCalendarApi(calendar);
+
+            return () => {
+                calendar.destroy();
+            };
+        }
+    }, [calendarRef.current, calendarEvents, resources, view]);
+
+    // Filter resources by building
+    useEffect(() => {
+        if (calendarApi) {
+            if (selectedBuilding === 'all') {
+                calendarApi.setOption('resources', resources);
+            } else {
+                calendarApi.setOption(
+                    'resources',
+                    resources.filter((r) => r.building === selectedBuilding),
+                );
             }
-        };
-    });
+        }
+    }, [selectedBuilding, calendarApi]);
 
     return (
         <AppLayout>
-            <Head title="My Calendar" />
+            <Head title="Section Calendar" />
             <div className="mb-6 space-y-4">
                 <div className="flex flex-col justify-between space-y-4 md:flex-row md:items-center md:space-y-0">
                     <div>
                         <Link
-                            href={route('dashboard')}
+                            href={route('sections.index', school.id)}
                             className="mb-2 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
                         >
                             <ChevronLeft className="mr-1 h-4 w-4" /> Back to
-                            Dashboard
+                            Sections
                         </Link>
                         <h1 className="text-2xl font-bold text-gray-800">
-                            My Calendar
+                            Section Calendar
                         </h1>
                     </div>
 
                     <div className="flex items-center space-x-3">
                         <Link
-                            href={route('schedules.index', school.id)}
+                            href={route('sections.create', school.id)}
+                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            <Plus className="mr-2 h-4 w-4" /> Add Section
+                        </Link>
+                        <Link
+                            href={route('sections.index', school.id)}
                             className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
-                            <List className="mr-2 h-4 w-4" /> Schedule List
+                            <List className="mr-2 h-4 w-4" /> List View
                         </Link>
                         <button
                             type="button"
@@ -110,26 +206,249 @@ export default function ProfessorCalendar({ calendarEvents, school, isProfessor,
                 </div>
             </div>
 
-            <Card className="mb-6">
+            <Card className="mb-4">
                 <CardHeader className="pb-2">
-                    <CardTitle>My Teaching Schedule</CardTitle>
+                    <CardTitle>Filter Options</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="mb-4 text-sm text-gray-600">
-                        Each course is shown in a different color to help you distinguish between your classes.
-                        Click on any class to view details or navigate to the section page.
-                    </p>
-
-                    {/* Schedule Calendar */}
-                    <div className="bg-white p-0 shadow-none">
-                        <ScheduleCalendar
-                            schedules={formattedSchedules}
-                            viewType="professor"
-                            showWeekView={true}
-                        />
+                    <div className="flex flex-wrap gap-4">
+                        <div className="w-full md:w-auto">
+                            <label
+                                htmlFor="building-filter"
+                                className="mb-1 block text-sm font-medium text-gray-700"
+                            >
+                                Building
+                            </label>
+                            <Select
+                                id="building-filter"
+                                value={selectedBuilding}
+                                onValueChange={setSelectedBuilding}
+                            >
+                                <SelectTrigger className="w-full md:w-[200px]">
+                                    <SelectValue placeholder="Select Building" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">
+                                        All Buildings
+                                    </SelectItem>
+                                    {buildings.map((building) => (
+                                        <SelectItem
+                                            key={building}
+                                            value={building}
+                                        >
+                                            {building}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="w-full md:w-auto">
+                            <label
+                                htmlFor="view-filter"
+                                className="mb-1 block text-sm font-medium text-gray-700"
+                            >
+                                View
+                            </label>
+                            <Select
+                                id="view-filter"
+                                value={view}
+                                onValueChange={(value) => {
+                                    setView(value);
+                                    calendarApi?.changeView(value);
+                                }}
+                            >
+                                <SelectTrigger className="w-full md:w-[200px]">
+                                    <SelectValue placeholder="Select View" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="resourceTimeGridDay">
+                                        Day
+                                    </SelectItem>
+                                    <SelectItem value="resourceTimeGridWeek">
+                                        Week
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
+
+            <div className="rounded-lg border bg-white p-0 shadow">
+                <div className="p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                        <h2 className="text-lg font-medium">
+                            Room Availability
+                        </h2>
+                        <div className="flex space-x-4 text-xs">
+                            <div className="flex items-center">
+                                <div className="mr-1 h-3 w-3 rounded-full bg-green-500"></div>
+                                <span>Available</span>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="mr-1 h-3 w-3 rounded-full bg-red-500"></div>
+                                <span>Canceled</span>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="mr-1 h-3 w-3 rounded-full bg-yellow-500"></div>
+                                <span>Full</span>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="mr-1 h-3 w-3 rounded-full bg-blue-500"></div>
+                                <span>Pending</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="mt-1 flex items-center text-xs text-gray-600">
+                        <div className="mr-4 flex items-center">
+                            <div className="mr-1 h-3 w-1 bg-green-500"></div>
+                            <span>Online</span>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="mr-1 h-3 w-1 bg-purple-500"></div>
+                            <span>Hybrid</span>
+                        </div>
+                    </div>
+                </div>
+                <div ref={calendarRef} className="min-h-[700px]" />
+            </div>
+
+            {/* Event Details Dialog */}
+            <Dialog open={showEventDetails} onOpenChange={setShowEventDetails}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{selectedEvent?.title}</DialogTitle>
+                        <DialogDescription>
+                            {selectedEvent?.description}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-4 space-y-3">
+                        <div>
+                            <div className="text-sm font-medium text-gray-500">
+                                Professor
+                            </div>
+                            <div>{selectedEvent?.professor_profile?.user?.name || 'Not Assigned'}</div>
+                        </div>
+                        <div>
+                            <div className="text-sm font-medium text-gray-500">
+                                Location
+                            </div>
+                            <div>{selectedEvent?.room}</div>
+                        </div>
+                        <div>
+                            <div className="text-sm font-medium text-gray-500">
+                                Time
+                            </div>
+                            <div>
+                                {selectedEvent?.start && selectedEvent?.end
+                                    ? `${selectedEvent.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${selectedEvent.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                                    : 'Time not specified'}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-sm font-medium text-gray-500">
+                                Status
+                            </div>
+                            <div className="capitalize">
+                                {selectedEvent?.status || 'Active'}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-sm font-medium text-gray-500">
+                                Delivery Method
+                            </div>
+                            <div className="capitalize">
+                                {selectedEvent?.deliveryMethod || 'In-person'}
+                            </div>
+                        </div>
+                        <div className="pt-4">
+                            <Link
+                                href={route('sections.show', [
+                                    selectedEvent?.school_id || school.id,
+                                    selectedEvent?.section_id,
+                                ])}
+                                className="inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                                View Section Details
+                            </Link>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Help Dialog */}
+            <Dialog open={showHelp} onOpenChange={setShowHelp}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Calendar Usage Guide</DialogTitle>
+                        <DialogDescription>
+                            How to use the calendar view for room scheduling
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="mt-4 space-y-4">
+                        <div className="space-y-2">
+                            <h3 className="font-medium">Color Coding</h3>
+                            <div className="space-y-1 text-sm">
+                                <div className="flex items-center">
+                                    <div className="mr-2 h-3 w-3 rounded-full bg-green-500"></div>
+                                    <span>Active sections</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <div className="mr-2 h-3 w-3 rounded-full bg-red-500"></div>
+                                    <span>Canceled sections</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <div className="mr-2 h-3 w-3 rounded-full bg-yellow-500"></div>
+                                    <span>Full sections</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <div className="mr-2 h-3 w-3 rounded-full bg-blue-500"></div>
+                                    <span>Pending sections</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h3 className="font-medium">
+                                Delivery Method Indicators
+                            </h3>
+                            <div className="space-y-1 text-sm">
+                                <div className="flex items-center">
+                                    <div className="mr-2 h-4 w-1 bg-green-500"></div>
+                                    <span>Online sections</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <div className="mr-2 h-4 w-1 bg-purple-500"></div>
+                                    <span>Hybrid sections</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h3 className="font-medium">Tip</h3>
+                            <p className="text-sm">
+                                Sections without assigned rooms appear in the
+                                "Unassigned" row at the top of the calendar.
+                                Click on any section to view details or to
+                                navigate to the section page.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h3 className="font-medium">Room Scheduling</h3>
+                            <p className="text-sm">
+                                The calendar shows the current schedule of all
+                                rooms, making it easier to identify available
+                                time slots for adding new section schedules. You
+                                can create a section without a schedule and add
+                                the schedule later when planning room
+                                allocations.
+                            </p>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

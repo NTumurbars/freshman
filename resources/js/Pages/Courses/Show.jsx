@@ -50,6 +50,18 @@ export default function Show({ course, school }) {
         }
     };
 
+    // Helper function to format the capacity display
+    const formatCapacity = (section) => {
+        const capacity = section.effective_capacity || section.capacity;
+        if (capacity === null || capacity === undefined) {
+            return 'Not Set';
+        }
+        if (capacity === 0) {
+            return 'No Limit';
+        }
+        return capacity;
+    };
+
     return (
         <AppLayout>
             <Head title={`${course.code} - ${course.title}`} />
@@ -130,7 +142,7 @@ export default function Show({ course, school }) {
                     <Link
                         href={route('sections.create', {
                             school: school.id,
-                            course: course.id,
+                            course_id: course.id,
                         })}
                         className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
@@ -155,6 +167,9 @@ export default function Show({ course, school }) {
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                             Status
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            Enrollment
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                             Delivery
@@ -229,6 +244,30 @@ export default function Show({ course, school }) {
                                                     <Badge color="gray">
                                                         Unknown
                                                     </Badge>
+                                                )}
+                                            </td>
+                                            <td className="whitespace-nowrap px-6 py-4">
+                                                <span className="text-sm">
+                                                    {section.students_count || 0}/{formatCapacity(section)}
+                                                </span>
+                                                {(section.effective_capacity > 0 || section.capacity > 0) && (
+                                                    <div className="mt-1 h-1.5 w-full rounded-full bg-gray-200">
+                                                        <div
+                                                            className={`h-1.5 rounded-full ${
+                                                                section.students_count >= (section.effective_capacity || section.capacity)
+                                                                    ? 'bg-red-500'
+                                                                    : section.students_count >= (section.effective_capacity || section.capacity) * 0.8
+                                                                    ? 'bg-yellow-500'
+                                                                    : 'bg-green-500'
+                                                            }`}
+                                                            style={{
+                                                                width: `${Math.min(
+                                                                    ((section.students_count || 0) / (section.effective_capacity || section.capacity || 1)) * 100,
+                                                                    100
+                                                                )}%`
+                                                            }}
+                                                        />
+                                                    </div>
                                                 )}
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4">
@@ -383,7 +422,7 @@ export default function Show({ course, school }) {
                             <Link
                                 href={route('sections.create', {
                                     school: school.id,
-                                    course: course.id,
+                                    course_id: course.id,
                                 })}
                                 className="mt-4 inline-flex items-center rounded-md border border-transparent bg-indigo-100 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >

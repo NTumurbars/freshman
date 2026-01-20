@@ -3,11 +3,16 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { BookOpen } from 'lucide-react';
+import { useEffect } from 'react';
 
 export default function Create({ departments, majors }) {
+    const params = new URLSearchParams(window.location.search);
+    const department_id = params.get('department_id');
+    const major_id = params.get('major_id');
+
     const { data, setData, post, errors, processing } = useForm({
-        department_id: '',
-        major_id: '',
+        department_id: department_id ? department_id.toString() : '',
+        major_id: major_id ? major_id.toString() : '',
         code: '',
         title: '',
         description: '',
@@ -16,8 +21,23 @@ export default function Create({ departments, majors }) {
 
     // Filter majors based on selected department
     const filteredMajors = majors.filter(
-        (major) => major.department_id === data.department_id,
+        (major) => major.department_id === (department_id ? parseInt(department_id) : data.department_id),
     );
+
+    useEffect(() => {
+        if (department_id) {
+            // If we have a preselected department, update the form
+            setData('department_id', department_id.toString());
+        }
+
+        if (major_id && department_id) {
+            // If we have a preselected major and department, update the form
+            setData(data => ({
+                ...data,
+                major_id: major_id.toString()
+            }));
+        }
+    }, [department_id, major_id]);
 
     const handleDepartmentChange = (e) => {
         const departmentId = parseInt(e.target.value);

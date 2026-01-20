@@ -17,16 +17,13 @@ class RoomController extends Controller
     public function index(School $school)
     {
         $this->authorize('viewAny', Room::class);
-
+        
         $rooms = Room::with(['features', 'floor.building.school', 'schedules.section.course', 'schedules.section.professor_profile.user'])
             ->whereHas('floor.building', function($query) use ($school) {
                 $query->where('school_id', $school->id);
             })
             ->get();
-
-        // Calculate utilization for each room
-        $rooms = $this->calculateRoomsUtilization($rooms);
-
+            
         return Inertia::render('Rooms/Index', [
             'rooms' => $rooms,
             'school' => $school
@@ -37,18 +34,18 @@ class RoomController extends Controller
     public function create(Request $request, School $school, ?Floor $floor = null)
     {
         $this->authorize('create', Room::class);
-
+        
         // Get floor_id from various sources
         $floorId = null;
         $preselectedFloor = null;
         $preselectedBuilding = null;
-
+        
         // 1. Check if floor is directly provided through route model binding
         if ($floor) {
             $floorId = $floor->id;
             $preselectedFloor = $floor;
             $preselectedBuilding = $floor->building;
-        }
+        } 
         // 2. Check if it's provided in request data
         else if ($request->has('floor_id')) {
             $floorId = $request->floor_id;
@@ -57,11 +54,11 @@ class RoomController extends Controller
                 $preselectedBuilding = $preselectedFloor->building;
             }
         }
-
+        
         $returnUrl = $request->input('return_url');
         $floors = Floor::with('building.school')->get();
         $features = RoomFeature::all();
-
+        
         return Inertia::render('Rooms/Create', [
             'floors' => $floors,
             'features' => $features,
@@ -107,7 +104,7 @@ class RoomController extends Controller
     public function edit(Request $request, School $school, Room $room)
     {
         $this->authorize('update', $room);
-
+        
         // Load relationships
         $room->load(['features', 'floor.building.school']);
         $floors = Floor::with('building.school')->get();
@@ -168,12 +165,7 @@ class RoomController extends Controller
     {
         $this->authorize('view', $room);
         $room->load(['features', 'schedules.section.course', 'schedules.section.professor_profile.user', 'floor.building.school']);
-
-        // Calculate utilization for this room
-        $rooms = collect([$room]);
-        $roomsWithUtilization = $this->calculateRoomsUtilization($rooms);
-        $room = $roomsWithUtilization->first();
-
+        
         return Inertia::render('Rooms/Show', [
             'room' => $room,
             'school' => $school
@@ -184,16 +176,13 @@ class RoomController extends Controller
     public function indexByFloor(School $school, $building, Floor $floor)
     {
         $this->authorize('viewAny', Room::class);
-
+        
         // Get only rooms for this specific floor
         $rooms = $floor->rooms()->with([
-            'features',
-            'schedules.section.course',
+            'features', 
+            'schedules.section.course', 
             'schedules.section.professor_profile.user'
         ])->get();
-
-        // Calculate utilization for each room
-        $rooms = $this->calculateRoomsUtilization($rooms);
 
         return Inertia::render('Buildings/Floors/Rooms/Index', [
             'rooms' => $rooms,
@@ -201,35 +190,5 @@ class RoomController extends Controller
             'building' => $floor->building,
             'school' => $school
         ]);
-    }
-
-    /**
-     * Calculate utilization statistics for a collection of rooms
-     *
-     * @param \Illuminate\Support\Collection $rooms
-     * @return \Illuminate\Support\Collection
-     */
-    private function calculateRoomsUtilization($rooms)
-    {
-        // Constants for utilization calculation
-        $timeBlocksPerDay = 12; // Assuming 12 hours of operation per day (8am-8pm)
-        $daysPerWeek = 5; // Monday to Friday
-        $maxPossibleSlotsPerRoom = $timeBlocksPerDay * $daysPerWeek;
-
-        return $rooms->map(function($room) use ($maxPossibleSlotsPerRoom) {
-            $scheduledSlotsCount = $room->schedules->count();
-            $availableSlots = $maxPossibleSlotsPerRoom - $scheduledSlotsCount;
-
-            $room->utilization = [
-                'used_slots' => $scheduledSlotsCount,
-                'available_slots' => $availableSlots,
-                'total_slots' => $maxPossibleSlotsPerRoom,
-                'utilization_percentage' => $maxPossibleSlotsPerRoom > 0
-                    ? round(($scheduledSlotsCount / $maxPossibleSlotsPerRoom) * 100, 1)
-                    : 0
-            ];
-
-            return $room;
-        });
     }
 }

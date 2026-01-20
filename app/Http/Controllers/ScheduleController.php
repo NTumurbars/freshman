@@ -34,44 +34,35 @@ class ScheduleController extends Controller
         // Base query
         $schedulesQuery = Schedule::with([
                 'section.course.department',
-                'section.professor_profile.user',
+                'section.professor_profile',
                 'room.floor.building'
             ])
             ->whereIn('section_id', $sectionIds);
 
-        // If user is a professor, show all schedules but mark their own
+        // If user is a professor, only show their schedules
         $user = Auth::user();
-        $isProfessor = $user->role->name === 'professor' || $user->role->name === 'major_coordinator';
+        $isProfessor = $user->role_id === 4; // Professor role ID
 
-        if ($isProfessor && $user->professor_profile) {
-            // Get all schedules
-            $allSchedules = $schedulesQuery->get();
-
-            // Filter to get professor's schedules
-            $professorSchedules = $allSchedules->filter(function($schedule) use ($user) {
-                return $schedule->section->professor_profile_id === $user->professor_profile->id;
-            })->values();
-
-            // Add a flag to mark the professor's own schedules
-            $allSchedules->map(function($schedule) use ($user) {
-                $schedule->is_professor_schedule = $schedule->section->professor_profile_id === $user->professor_profile->id;
-                return $schedule;
+        if ($isProfessor) {
+            $schedulesQuery->whereHas('section', function($query) use ($user) {
+                $query->where('professor_profile_id', $user->id);
             });
-
-            return Inertia::render('Schedules/Index', [
-                'schedules' => $allSchedules,
-                'professorSchedules' => $professorSchedules,
-                'school' => $school,
-                'isProfessor' => true
-            ]);
         }
 
         $schedules = $schedulesQuery->get();
 
+        // Get rooms for admin calendar view with their schedules and necessary relationships
+        $rooms = Room::with(['floor.building', 'schedules.section.professor_profile', 'schedules.section.course'])
+            ->whereHas('floor.building', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })
+            ->get();
+
         return Inertia::render('Schedules/Index', [
             'schedules' => $schedules,
+            'rooms' => $rooms,
             'school' => $school,
-            'isProfessor' => false
+            'isProfessor' => $isProfessor
         ]);
     }
 
@@ -99,21 +90,31 @@ class ScheduleController extends Controller
         $sections = $query->get();
 
         // Filter rooms to only show those from the current school
-        $rooms = Room::with([
-                'floor.building',
-                'schedules.section.course',
-                'schedules.section.professor_profile.user'
-            ])
+        $rooms = Room::with('floor.building')
             ->whereHas('floor.building', function($query) use ($school) {
                 $query->where('school_id', $school->id);
             })
             ->get();
 
+        // Get room_id and location_type from query params if provided
+        $preselectedRoomId = $request->query('room_id');
+        $preselectedLocationType = $request->query('location_type');
+        $preselectedDayOfWeek = $request->query('day_of_week');
+        $preselectedStartTime = $request->query('start_time');
+        $preselectedEndTime = $request->query('end_time');
+        $returnUrl = $request->query('return_url');
+
         return Inertia::render('Schedules/Create', [
             'sections' => $sections,
             'rooms' => $rooms,
             'school' => $school,
-            'preselectedSectionId' => $selectedSectionId
+            'preselectedSectionId' => $selectedSectionId,
+            'preselectedRoomId' => $preselectedRoomId,
+            'preselectedLocationType' => $preselectedLocationType,
+            'preselectedDayOfWeek' => $preselectedDayOfWeek,
+            'preselectedStartTime' => $preselectedStartTime,
+            'preselectedEndTime' => $preselectedEndTime,
+            'returnUrl' => $returnUrl
         ]);
     }
 
@@ -341,12 +342,7 @@ class ScheduleController extends Controller
             // Make sure to load the section with its course
             $schedule->load(['section.course', 'room.floor.building']);
 
-            // Load rooms with their schedules for proper utilization calculation
-            $rooms = Room::with([
-                    'floor.building',
-                    'schedules.section.course',
-                    'schedules.section.professor_profile.user'
-                ])
+            $rooms = Room::with('floor.building')
                 ->whereHas('floor.building', function($query) use ($school) {
                     $query->where('school_id', $school->id);
                 })
@@ -391,9 +387,7 @@ class ScheduleController extends Controller
             'update_section_capacity_raw' => $request->input('update_section_capacity'),
             'update_section_capacity_boolean' => $request->boolean('update_section_capacity'),
             'new_capacity_raw' => $request->input('new_capacity'),
-            'new_capacity_type' => gettype($request->input('new_capacity')),
-            'is_keeping_same_room' => $request->boolean('is_keeping_same_room'),
-            'bypass_conflict_check' => $request->boolean('bypass_conflict_check_for_same_room'),
+            'new_capacity_type' => gettype($request->input('new_capacity'))
         ]);
 
         $data = $request->validate([
@@ -407,8 +401,6 @@ class ScheduleController extends Controller
             'meeting_pattern' => 'nullable|string|in:single,weekly,monday-wednesday-friday,tuesday-thursday,monday-wednesday,tuesday-friday',
             'update_section_capacity' => 'sometimes|boolean',
             'new_capacity' => 'sometimes|integer|min:1',
-            'bypass_conflict_check_for_same_room' => 'sometimes|boolean',
-            'is_keeping_same_room' => 'sometimes|boolean',
         ]);
 
         // Ensure time format is consistent with seconds
@@ -496,35 +488,60 @@ class ScheduleController extends Controller
             }
         }
 
-        // Check if we should bypass conflict check (same room, small time change)
-        $bypassConflictCheck = $request->boolean('bypass_conflict_check_for_same_room') &&
-            $request->boolean('is_keeping_same_room') &&
-            $schedule->room_id == $data['room_id'];
-
-        Log::info('Conflict check decision:', [
-            'bypass_conflict_check' => $bypassConflictCheck,
-            'is_keeping_same_room' => $request->boolean('is_keeping_same_room'),
-            'original_room_id' => $schedule->room_id,
-            'new_room_id' => $data['room_id'],
-            'room_ids_match' => $schedule->room_id == $data['room_id']
-        ]);
-
-        // Check for conflicts (only if not bypassing)
-        if (!$bypassConflictCheck) {
-            if ($conflict = $this->checkScheduleConflicts($data, $schedule->id)) {
-                return back()->withErrors($conflict);
-            }
-        } else {
-            Log::info('Bypassing conflict check for same room edit');
+        // Check for conflicts
+        if ($conflict = $this->checkScheduleConflicts($data, $schedule->id)) {
+            return back()->withErrors($conflict);
         }
 
-        $schedule->update($data);
+        // Begin transaction
+        DB::beginTransaction();
 
-        Log::info('Schedule updated successfully:', ['id' => $schedule->id]);
+        try {
+            // Get the section_id before any changes are made
+            $sectionId = $schedule->section_id;
 
-        // Always redirect to the section show page
-        return redirect()->route('sections.show', [$school->id, $section->id])
-            ->with('success', 'Schedule updated successfully');
+            // If there's a meeting pattern other than 'single', delete all schedules for this section
+            // and create new ones based on the pattern
+            if (isset($data['meeting_pattern']) && $data['meeting_pattern'] !== 'single') {
+                Log::info("Deleting all schedules for section {$sectionId} before creating new ones with pattern {$data['meeting_pattern']}");
+
+                // Delete all existing schedules for this section
+                $deleteCount = Schedule::where('section_id', $sectionId)->delete();
+
+                Log::info("Deleted {$deleteCount} existing schedules for section {$sectionId}");
+
+                // Create new schedules based on the pattern
+                $days = $this->getDaysFromPattern($data['meeting_pattern']);
+
+                foreach ($days as $day) {
+                    $newSchedule = new Schedule($data);
+                    $newSchedule->setAttribute('day_of_week', $day);
+                    $newSchedule->save();
+
+                    Log::info("Created new schedule for day {$day}");
+                }
+
+                DB::commit();
+                return redirect()->route('sections.show', [$school->id, $sectionId])
+                    ->with('success', 'Schedules updated successfully');
+            } else {
+                // For single schedules, just update the existing one
+                $schedule->update($data);
+                Log::info('Schedule updated successfully:', ['id' => $schedule->id]);
+
+                DB::commit();
+                return redirect()->route('sections.show', [$school->id, $section->id])
+                    ->with('success', 'Schedule updated successfully');
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating schedules:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->withErrors(['general' => 'Error updating schedules: ' . $e->getMessage()]);
+        }
     }
 
     // DELETE /schools/{school}/schedules/{schedule}
@@ -576,7 +593,7 @@ class ScheduleController extends Controller
 
         $schedule->load([
             'section.course',
-            'section.professor_profile',
+            'section.professor',
             'room.floor.building'
         ]);
 
@@ -595,12 +612,6 @@ class ScheduleController extends Controller
      */
     private function checkScheduleConflicts(array $data, ?int $excludeId = null): ?array
     {
-        // Check if we're editing the same room and should bypass conflict check
-        if (isset($data['bypass_conflict_check_for_same_room']) && $data['bypass_conflict_check_for_same_room'] === true) {
-            Log::info('Bypassing conflict check as requested by frontend');
-            return null;
-        }
-
         $query = function (Builder $query) use ($data) {
             $query->whereBetween('start_time', [$data['start_time'], $data['end_time']])
                 ->orWhereBetween('end_time', [$data['start_time'], $data['end_time']])

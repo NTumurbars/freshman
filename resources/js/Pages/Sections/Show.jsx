@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
     Calendar,
@@ -10,8 +10,10 @@ import {
     MapPin,
     User,
     Users,
+    ChevronDown,
+    ChevronUp,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Helper component to render professor info
 const ProfessorInfo = ({ professor, school }) => (
@@ -35,11 +37,27 @@ const ProfessorInfo = ({ professor, school }) => (
 );
 
 export default function Show({ section, school }) {
+    const { auth } = usePage().props;
+    const isSchoolAdmin = auth.user.role.name === 'school_admin' || auth.user.role.name === 'super_admin';
+
+    // Add state for student pagination
+    const [studentsPerPage, setStudentsPerPage] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showAllStudents, setShowAllStudents] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+
     useEffect(() => {
+        console.log('Section full data object:', section);
         console.log('Section data:', section);
         console.log('Section schedules:', section.schedules);
         if (section.schedules && section.schedules.length > 0) {
             console.log('First schedule:', section.schedules[0]);
+        }
+        console.log('Course registrations:', section.courseRegistrations);
+        console.log('Section has courseRegistrations property:', section.hasOwnProperty('courseRegistrations'));
+        if (section.courseRegistrations && section.courseRegistrations.length > 0) {
+            console.log('First registration:', section.courseRegistrations[0]);
+            console.log('Student data:', section.courseRegistrations[0].student);
         }
     }, [section]);
 
@@ -141,7 +159,30 @@ export default function Show({ section, school }) {
         }, {});
     };
 
-    const featuresGrouped = groupFeaturesByCategory(section.requiredFeatures);
+    const featuresGrouped = groupFeaturesByCategory(section.required_features);
+
+    // Calculate which students to display based on pagination
+    const displayedStudents = showAllStudents
+        ? section.courseRegistrations || []
+        : (section.courseRegistrations || []).slice(
+            (currentPage - 1) * studentsPerPage,
+            currentPage * studentsPerPage
+        );
+
+    const totalPages = Math.ceil(
+        (section.courseRegistrations?.length || 0) / studentsPerPage
+    );
+
+    // Function to handle changing page
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    // Toggle between showing all students and paginated view
+    const toggleShowAll = () => {
+        setShowAllStudents(!showAllStudents);
+        setExpanded(!expanded);
+    };
 
     return (
         <AppLayout>
@@ -181,18 +222,20 @@ export default function Show({ section, school }) {
                             </span>
                         </div>
                     </div>
-                    <div className="flex space-x-3">
-                        <Link
-                            href={route('sections.edit', [
-                                school.id,
-                                section.id,
-                            ])}
-                            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Section
-                        </Link>
-                    </div>
+                    {isSchoolAdmin && (
+                        <div className="flex space-x-3">
+                            <Link
+                                href={route('sections.edit', [
+                                    school.id,
+                                    section.id,
+                                ])}
+                                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Section
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -204,7 +247,7 @@ export default function Show({ section, school }) {
                             <h2 className="text-lg font-medium text-gray-900">
                                 Section Information
                             </h2>
-                            {!section.schedules ||
+                            {isSchoolAdmin && (!section.schedules ||
                             section.schedules.length === 0 ? (
                                 <Link
                                     href={route('schedules.create', {
@@ -227,7 +270,7 @@ export default function Show({ section, school }) {
                                     <Calendar className="mr-1.5 h-4 w-4" />
                                     Edit Schedule
                                 </Link>
-                            )}
+                            ))}
                         </div>
                         <div className="px-6 py-4">
                             <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
@@ -451,39 +494,43 @@ export default function Show({ section, school }) {
                                                                         {schedule.day_of_week}
                                                                     </span>
                                                                 </div>
-                                                                <Link
-                                                                    href={route('schedules.edit', [school.id, schedule.id])}
-                                                                    className="rounded-md bg-white px-2 py-1 text-xs font-medium text-blue-600 shadow-sm hover:bg-blue-50 hover:text-blue-700"
-                                                                >
-                                                                    Edit
-                                                                </Link>
+                                                                {isSchoolAdmin && (
+                                                                    <Link
+                                                                        href={route('schedules.edit', [school.id, schedule.id])}
+                                                                        className="rounded-md bg-white px-2 py-1 text-xs font-medium text-blue-600 shadow-sm hover:bg-blue-50 hover:text-blue-700"
+                                                                    >
+                                                                        Edit
+                                                                    </Link>
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
                                                 </div>
                                             )}
 
-                                            <div className="mt-4 flex justify-end space-x-3">
-                                                {scheduleGroup.group.length === 1 && (
+                                            {isSchoolAdmin && (
+                                                <div className="mt-4 flex justify-end space-x-3">
+                                                    {scheduleGroup.group.length === 1 && (
+                                                        <Link
+                                                            href={route('schedules.edit', [school.id, scheduleGroup.group[0].id])}
+                                                            className="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-sm font-medium text-blue-600 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-50"
+                                                        >
+                                                            <Edit className="mr-1.5 h-3.5 w-3.5" />
+                                                            Edit
+                                                        </Link>
+                                                    )}
                                                     <Link
-                                                        href={route('schedules.edit', [school.id, scheduleGroup.group[0].id])}
-                                                        className="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-sm font-medium text-blue-600 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-50"
+                                                        href={route('schedules.create', {
+                                                            school: school.id,
+                                                            section_id: section.id,
+                                                        })}
+                                                        className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-600 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-100"
                                                     >
-                                                        <Edit className="mr-1.5 h-3.5 w-3.5" />
-                                                        Edit
+                                                        <CalendarPlus className="mr-1.5 h-3.5 w-3.5" />
+                                                        Add Schedule
                                                     </Link>
-                                                )}
-                                                <Link
-                                                    href={route('schedules.create', {
-                                                        school: school.id,
-                                                        section_id: section.id,
-                                                    })}
-                                                    className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-600 shadow-sm ring-1 ring-inset ring-blue-200 hover:bg-blue-100"
-                                                >
-                                                    <CalendarPlus className="mr-1.5 h-3.5 w-3.5" />
-                                                    Add Schedule
-                                                </Link>
-                                            </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -499,18 +546,20 @@ export default function Show({ section, school }) {
                                 <p className="mt-1 max-w-md text-sm text-gray-500">
                                     This section doesn't have a schedule yet. Create one to assign time and location for students.
                                 </p>
-                                <div className="mt-6">
-                                    <Link
-                                        href={route('schedules.create', {
-                                            school: school.id,
-                                            section_id: section.id,
-                                        })}
-                                        className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                    >
-                                        <CalendarPlus className="mr-2 h-4 w-4" />
-                                        Create Schedule
-                                    </Link>
-                                </div>
+                                {isSchoolAdmin && (
+                                    <div className="mt-6">
+                                        <Link
+                                            href={route('schedules.create', {
+                                                school: school.id,
+                                                section_id: section.id,
+                                            })}
+                                            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                        >
+                                            <CalendarPlus className="mr-2 h-4 w-4" />
+                                            Create Schedule
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -587,8 +636,10 @@ export default function Show({ section, school }) {
                                                         key={feature.id}
                                                         className="flex items-center text-sm"
                                                     >
-                                                        <span className="mr-2 h-2 w-2 rounded-full bg-green-500"></span>
-                                                        {feature.name}
+                                                        <span className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-green-100">
+                                                            <span className="h-2.5 w-2.5 rounded-full bg-green-500"></span>
+                                                        </span>
+                                                        <span className="font-medium text-gray-700">{feature.name}</span>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -609,33 +660,98 @@ export default function Show({ section, school }) {
                             <h2 className="text-lg font-medium text-gray-900">
                                 Enrolled Students
                             </h2>
-                            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                                {section.courseRegistrations?.length || 0}
-                            </span>
+                            <div className="flex items-center">
+                                <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 mr-2">
+                                    {section.courseRegistrations?.length || 0}
+                                </span>
+                                {section.courseRegistrations && section.courseRegistrations.length > studentsPerPage && (
+                                    <button
+                                        onClick={toggleShowAll}
+                                        className="flex items-center text-xs text-blue-600 hover:text-blue-800"
+                                    >
+                                        {expanded ? (
+                                            <>
+                                                <ChevronUp className="h-3 w-3 mr-1" />
+                                                Show Less
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ChevronDown className="h-3 w-3 mr-1" />
+                                                Show All
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <div className="px-6 py-4">
                             {section.courseRegistrations &&
                             section.courseRegistrations.length > 0 ? (
-                                <ul className="divide-y divide-gray-200">
-                                    {section.courseRegistrations.map(
-                                        (registration) => (
-                                            <li
-                                                key={registration.id}
-                                                className="py-2"
-                                            >
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {registration.student
-                                                        ?.name ||
+                                <>
+                                    <ul className="divide-y divide-gray-200">
+                                        {displayedStudents.map(
+                                            (registration) => (
+                                                <li
+                                                    key={registration.id}
+                                                    className="py-2"
+                                                >
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {(registration.student && registration.student.name) ||
                                                         'Unknown Student'}
-                                                </p>
-                                                <p className="text-xs text-gray-500">
-                                                    {registration.student
-                                                        ?.email || ''}
-                                                </p>
-                                            </li>
-                                        ),
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {(registration.student && registration.student.email) ||
+                                                        ''}
+                                                    </p>
+                                                </li>
+                                            ),
+                                        )}
+                                    </ul>
+
+                                    {!showAllStudents && totalPages > 1 && (
+                                        <div className="flex items-center justify-center space-x-2 mt-4">
+                                            <button
+                                                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                                                disabled={currentPage === 1}
+                                                className={`inline-flex items-center justify-center w-8 h-8 rounded-md ${
+                                                    currentPage === 1
+                                                        ? 'text-gray-400 cursor-not-allowed'
+                                                        : 'text-blue-600 hover:bg-blue-50'
+                                                }`}
+                                            >
+                                                <span className="sr-only">Previous</span>
+                                                <ChevronLeft className="h-4 w-4" />
+                                            </button>
+
+                                            {[...Array(totalPages)].map((_, i) => (
+                                                <button
+                                                    key={i + 1}
+                                                    onClick={() => handlePageChange(i + 1)}
+                                                    className={`inline-flex items-center justify-center w-8 h-8 rounded-md ${
+                                                        currentPage === i + 1
+                                                            ? 'bg-blue-600 text-white'
+                                                            : 'text-gray-700 hover:bg-blue-50'
+                                                    }`}
+                                                >
+                                                    {i + 1}
+                                                </button>
+                                            ))}
+
+                                            <button
+                                                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                                                disabled={currentPage === totalPages}
+                                                className={`inline-flex items-center justify-center w-8 h-8 rounded-md ${
+                                                    currentPage === totalPages
+                                                        ? 'text-gray-400 cursor-not-allowed'
+                                                        : 'text-blue-600 hover:bg-blue-50'
+                                                }`}
+                                            >
+                                                <span className="sr-only">Next</span>
+                                                <ChevronLeft className="h-4 w-4 transform rotate-180" />
+                                            </button>
+                                        </div>
                                     )}
-                                </ul>
+                                </>
                             ) : (
                                 <p className="text-sm text-gray-500">
                                     No students enrolled

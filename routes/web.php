@@ -29,7 +29,8 @@ use App\Http\Controllers\{
     ProfileController,
     ReportController,
     StatsController,
-    UserController
+    UserController,
+    ProgramController
 };
 
 /*
@@ -46,8 +47,9 @@ Route::get('/', function () {
 })->name('welcome');
 
 Route::get('/dashboard/all/stats', [StatsController::class, 'superUser'])->name('superuser.stats');
-Route::get('/dashboard/admin/stats', [StatsController::class, 'schoolAdmin'])->name('school.admin.stats');
-Route::get('/dashboard/professor/stats', [StatsController::class, 'professorStats'])->name('professor.stats');
+Route::get('/dashboard/admin/stats', [StatsController::class, 'schoolAdmin'])->name('dashboard.admin.stats');
+// Using the school-specific route defined below instead
+// Route::get('/dashboard/professor/stats', [StatsController::class, 'professorStats'])->name('professor.stats');
 
 require __DIR__ . '/auth.php';
 
@@ -77,24 +79,6 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
                 ];
             });
     })->name('api.buildings.list');
-
-    // Student enrollments API
-    Route::get('/student/enrollments', function () {
-        $user = Auth::user();
-        if ($user->role->name !== 'student') {
-            return response()->json(['error' => 'Not authorized'], 403);
-        }
-
-        try {
-            $enrollments = \App\Models\CourseRegistration::where('student_id', $user->id)
-                ->with(['section.course', 'section.professor_profile.user', 'section.schedules.room'])
-                ->get();
-
-            return response()->json(['enrollments' => $enrollments]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Error fetching enrollments: ' . $e->getMessage()], 500);
-        }
-    })->name('api.student.enrollments');
 });
 
 /*
@@ -103,19 +87,8 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Dashboard View - redirects based on role
-    Route::get('/dashboard', function() {
-        $user = Auth::user();
-        if ($user->role->name === 'student') {
-            return redirect()->route('student.dashboard');
-        }
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
-
-    // Student Dashboard
-    Route::get('/student/dashboard', function() {
-        return Inertia::render('Student/Dashboard');
-    })->name('student.dashboard');
+    // Dashboard View
+    Route::get('/dashboard', fn() => Inertia::render('Dashboard'))->name('dashboard');
 
     // Profile Management
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
@@ -141,40 +114,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('sections/calendar', [SectionController::class, 'calendar'])
             ->name('sections.calendar');
 
+        // Add new professor students route
+        Route::get('professor/students', [CourseRegistrationController::class, 'professorStudents'])
+            ->name('professor.students');
+
         Route::resources([
             'departments'             => DepartmentController::class,
-            'majors'                  => MajorController::class,
-            'terms'                   => TermController::class,
-            'courses'                 => CourseController::class,
-            'sections'                => SectionController::class,
-            'rooms'                   => RoomController::class,
-            'roomfeatures'            => RoomFeatureController::class,
-            'schedules'               => ScheduleController::class,
-            'professor-profiles'      => ProfessorProfileController::class,
-            'course-registrations'    => CourseRegistrationController::class,
-            'buildings'               => BuildingController::class,
-            'buildings.floors'        => FloorController::class,
-            'buildings.floors.rooms'  => RoomController::class,
+            'majors'                 => MajorController::class,
+            'terms'                  => TermController::class,
+            'courses'                => CourseController::class,
+            'sections'               => SectionController::class,
+            'rooms'                  => RoomController::class,
+            'roomfeatures'           => RoomFeatureController::class,
+            'schedules'              => ScheduleController::class,
+            'professor-profiles'     => ProfessorProfileController::class,
+            'course-registrations'   => CourseRegistrationController::class,
+            'buildings'              => BuildingController::class,
+            'buildings.floors'       => FloorController::class,
+            'buildings.floors.rooms' => RoomController::class,
         ]);
 
-        // Student course registration routes
-        Route::delete('sections/{section}/drop', function(School $school, App\Models\Section $section) {
-            $user = Auth::user();
-            if ($user->role->name !== 'student') {
-                return response()->json(['error' => 'Not authorized'], 403);
-            }
-
-            $registration = App\Models\CourseRegistration::where('student_id', $user->id)
-                ->where('section_id', $section->id)
-                ->first();
-
-            if ($registration) {
-                $registration->delete();
-                return response()->json(['success' => true]);
-            }
-
-            return response()->json(['error' => 'Registration not found'], 404);
-        })->name('course-registrations.drop');
+        // Student course registration view
+        Route::get('student/course-registration', [CourseRegistrationController::class, 'studentIndex'])
+            ->name('student.course-registration');
 
         // Batch schedule creation routes – adding an alias for flexibility
         Route::post('schedules-batch', [ScheduleController::class, 'storeBatch'])
@@ -189,6 +151,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Direct route for creating a room associated with a floor
         Route::get('rooms/create/{floor}', [RoomController::class, 'create'])
             ->name('rooms.create.with.floor');
+
+        // Stats routes
+        Route::get('api/stats/school-admin', [StatsController::class, 'schoolAdmin'])
+            ->name('school.admin.stats');
+        Route::get('api/stats/professor', [StatsController::class, 'professor'])
+            ->name('professor.stats');
+        Route::get('api/stats/student', [StatsController::class, 'student'])
+            ->name('student.stats');
     });
 });
 

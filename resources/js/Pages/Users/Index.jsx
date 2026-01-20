@@ -7,7 +7,7 @@ import {
     TrashIcon,
     UserPlusIcon,
 } from '@heroicons/react/24/outline';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     Badge,
     Button,
@@ -64,6 +64,9 @@ export default function Index({ users, roles, filters }) {
         userId: null,
     });
     const { get, delete: destroy, processing } = useForm();
+
+    const { auth } = usePage().props;
+    const isAdmin = auth.user.role.id === 2;
 
     const debouncedSearch = debounce((value) => {
         get(
@@ -129,9 +132,11 @@ export default function Index({ users, roles, filters }) {
             <div className="px-4 py-6 sm:px-6 lg:px-8">
                 <div className="sm:flex sm:items-center sm:justify-between">
                     <Title>User Management</Title>
-                    <Link href={route('users.create')}>
-                        <Button icon={UserPlusIcon}>Add User</Button>
-                    </Link>
+                    {isAdmin && (
+                        <Link href={route('users.create')}>
+                            <Button icon={UserPlusIcon}>Add User</Button>
+                        </Link>
+                    )}
                 </div>
 
                 <Card className="mt-6">
@@ -180,7 +185,11 @@ export default function Index({ users, roles, filters }) {
                                     </TableHeaderCell>
                                     <TableHeaderCell>Role</TableHeaderCell>
                                     <TableHeaderCell>School</TableHeaderCell>
-                                    <TableHeaderCell>Actions</TableHeaderCell>
+                                    {isAdmin && (
+                                        <TableHeaderCell>
+                                            Actions
+                                        </TableHeaderCell>
+                                    )}
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -204,191 +213,125 @@ export default function Index({ users, roles, filters }) {
                                         <TableCell>
                                             {user.school?.name || 'N/A'}
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-2">
-                                                <Link
-                                                    href={route(
-                                                        'users.show',
-                                                        user.id,
-                                                    )}
-                                                >
+                                        {isAdmin && (
+                                            <TableCell>
+                                                <div className="flex gap-2">
+                                                    <Link
+                                                        href={route(
+                                                            'users.show',
+                                                            user.id,
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            size="xs"
+                                                            variant="secondary"
+                                                        >
+                                                            View
+                                                        </Button>
+                                                    </Link>
+                                                    <Link
+                                                        href={route(
+                                                            'users.edit',
+                                                            user.id,
+                                                        )}
+                                                    >
+                                                        <Button
+                                                            size="xs"
+                                                            variant="secondary"
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    </Link>
                                                     <Button
                                                         size="xs"
                                                         variant="secondary"
+                                                        color="red"
+                                                        icon={TrashIcon}
+                                                        onClick={() =>
+                                                            handleDelete(
+                                                                user.id,
+                                                            )
+                                                        }
                                                     >
-                                                        View
+                                                        Delete
                                                     </Button>
-                                                </Link>
-                                                <Link
-                                                    href={route(
-                                                        'users.edit',
-                                                        user.id,
-                                                    )}
-                                                >
-                                                    <Button
-                                                        size="xs"
-                                                        variant="secondary"
-                                                    >
-                                                        Edit
-                                                    </Button>
-                                                </Link>
-                                                <Button
-                                                    size="xs"
-                                                    variant="secondary"
-                                                    color="red"
-                                                    icon={TrashIcon}
-                                                    onClick={() =>
-                                                        handleDelete(user.id)
-                                                    }
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </div>
-                                        </TableCell>
+                                                </div>
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
 
-                        {users.links && users.links.length > 3 && (
-                            <div className="mt-4 flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
-                                <div className="flex flex-1 justify-between sm:hidden">
-                                    {users.links.find(
-                                        (link) =>
-                                            link.label === '&laquo; Previous' && link.url
-                                    ) && (
-                                        <Link
-                                            href={users.prev_page_url}
-                                            className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                        >
-                                            Previous
-                                        </Link>
-                                    )}
-                                    {users.links.find(
-                                        (link) => link.label === 'Next &raquo;' && link.url
-                                    ) && (
-                                        <Link
-                                            href={users.next_page_url}
-                                            className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                        >
-                                            Next
-                                        </Link>
-                                    )}
-                                </div>
-                                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-700">
-                                            Showing{' '}
-                                            <span className="font-medium">
-                                                {users.from}
-                                            </span>{' '}
-                                            to{' '}
-                                            <span className="font-medium">
-                                                {users.to}
-                                            </span>{' '}
-                                            of{' '}
-                                            <span className="font-medium">
-                                                {users.total}
-                                            </span>{' '}
-                                            results
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <nav
-                                            className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                                            aria-label="Pagination"
-                                        >
-                                            {users.links.map((link, index) => {
-                                                if (
-                                                    link.label ===
-                                                    '&laquo; Previous'
-                                                ) {
-                                                    return link.url ? (
-                                                        <Link
-                                                            key={index}
-                                                            href={link.url}
-                                                            className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                                                        >
-                                                            <span className="sr-only">
-                                                                Previous
-                                                            </span>
-                                                            <ChevronUpIcon
-                                                                className="h-5 w-5"
-                                                                aria-hidden="true"
-                                                            />
-                                                        </Link>
-                                                    ) : (
-                                                        <span
-                                                            key={index}
-                                                            className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 cursor-not-allowed"
-                                                        >
-                                                            <span className="sr-only">
-                                                                Previous
-                                                            </span>
-                                                            <ChevronUpIcon
-                                                                className="h-5 w-5"
-                                                                aria-hidden="true"
-                                                            />
-                                                        </span>
-                                                    );
-                                                }
-                                                if (
-                                                    link.label ===
-                                                    'Next &raquo;'
-                                                ) {
-                                                    return link.url ? (
-                                                        <Link
-                                                            key={index}
-                                                            href={link.url}
-                                                            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                                                        >
-                                                            <span className="sr-only">
-                                                                Next
-                                                            </span>
-                                                            <ChevronDownIcon
-                                                                className="h-5 w-5"
-                                                                aria-hidden="true"
-                                                            />
-                                                        </Link>
-                                                    ) : (
-                                                        <span
-                                                            key={index}
-                                                            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 cursor-not-allowed"
-                                                        >
-                                                            <span className="sr-only">
-                                                                Next
-                                                            </span>
-                                                            <ChevronDownIcon
-                                                                className="h-5 w-5"
-                                                                aria-hidden="true"
-                                                            />
-                                                        </span>
-                                                    );
-                                                }
-                                                return link.url ? (
-                                                    <Link
-                                                        key={index}
-                                                        href={link.url}
-                                                        className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                                                            link.active
-                                                                ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                                                                : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
-                                                        }`}
-                                                    >
-                                                        {link.label}
-                                                    </Link>
-                                                ) : (
-                                                    <span
-                                                        key={index}
-                                                        className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-300 ring-1 ring-inset ring-gray-300 cursor-not-allowed"
-                                                    >
-                                                        {link.label}
-                                                    </span>
-                                                );
-                                            })}
-                                        </nav>
-                                    </div>
-                                </div>
+                        {users.links && users.links.length > 0 && (
+                            <div className="mt-4 flex items-center justify-center border-t border-gray-200 pt-4">
+                                <nav
+                                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                    aria-label="Pagination"
+                                >
+                                    {users.links.map((link, index) => {
+                                        const isDisabled = !link.url;
+
+                                        if (link.label === '&laquo; Previous') {
+                                            return isDisabled ? (
+                                                <span
+                                                    key={index}
+                                                    className="relative inline-flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-200"
+                                                >
+                                                    <ChevronUpIcon className="h-5 w-5" />
+                                                </span>
+                                            ) : (
+                                                <Link
+                                                    key={index}
+                                                    href={link.url}
+                                                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                                >
+                                                    <ChevronUpIcon className="h-5 w-5" />
+                                                </Link>
+                                            );
+                                        }
+
+                                        if (link.label === 'Next &raquo;') {
+                                            return isDisabled ? (
+                                                <span
+                                                    key={index}
+                                                    className="relative inline-flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-200"
+                                                >
+                                                    <ChevronDownIcon className="h-5 w-5" />
+                                                </span>
+                                            ) : (
+                                                <Link
+                                                    key={index}
+                                                    href={link.url}
+                                                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                                >
+                                                    <ChevronDownIcon className="h-5 w-5" />
+                                                </Link>
+                                            );
+                                        }
+
+                                        return isDisabled ? (
+                                            <span
+                                                key={index}
+                                                className="relative inline-flex h-10 w-10 cursor-not-allowed items-center justify-center px-4 py-2 text-sm font-semibold text-gray-400 ring-1 ring-inset ring-gray-200"
+                                            >
+                                                {link.label}
+                                            </span>
+                                        ) : (
+                                            <Link
+                                                key={index}
+                                                href={link.url}
+                                                className={`relative inline-flex h-10 w-10 items-center justify-center px-4 py-2 text-sm font-semibold ${
+                                                    link.active
+                                                        ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                                                        : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                                                }`}
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        );
+                                    })}
+                                </nav>
                             </div>
                         )}
                     </div>

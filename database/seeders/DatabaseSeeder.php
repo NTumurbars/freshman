@@ -46,9 +46,13 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Seeding schedules for sections...');
         $this->call(ScheduleSeeder::class);
 
-        // Create students and register them for courses
-        $this->command->info('Seeding students and course registrations...');
+        // Seed students (improved version with more data)
+        $this->command->info('Seeding students...');
         $this->call(StudentSeeder::class);
+
+        // Seed course registrations to connect students with sections
+        $this->command->info('Registering students for courses...');
+        $this->call(CourseRegistrationSeeder::class);
 
         // ======================== SUMMARY ========================
         $this->command->info('Database seeding completed successfully!');

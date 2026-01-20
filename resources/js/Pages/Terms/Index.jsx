@@ -73,13 +73,7 @@ export default function Index({ auth, terms }) {
                         <div className="bg-gray-50 px-5 py-3">
                             <div className="text-sm">
                                 <div className="font-medium text-gray-900">
-                                    {new Date(
-                                        term.start_date,
-                                    ).toLocaleDateString()}{' '}
-                                    -{' '}
-                                    {new Date(
-                                        term.end_date,
-                                    ).toLocaleDateString()}
+                                    {new Date(term.start_date).toLocaleDateString()} - {new Date(term.end_date).toLocaleDateString()}
                                 </div>
                             </div>
                         </div>
@@ -88,18 +82,12 @@ export default function Index({ auth, terms }) {
                                 <div className="flex items-center">
                                     <BookOpen className="mr-2 h-5 w-5 text-gray-400" />
                                     <span className="text-sm text-gray-500">
-                                        {term.sections_count}{' '}
-                                        {term.sections_count === 1
-                                            ? 'Section'
-                                            : 'Sections'}
+                                        {term.sections_count} {term.sections_count === 1 ? 'Section' : 'Sections'}
                                     </span>
                                 </div>
                             </div>
-                            <div className="px-5 py-3">
-                                {auth.can &&
-                                auth.can.update_term &&
-                                school &&
-                                term.school_id ? (
+                            {auth.can && auth.can.update_term && school && term.school_id && (
+                                <div className="px-5 py-3">
                                     <Link
                                         href={route('terms.edit', {
                                             school: school.id,
@@ -109,19 +97,8 @@ export default function Index({ auth, terms }) {
                                     >
                                         Manage Term
                                     </Link>
-                                ) : (
-                                    <Link
-                                        href={route('terms.show', {
-                                            school:
-                                                term.school_id || school?.id,
-                                            term: term.id,
-                                        })}
-                                        className="text-sm text-blue-600 hover:text-blue-800"
-                                    >
-                                        View Details
-                                    </Link>
-                                )}
-                            </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 ))}

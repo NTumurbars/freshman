@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\School;
 use App\Models\RoomFeature;
@@ -10,6 +12,8 @@ use App\Models\Floor;
 
 class Room extends Model
 {
+    use HasFactory, Notifiable;
+
     protected $fillable = [
         'room_number',
         'floor_id',
