@@ -505,6 +505,48 @@ export default function Dashboard() {
                         </div>
                     </div>
                 </div>
+                
+                {/* Quick Actions - Moved directly after summary stats */}
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                <Building className="h-6 w-6" />
+                            </div>
+                            <h3 className="mb-1 text-lg font-semibold text-gray-900">Add New School</h3>
+                            <p className="mb-4 text-sm text-gray-600">
+                                Create and configure a new educational institution
+                            </p>
+                            <Link
+                                href={route('schools.create')}
+                                className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+                            >
+                                Get Started
+                                <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                            </Link>
+                            <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                        </div>
+                        
+                        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                <UserCheck className="h-6 w-6" />
+                            </div>
+                            <h3 className="mb-1 text-lg font-semibold text-gray-900">Manage Users</h3>
+                            <p className="mb-4 text-sm text-gray-600">
+                                View and manage user accounts and permissions
+                            </p>
+                            <Link
+                                href={route('users.index')}
+                                className="mt-2 inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800"
+                            >
+                                View Users
+                                <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                            </Link>
+                            <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Role Distribution */}
                 {data.role_distribution && data.role_distribution.length > 0 && (
@@ -605,27 +647,6 @@ export default function Dashboard() {
                         </div>
                     </div>
                 )}
-
-                {/* Quick Actions */}
-                <div className="space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-800">Quick Actions</h2>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <QuickAction
-                            title="Add New School"
-                            description="Create and configure a new educational institution"
-                            icon={Building}
-                            href={route('schools.create')}
-                            color="blue"
-                        />
-                        <QuickAction
-                            title="Manage Users"
-                            description="View and manage user accounts and permissions"
-                            icon={UserCheck}
-                            href={route('users.index')}
-                            color="green"
-                        />
-                    </div>
-                </div>
             </div>
         )
     }
@@ -659,87 +680,161 @@ export default function Dashboard() {
                             </div>
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                                 {/* Course Count Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-blue-100 rounded-full p-3">
-                                        <BookCopy className="h-6 w-6 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Current Courses</p>
-                                        <div className="flex items-baseline">
-                                            <p className="text-2xl font-semibold text-gray-900">
-                                                {loading ? (
-                                                    <Loader className="h-6 w-6 animate-spin text-gray-400" />
-                                                ) : (
-                                                    stats?.stats?.current_term_sections || 0
-                                                )}
-                                            </p>
-                                            <Link href={schoolRoute('sections.index')} className="ml-2 text-xs text-blue-600 hover:text-blue-800">
-                                                View →
-                                            </Link>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('sections.index')} className="absolute inset-0 z-10" aria-label="View courses" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                            <BookCopy className="h-6 w-6" />
                                         </div>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-sm font-medium text-gray-500">Current Courses</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.current_term_sections || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">
                                             {stats?.stats?.current_term ? `For ${stats?.stats?.current_term.name}` : 'No active term'}
                                         </p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-blue-600">
+                                            <span>View Courses</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 {/* Total Students Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-green-100 rounded-full p-3">
-                                        <Users className="h-6 w-6 text-green-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Total Students</p>
-                                        <div className="flex items-baseline">
-                                            <p className="text-2xl font-semibold text-gray-900">
-                                                {loading ? (
-                                                    <Loader className="h-6 w-6 animate-spin text-gray-400" />
-                                                ) : (
-                                                    stats?.stats?.current_term_students || 0
-                                                )}
-                                            </p>
-                                            <Link href={schoolRoute('professor.students')} className="ml-2 text-xs text-blue-600 hover:text-blue-800">
-                                                View →
-                                            </Link>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('professor.students')} className="absolute inset-0 z-10" aria-label="View students" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                            <Users className="h-6 w-6" />
                                         </div>
-                                        <p className="text-xs text-gray-500">Students in your courses</p>
+                                        <p className="text-sm font-medium text-gray-500">Total Students</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.current_term_students || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Students in your courses</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-green-600">
+                                            <span>View Students</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 {/* Department Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-purple-100 rounded-full p-3">
-                                        <Building className="h-6 w-6 text-purple-600" />
-                                    </div>
-                                    <div>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 transition duration-200 group-hover:scale-110">
+                                            <Building className="h-6 w-6" />
+                                        </div>
                                         <p className="text-sm font-medium text-gray-500">Department</p>
-                                        <p className="text-xl font-semibold text-gray-900 truncate max-w-[150px]">
+                                        <p className="text-xl font-semibold text-gray-900 truncate max-w-[180px]">
                                             {loading ? (
                                                 <Loader className="h-6 w-6 animate-spin text-gray-400" />
                                             ) : (
                                                 stats?.stats?.department?.name || 'Not Assigned'
                                             )}
                                         </p>
-                                        <p className="text-xs text-gray-500">Your academic department</p>
+                                        <p className="text-xs text-gray-500 mt-1">Your academic department</p>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-400 to-purple-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
 
                                 {/* Term Card */}
-                                <div className="bg-white rounded-lg p-4 shadow-sm flex items-center space-x-4">
-                                    <div className="bg-indigo-100 rounded-full p-3">
-                                        <Calendar className="h-6 w-6 text-indigo-600" />
-                                    </div>
-                                    <div>
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('terms.index')} className="absolute inset-0 z-10" aria-label="View terms" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition duration-200 group-hover:scale-110">
+                                            <Calendar className="h-6 w-6" />
+                                        </div>
                                         <p className="text-sm font-medium text-gray-500">Current Term</p>
-                                        <p className="text-xl font-semibold text-gray-900">
+                                        <p className="text-xl font-semibold text-gray-900 truncate max-w-[180px]">
                                             {loading ? (
                                                 <Loader className="h-6 w-6 animate-spin text-gray-400" />
                                             ) : (
                                                 stats?.stats?.current_term?.name || 'N/A'
                                             )}
                                         </p>
-                                        <p className="text-xs text-gray-500">Active academic term</p>
+                                        <p className="text-xs text-gray-500 mt-1">Active academic term</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-indigo-600">
+                                            <span>View Terms</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
                                     </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-indigo-400 to-indigo-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Actions - Moved directly under Teaching Summary */}
+                        <div className="bg-white rounded-xl shadow-sm p-6">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                                Quick Actions
+                            </h2>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                        <Calendar className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">View My Schedule</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        See your complete teaching schedule for the current term.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('sections.calendar')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+                                    >
+                                        Open Calendar
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                        <Users className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Manage Students</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        View and manage student enrollments in your courses.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('professor.students')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800"
+                                    >
+                                        Manage Students
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 transition duration-200 group-hover:scale-110">
+                                        <BookOpen className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Course Materials</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        Access and update your course materials and resources.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('sections.index')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-800"
+                                    >
+                                        View Courses
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-400 to-purple-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
                                 </div>
                             </div>
                         </div>
@@ -972,36 +1067,6 @@ export default function Dashboard() {
                                 </Card>
                             )}
                         </div>
-
-                        {/* Quick Actions */}
-                        <div className="space-y-4">
-                            <h2 className="text-lg font-semibold text-gray-900">
-                                Quick Actions
-                            </h2>
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                <QuickAction
-                                    title="View My Schedule"
-                                    description="See your complete teaching schedule for the current term."
-                                    icon={Calendar}
-                                    href={schoolRoute('sections.calendar')}
-                            color="blue"
-                                />
-                                <QuickAction
-                                    title="Manage Students"
-                                    description="View and manage student enrollments in your courses."
-                            icon={Users}
-                                    href={schoolRoute('professor.students')}
-                            color="green"
-                                />
-                                <QuickAction
-                                    title="Course Materials"
-                                    description="Access and update your course materials and resources."
-                                    icon={BookOpen}
-                                    href={schoolRoute('sections.index')}
-                            color="purple"
-                        />
-                            </div>
-                        </div>
                     </div>
                 ) : isStudent ? (
                     // Student stats
@@ -1070,9 +1135,53 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </div>
+                        
+                        {/* Quick Actions - Added for students */}
+                        <div className="bg-white rounded-xl shadow-sm p-6">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                                Quick Actions
+                            </h2>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                        <BookOpen className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Course Registration</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        Browse and register for available courses this term.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('student.course-registration')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+                                    >
+                                        Register Now
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                        <Calendar className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">View Schedule</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        View your complete class schedule for this term.
+                                    </p>
+                                    <Link
+                                        href="#schedule-section"
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800"
+                                    >
+                                        Go to Schedule
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Schedule Calendar with improved design */}
-                        <Card className="overflow-hidden">
+                        <Card className="overflow-hidden" id="schedule-section">
                             <div className="border-b pb-4 mb-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center">
@@ -1213,59 +1322,411 @@ export default function Dashboard() {
                         </Card>
                     </div>
                 ) : canShowSchoolContent ? (
-                    // School admin stats
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        <DashboardCard
-                            title="Total Users"
-                            value={stats?.stats?.users}
-                            icon={Users}
-                            linkTo={route('users.index')}
-                            subtitle="Active users in your school"
-                        />
-                        <DashboardCard
-                            title="Departments"
-                            value={stats?.stats?.departments}
-                            icon={LayoutList}
-                            linkTo={schoolRoute('departments.index')}
-                            color="purple"
-                            subtitle="Academic departments"
-                        />
-                        <DashboardCard
-                            title="Buildings"
-                            value={stats?.stats?.buildings}
-                            icon={Building}
-                            linkTo={schoolRoute('buildings.index')}
-                            color="orange"
-                            subtitle="Campus facilities"
-                        />
-                        <DashboardCard
-                            title="Active Courses"
-                            value={stats?.stats?.activeCourses}
-                            icon={BookOpen}
-                            linkTo={schoolRoute('courses.index')}
-                            color="orange"
-                            subtitle="Currently running courses"
-                        />
-                        <DashboardCard
-                            title="Current Term"
-                            value={stats?.stats?.currentTerm?.name || 'None'}
-                            icon={Calendar}
-                            linkTo={schoolRoute('terms.index')}
-                            color="blue"
-                            subtitle={
-                                stats?.stats?.currentTerm
-                                    ? `${new Date(stats.stats.currentTerm.start_date).toLocaleDateString()} - ${new Date(stats.stats.currentTerm.end_date).toLocaleDateString()}`
-                                    : 'No active term'
-                            }
-                        />
-                        <DashboardCard
-                            title="Schedule Conflicts"
-                            value={stats?.stats?.scheduleConflicts || 0}
-                            icon={AlertCircle}
-                            linkTo={schoolRoute('schedules.index')}
-                            color="red"
-                            subtitle="Requires attention"
-                        />
+                    // School admin stats with improved layout
+                    <div className="space-y-8">
+                        {/* Admin Summary Stats - With gradient background */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 shadow-sm">
+                            <div className="mb-4">
+                                <h2 className="text-xl font-semibold text-gray-800">School Overview</h2>
+                                <p className="text-sm text-gray-600">Summary statistics for {school?.name || 'your school'}</p>
+                            </div>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+                                {/* Total Users Card */}
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={route('users.index')} className="absolute inset-0 z-10" aria-label="View users" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                            <Users className="h-6 w-6" />
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500">Total Users</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.users || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Active users in your school</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-blue-600">
+                                            <span>View Details</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                {/* Departments Card */}
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('departments.index')} className="absolute inset-0 z-10" aria-label="View departments" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 transition duration-200 group-hover:scale-110">
+                                            <LayoutList className="h-6 w-6" />
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500">Departments</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.departments || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Academic departments</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-purple-600">
+                                            <span>View Details</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-400 to-purple-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                {/* Buildings Card */}
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('buildings.index')} className="absolute inset-0 z-10" aria-label="View buildings" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600 transition duration-200 group-hover:scale-110">
+                                            <Building className="h-6 w-6" />
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500">Buildings</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.buildings || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Campus facilities</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-orange-600">
+                                            <span>View Details</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-orange-400 to-orange-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                {/* Active Courses Card */}
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('courses.index')} className="absolute inset-0 z-10" aria-label="View courses" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                            <BookOpen className="h-6 w-6" />
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500">Active Courses</p>
+                                        <p className="text-2xl font-semibold text-gray-900">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.activeCourses || 0
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">Currently running courses</p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-green-600">
+                                            <span>View Details</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                {/* Current Term Card */}
+                                <div className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <Link href={schoolRoute('terms.index')} className="absolute inset-0 z-10" aria-label="View terms" />
+                                    <div className="p-5">
+                                        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition duration-200 group-hover:scale-110">
+                                            <Calendar className="h-6 w-6" />
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500">Current Term</p>
+                                        <p className="text-xl font-semibold text-gray-900 truncate max-w-[180px]">
+                                            {loading ? (
+                                                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+                                            ) : (
+                                                stats?.stats?.currentTerm?.name || 'None'
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1 truncate max-w-[180px]">
+                                            {stats?.stats?.currentTerm
+                                                ? `${new Date(stats.stats.currentTerm.start_date).toLocaleDateString()} - ${new Date(stats.stats.currentTerm.end_date).toLocaleDateString()}`
+                                                : 'No active term'}
+                                        </p>
+                                        
+                                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-indigo-600">
+                                            <span>View Details</span>
+                                            <ChevronRight className="h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-indigo-400 to-indigo-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Actions with improved design - moved above Room Utilization */}
+                        <div className="bg-white rounded-xl shadow-sm p-6">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                                Quick Actions
+                            </h2>
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition duration-200 group-hover:scale-110">
+                                        <Calendar className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">View My Schedule</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        See your complete teaching schedule for the current term.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('sections.calendar')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+                                    >
+                                        Open Calendar
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-blue-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 transition duration-200 group-hover:scale-110">
+                                        <Users className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Manage Students</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        View and manage student enrollments in your courses.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('professor.students')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800"
+                                    >
+                                        Manage Students
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-green-400 to-green-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+
+                                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:shadow-md hover:-translate-y-1">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 transition duration-200 group-hover:scale-110">
+                                        <BookOpen className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-1 text-lg font-semibold text-gray-900">Course Materials</h3>
+                                    <p className="mb-4 text-sm text-gray-600">
+                                        Access and update your course materials and resources.
+                                    </p>
+                                    <Link
+                                        href={schoolRoute('sections.index')}
+                                        className="mt-2 inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-800"
+                                    >
+                                        View Courses
+                                        <ChevronRight className="ml-1 h-4 w-4 transition duration-200 group-hover:translate-x-1" />
+                                    </Link>
+                                    <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-400 to-purple-600 transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Room Utilization Section - moved below Quick Actions */}
+                        {stats?.stats?.roomStats && (
+                            <div className="bg-white rounded-xl shadow-sm p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h2 className="text-xl font-semibold text-gray-900">Room Utilization</h2>
+                                        <p className="text-sm text-gray-600 mt-1">Overview of classroom and facility usage</p>
+                                    </div>
+                                    <Link
+                                        href={schoolRoute('rooms.index')}
+                                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    >
+                                        View all rooms
+                                    </Link>
+                                </div>
+
+                                {/* Utilization Stats Cards */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200 shadow-sm">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-sm font-medium text-blue-800">Room Utilization</p>
+                                                <p className="text-3xl font-bold text-blue-900 mt-2">{stats?.stats?.roomStats?.utilizationPercentage}%</p>
+                                                <p className="text-xs text-blue-700 mt-1">Of all available time slots</p>
+                                            </div>
+                                            <div className="bg-white p-2 rounded-full shadow">
+                                                <Percent className="h-6 w-6 text-blue-600" />
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 w-full bg-blue-200 rounded-full h-2.5">
+                                            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${stats?.stats?.roomStats?.utilizationPercentage}%` }}></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200 shadow-sm">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-sm font-medium text-green-800">Rooms In Use</p>
+                                                <p className="text-3xl font-bold text-green-900 mt-2">{stats?.stats?.roomStats?.roomsUtilizedPercentage}%</p>
+                                                <p className="text-xs text-green-700 mt-1">{stats?.stats?.roomStats?.roomsWithSchedules} of {stats?.stats?.roomStats?.totalRooms} rooms</p>
+                                            </div>
+                                            <div className="bg-white p-2 rounded-full shadow">
+                                                <Home className="h-6 w-6 text-green-600" />
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 w-full bg-green-200 rounded-full h-2.5">
+                                            <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${stats?.stats?.roomStats?.roomsUtilizedPercentage}%` }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Most and Least Utilized Rooms */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    {/* Most Utilized Rooms */}
+                                    <div className="overflow-hidden rounded-lg bg-white border border-gray-200 shadow-sm">
+                                        <div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                                                        Most Utilized Rooms
+                                                    </h3>
+                                                    <p className="mt-1 text-sm text-gray-500">
+                                                        Rooms with highest percentage of time slots in use
+                                                    </p>
+                                                </div>
+                                                <div className="bg-green-100 p-2 rounded-full">
+                                                    <ArrowUpRight className="h-5 w-5 text-green-600" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-white px-4 py-5 sm:p-6">
+                                            <div className="flow-root">
+                                                <ul className="-mb-8">
+                                                    {loading ? (
+                                                        <div className="flex justify-center py-4">
+                                                            <Loader className="h-8 w-8 animate-spin text-blue-500" />
+                                                        </div>
+                                                    ) : stats?.stats?.roomStats?.mostUtilizedRooms?.length > 0 ? (
+                                                        stats.stats.roomStats.mostUtilizedRooms.map((room, idx) => (
+                                                            <li key={room.id}>
+                                                                <div className="relative pb-8">
+                                                                    {idx !== stats.stats.roomStats.mostUtilizedRooms.length - 1 && (
+                                                                        <span
+                                                                            className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
+                                                                            aria-hidden="true"
+                                                                        />
+                                                                    )}
+                                                                    <div className="relative flex space-x-3">
+                                                                        <div>
+                                                                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-500 ring-8 ring-white">
+                                                                                {idx + 1}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                                                            <div>
+                                                                                <p className="text-sm font-medium text-gray-900">
+                                                                                    <Link
+                                                                                        href={schoolRoute('rooms.show', { room: room.id })}
+                                                                                        className="hover:text-blue-600 hover:underline"
+                                                                                    >
+                                                                                        {room.name}
+                                                                                    </Link>
+                                                                                </p>
+                                                                                <p className="text-sm text-gray-500">
+                                                                                    Capacity: {room.capacity}
+                                                                                </p>
+                                                                            </div>
+                                                                            <div className="whitespace-nowrap text-right text-sm font-medium">
+                                                                                <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800">
+                                                                                    {room.utilization_percentage}%
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+                                                        ))
+                                                    ) : (
+                                                        <div className="py-4 text-center text-sm text-gray-500">
+                                                            No room data available
+                                                        </div>
+                                                    )}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Most Available Rooms */}
+                                    <div className="overflow-hidden rounded-lg bg-white border border-gray-200 shadow-sm">
+                                        <div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                                                        Most Available Rooms
+                                                    </h3>
+                                                    <p className="mt-1 text-sm text-gray-500">
+                                                        Rooms with highest number of available time slots
+                                                    </p>
+                                                </div>
+                                                <div className="bg-indigo-100 p-2 rounded-full">
+                                                    <ArrowDownRight className="h-5 w-5 text-indigo-600" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-white px-4 py-5 sm:p-6">
+                                            <div className="flow-root">
+                                                <ul className="-mb-8">
+                                                    {loading ? (
+                                                        <div className="flex justify-center py-4">
+                                                            <Loader className="h-8 w-8 animate-spin text-blue-500" />
+                                                        </div>
+                                                    ) : stats?.stats?.roomStats?.mostAvailableRooms?.length > 0 ? (
+                                                        stats.stats.roomStats.mostAvailableRooms.map((room, idx) => (
+                                                            <li key={room.id}>
+                                                                <div className="relative pb-8">
+                                                                    {idx !== stats.stats.roomStats.mostAvailableRooms.length - 1 && (
+                                                                        <span
+                                                                            className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
+                                                                            aria-hidden="true"
+                                                                        />
+                                                                    )}
+                                                                    <div className="relative flex space-x-3">
+                                                                        <div>
+                                                                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-500 ring-8 ring-white">
+                                                                                {idx + 1}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                                                            <div>
+                                                                                <p className="text-sm font-medium text-gray-900">
+                                                                                    <Link
+                                                                                        href={schoolRoute('rooms.show', { room: room.id })}
+                                                                                        className="hover:text-blue-600 hover:underline"
+                                                                                    >
+                                                                                        {room.name}
+                                                                                    </Link>
+                                                                                </p>
+                                                                                <p className="text-sm text-gray-500">
+                                                                                    Capacity: {room.capacity}
+                                                                                </p>
+                                                                            </div>
+                                                                            <div className="whitespace-nowrap text-right text-sm font-medium">
+                                                                                <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-sm font-medium text-indigo-800">
+                                                                                    {room.available_slots} slots
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+                                                        ))
+                                                    ) : (
+                                                        <div className="py-4 text-center text-sm text-gray-500">
+                                                            No room data available
+                                                        </div>
+                                                    )}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="py-12 text-center">
@@ -1277,226 +1738,6 @@ export default function Dashboard() {
                             You need to be assigned to a school to view
                             school-specific information.
                         </p>
-                    </div>
-                )}
-
-                {/* Room Utilization Section - Only show for admin */}
-                {!isStudent && !isProfessor && canShowSchoolContent && stats?.stats?.roomStats && (
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold text-gray-900">
-                                Room Utilization
-                            </h2>
-                            <Link
-                                href={schoolRoute('rooms.index')}
-                                className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                            >
-                                View all rooms
-                            </Link>
-                        </div>
-
-                        {/* Overall stats */}
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                            <DashboardCard
-                                title="Room Utilization"
-                                value={`${stats?.stats?.roomStats?.utilizationPercentage}%`}
-                                icon={Percent}
-                                linkTo={schoolRoute('rooms.index')}
-                                color="blue"
-                                subtitle="Of all available time slots"
-                            />
-                            <DashboardCard
-                                title="Rooms In Use"
-                                value={`${stats?.stats?.roomStats?.roomsUtilizedPercentage}%`}
-                                icon={Home}
-                                linkTo={schoolRoute('rooms.index')}
-                                color="green"
-                                subtitle={`${stats?.stats?.roomStats?.roomsWithSchedules} of ${stats?.stats?.roomStats?.totalRooms} rooms`}
-                            />
-                        </div>
-
-                        {/* Most and Least Utilized Rooms */}
-                        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                            {/* Most Utilized Rooms */}
-                            <div className="overflow-hidden rounded-lg bg-white shadow">
-                                <div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
-                                    <div className="-ml-4 -mt-4 flex flex-wrap items-center justify-between sm:flex-nowrap">
-                                        <div className="ml-4 mt-4">
-                                            <h3 className="text-base font-semibold leading-6 text-gray-900">
-                                                Most Utilized Rooms
-                                            </h3>
-                                            <p className="mt-1 text-sm text-gray-500">
-                                                Rooms with highest percentage of time slots in use
-                                            </p>
-                                        </div>
-                                        <div className="ml-4 mt-4 flex-shrink-0">
-                                            <ArrowUpRight className="h-5 w-5 text-green-600" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-white px-4 py-5 sm:p-6">
-                                    <div className="flow-root">
-                                        <ul className="-mb-8">
-                                            {loading ? (
-                                                <div className="flex justify-center py-4">
-                                                    <Loader className="h-8 w-8 animate-spin text-blue-500" />
-                                                </div>
-                                            ) : stats?.stats?.roomStats?.mostUtilizedRooms?.length > 0 ? (
-                                                stats.stats.roomStats.mostUtilizedRooms.map((room, idx) => (
-                                                    <li key={room.id}>
-                                                        <div className="relative pb-8">
-                                                            {idx !== stats.stats.roomStats.mostUtilizedRooms.length - 1 && (
-                                                                <span
-                                                                    className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
-                                                                    aria-hidden="true"
-                                                                />
-                                                            )}
-                                                            <div className="relative flex space-x-3">
-                                                                <div>
-                                                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-500 ring-8 ring-white">
-                                                                        {idx + 1}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-                                                                    <div>
-                                                                        <p className="text-sm font-medium text-gray-900">
-                                                                            <Link
-                                                                                href={schoolRoute('rooms.show', { room: room.id })}
-                                                                                className="hover:text-blue-600 hover:underline"
-                                                                            >
-                                                                                {room.name}
-                                                                            </Link>
-                                                                        </p>
-                                                                        <p className="text-sm text-gray-500">
-                                                                            Capacity: {room.capacity}
-                                                                        </p>
-                                                                    </div>
-                                                                    <div className="whitespace-nowrap text-right text-sm font-medium">
-                                                                        <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800">
-                                                                            {room.utilization_percentage}%
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                ))
-                                            ) : (
-                                                <div className="py-4 text-center text-sm text-gray-500">
-                                                    No room data available
-                                                </div>
-                                            )}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Most Available Rooms */}
-                            <div className="overflow-hidden rounded-lg bg-white shadow">
-                                <div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
-                                    <div className="-ml-4 -mt-4 flex flex-wrap items-center justify-between sm:flex-nowrap">
-                                        <div className="ml-4 mt-4">
-                                            <h3 className="text-base font-semibold leading-6 text-gray-900">
-                                                Most Available Rooms
-                                            </h3>
-                                            <p className="mt-1 text-sm text-gray-500">
-                                                Rooms with highest number of available time slots
-                                            </p>
-                                        </div>
-                                        <div className="ml-4 mt-4 flex-shrink-0">
-                                            <ArrowDownRight className="h-5 w-5 text-indigo-600" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-white px-4 py-5 sm:p-6">
-                                    <div className="flow-root">
-                                        <ul className="-mb-8">
-                                            {loading ? (
-                                                <div className="flex justify-center py-4">
-                                                    <Loader className="h-8 w-8 animate-spin text-blue-500" />
-                                                </div>
-                                            ) : stats?.stats?.roomStats?.mostAvailableRooms?.length > 0 ? (
-                                                stats.stats.roomStats.mostAvailableRooms.map((room, idx) => (
-                                                    <li key={room.id}>
-                                                        <div className="relative pb-8">
-                                                            {idx !== stats.stats.roomStats.mostAvailableRooms.length - 1 && (
-                                                                <span
-                                                                    className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
-                                                                    aria-hidden="true"
-                                                                />
-                                                            )}
-                                                            <div className="relative flex space-x-3">
-                                                                <div>
-                                                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-500 ring-8 ring-white">
-                                                                        {idx + 1}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-                                                                    <div>
-                                                                        <p className="text-sm font-medium text-gray-900">
-                                                                            <Link
-                                                                                href={schoolRoute('rooms.show', { room: room.id })}
-                                                                                className="hover:text-blue-600 hover:underline"
-                                                                            >
-                                                                                {room.name}
-                                                                            </Link>
-                                                                        </p>
-                                                                        <p className="text-sm text-gray-500">
-                                                                            Capacity: {room.capacity}
-                                                                        </p>
-                                                                    </div>
-                                                                    <div className="whitespace-nowrap text-right text-sm font-medium">
-                                                                        <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-sm font-medium text-indigo-800">
-                                                                            {room.available_slots} slots
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                ))
-                                            ) : (
-                                                <div className="py-4 text-center text-sm text-gray-500">
-                                                    No room data available
-                                                </div>
-                                            )}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Quick Actions */}
-                {!isStudent && !isProfessor && canShowSchoolContent && (
-                    <div className="space-y-4">
-                        <h2 className="text-lg font-semibold text-gray-900">
-                            Quick Actions
-                        </h2>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            <QuickAction
-                                title="Manage Users"
-                                description="Add, edit, or remove users from your school."
-                                icon={Users}
-                                href={route('users.index')}
-                                color="blue"
-                            />
-                            <QuickAction
-                                title="Course Planning"
-                                description="Plan and organize courses for upcoming terms."
-                                icon={BookOpen}
-                                href={schoolRoute('courses.index')}
-                                color="green"
-                            />
-                            <QuickAction
-                                title="Manage Schedule"
-                                description="View and modify class schedules and room assignments."
-                                icon={Calendar}
-                                href={schoolRoute('schedules.index')}
-                                color="purple"
-                            />
-                        </div>
                     </div>
                 )}
             </div>

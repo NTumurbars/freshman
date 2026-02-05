@@ -37,11 +37,11 @@ export default function Welcome({ auth, users, schools }) {
     ];
 
     const benefits = [
-        'Reduce administrative workload by up to 40%',
-        'Eliminate scheduling conflicts automatically',
+        'Reduce administrative workload',
+        'Eliminate scheduling conflicts',
         'Optimize classroom usage and resources',
         'Streamline course registration for students',
-        'Generate comprehensive reports with one click',
+        'Comprehensive dashboard for users',
     ];
 
     return (

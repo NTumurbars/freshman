@@ -22,11 +22,25 @@ class MajorController extends Controller
 
         // Get majors for these departments
         $majors = Major::whereIn('department_id', $departmentIds)
-            ->with('department')
+            ->with(['department', 'courses.sections.courseRegistrations'])
             ->get()
             ->map(function ($major) {
-                // Add a temporary student count
-                $major->student_count = 0;
+                // Count students enrolled in courses in this major
+                $studentCount = 0;
+                
+                // Get all courses belonging to this major
+                if ($major->courses && count($major->courses) > 0) {
+                    foreach ($major->courses as $course) {
+                        if ($course->sections && count($course->sections) > 0) {
+                            foreach ($course->sections as $section) {
+                                // Add the number of course registrations (students) for this section
+                                $studentCount += $section->courseRegistrations ? count($section->courseRegistrations) : 0;
+                            }
+                        }
+                    }
+                }
+                
+                $major->student_count = $studentCount;
                 return $major;
             });
 
